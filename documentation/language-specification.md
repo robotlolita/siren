@@ -29,8 +29,8 @@ a good live-programming environment as a mixture of DrRacket with Smalltalk VMs,
 I do not think there will be enough time for working on that for now.
 
 
-1) Overview
-2) Concepts
-3) Program structure
-4) Standard library
-5) Formal syntax
+## 1) Overview
+## 2) Concepts
+## 3) Program structure
+## 4) Standard library
+## 5) Formal syntax
