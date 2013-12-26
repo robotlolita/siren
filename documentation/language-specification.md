@@ -47,11 +47,13 @@ not be variadic.
 
 ```smalltalk
 take: size => 
-  internal-take apply: size with: this with: []
+  take' size: size from: this into: []
   where
-    internal-take => [| size xs result |
-                      (size = 0) then: result
-                                 else: internal-take apply: size with: xs rest with: xs first ++ result.
+    take' size: size from: xs into: result =>
+      (size = 0) then: result
+                 else: take' size: size - 1
+                             from: xs rest
+                             into: xs first ~ result.
 ```
 
 For making things easier to teach, the language provides primitives and syntax
