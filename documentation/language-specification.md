@@ -1,5 +1,3 @@
-Use numbered headers: True
-
 The Mermaid Language
 ====================
 
@@ -98,7 +96,84 @@ main: arguments => Root IO show: "Hello, " ++ arguments first.
 
 ## 2) Concepts
 
-### 2.1) Objects
+### 2.2) Objects
+
+Objects in Mermaid are first-class entities of dynamically dispatched behaviour, and
+behaviour can be shared by objects by way of delegation. In other words, an object is
+something that responds to particular messages with an expression. There's nothing
+about an object besides messages that maps to expressions.
+
+A message can be of one of three types:
+
+ *  An unary message, e.g.: `x first`, `x last`, `x is-empty?`, is a computation that only
+    depends in the data stored in the object that is receiving the message.
+
+ *  A binary message, e.g.: `x + y`, `x ~ y`, `x > y`, is a computation that depends on the data
+    stored in the object receiving the message, and a single other object.
+
+ *  A keyword message, e.g.: `x from: y to: z`, is a computation that depends on the data
+    stored in the object receiving the message, and K other objects (where K > 0).
+  
+Since all of the data in an object is a message, the evaluation of such data is delayed
+until the object receives such message, and there is no difference between data and
+computations.
+
+
+### 2.1) Expressions
+
+Expressions in Mermaid are made of objects and message passing. Expressions are similar to
+mathematical expressions, except when mutable values and side-effects are involved
+in the computation — since Mermaid does not try to be a pure language, only to avoid
+mutability and side-effects as much as possible.
+
+At any rate, the concepts in the language make it possible to easily teach how to reason
+about programs in terms of reductions and equivalence.
+
+
+### 2.3) Evaluation order
+
+Mermaid is an eager language with applicative-order and call-by-sharing semantics, therefore
+all of the expressions in a message are evaluated before the message is sent to the receiver
+object. Once the messages are evaluated, the value is passed over to the message as a shared
+reference — although due to immutability there is no perceived difference between this
+semantics and call-by-value.
+
+
+### 2.4) Bindings and lexical scoping
+
+The language uses lexical scoping, with similar semantics to JavaScript with respect to
+clsoures and so on. However, bindings can only be introduced by `where`, and `let` expressions,
+and message parameters. There are no variables in the language.
+
+```smalltalk
+take: n => n.    ;; n is introduced as a binding inside the message body.
+
+take: n => n + y
+           where
+             y => n * n.            ;; y is introduced as a binding inside the message body.
+             
+take: n => let
+             y => n * n
+           in
+             n + y.                 ;; y is introduced as a binding inside the message body.
+```
+
+### 2.5) Delegation
+
+Mermaid uses delegative inheritance with prototypes. Each object has a single delegation
+slot that points to another object. The chain always ends up in the `Root` object. Mermaid
+has no `Null` values.
+
+
+### 2.6) Blocks and closures
+
+Functions 
+
+
+### 2.7) Control-flow
+### 2.8) Concurrency
+### 2.9) Exceptions
+### 2.10) Modules
 
 ## 3) Program structure
 ## 4) Standard library
