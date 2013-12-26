@@ -167,11 +167,36 @@ has no `Null` values.
 
 ### 2.6) Blocks and closures
 
-Functions 
+Functions in Mermaid are just objects matching the conventional interface for functions:
+
+```smalltalk
+Function0 => { apply => ... }
+Function1 => { apply: a => ... }
+Function2 => { apply: a with: b => ... }
+Function3 => { apply: a with: b with: c => ... }
+```
+
+All methods are closures, and capture the the environment and the object in which they
+are defined. Unlike JavaScript, `this` is always bound in Mermaid.
 
 
 ### 2.7) Control-flow
+
+Control-flow is implemented in the language itself, through primitives and thunks/functions.
+The common form is the `then:else:` message in the `Boolean` prototype, which takes two thunks
+and applies the first one if the object is true, or the second one if the object is false.
+
+Custom control-flow mechanisms can be derived in the same fashion, by using objects, messages
+and thunks. Due to the preference of recursion for simpler semantics and teaching, there are
+no loops in the language, nor are there non-local returns (which don't have much of a direct
+mapping to JavaScript, short of using exceptions as a control-flow, which slows everything
+down). Loops can be derived in terms of recursion, none the less, if such construct is needed.
+
+
 ### 2.8) Concurrency
+
+
+
 ### 2.9) Exceptions
 ### 2.10) Modules
 
