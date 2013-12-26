@@ -50,10 +50,11 @@ take: size =>
   take' size: size from: this into: []
   where
     take' size: size from: xs into: result =>
-      (size = 0) then: result
-                 else: take' size: size - 1
-                             from: xs rest
-                             into: xs first ~ result.
+      (size = 0) then: [ result ]
+                 else: [ take' size: size - 1
+                               from: xs rest
+                               into: xs first ~ result. ]
+  end.
 ```
 
 For making things easier to teach, the language provides primitives and syntax
@@ -78,12 +79,12 @@ this easy.
 
 ```smalltalk
 delay: thunk => Reference { forced => False. value => thunk }.
-force: promise => (promise forced) then: promise value
-                                   else: begin
-                                           promise !! forced := True.
-                                           promise !! value  := promise value apply.
-                                           promise !! value.
-                                         end.
+force: promise => (promise forced) then: [ promise value ]
+                                   else: [ begin
+                                             promise !! forced := True.
+                                             promise !! value  := promise value apply.
+                                             promise !! value.
+                                           end. ]
 ```
 
 For providing functionality, Mermaid uses first-class parametrised modules.
@@ -151,11 +152,13 @@ take: n => n.    ;; n is introduced as a binding inside the message body.
 take: n => n + y
            where
              y => n * n.            ;; y is introduced as a binding inside the message body.
+           end.
              
 take: n => let
              y => n * n
            in
              n + y.                 ;; y is introduced as a binding inside the message body.
+           end.
 ```
 
 ### 2.5) Delegation
@@ -212,7 +215,43 @@ concatenate: path1 with: path2 => do
 ```
 
 ### 2.9) Exceptions
+
+Mermaid uses exception for exceptional conditions that can not be handled by the current
+computation, and are unlikely to be possible to be handled by most of the callers. Regular
+failures are best modelled as monads.
+
+The way exceptions work is very similar to ML:
+
+```smalltalk
+division-by-zero => Error { message => "Division by zero." }.
+
+divide: x by: y => (y = 0) then: [ raise division-by-zero ]
+                           else: [ x / y ].
+                           
+main: _ => divide: 1 by: 0
+           rescue
+             division-by-zero: e => IO show: "Can't divide by zero"
+             Error: e => raise e.
+           end.
+```
+
 ### 2.10) Modules
+
+Modules are first-class parametrised objects. A module is defined by its bindings, and
+the messages it responds to (just like an object). And can only be loaded by the `ModuleLoader`
+object, present in the `Lobby` object. If you don't pass the `ModuleLoader` to a module, it
+can never load any other code, only work with whatever you pass over to it.
+
+```smalltalk
+| Lobby |
+
+Prelude => Lobby module load: "./foo.maid" with: [ Arg1, Arg2 ].
+```
+
+### 2.11) Primitives
+
+
+
 
 ## 3) Program structure
 ## 4) Standard library
