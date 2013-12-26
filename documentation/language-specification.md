@@ -82,7 +82,7 @@ force: promise => (promise forced) then: promise value
                                    else: begin
                                            promise !! forced := True.
                                            promise !! value  := promise value apply.
-                                           promise unwrap value.
+                                           promise !! value.
                                          end.
 ```
 
@@ -195,7 +195,21 @@ down). Loops can be derived in terms of recursion, none the less, if such constr
 
 ### 2.8) Concurrency
 
+Concurrency is implemented in terms of asynchronous computations and futures, which map
+directly to the usual idioms in JavaScript (except for futures being more sane than Promises/A+).
 
+```smalltalk
+concatenate: path1 with: path2 => do
+                                    file1 <- (File: path1) read.
+                                    file2 <- (File: path2) read.
+                                    yield file1 ++ file2.
+                                  end.
+                                  
+;; Or alternatively:
+
+(File: path1) read >>= [| file1 |
+                        (File: path2) read map: [| file2 | file1 ++ file2 ]]
+```
 
 ### 2.9) Exceptions
 ### 2.10) Modules
