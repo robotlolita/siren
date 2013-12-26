@@ -37,7 +37,7 @@ and JavaScript, whereas the syntax is a simplified form of Smalltalk, and
 similar to [Purr](https://github.com/robotlolita/purr).
 
 ```smalltalk
-"Hello" reverse ++ "World reverse".
+"Hello" reverse ++ ", " ++ "World!" reverse.
 ```
 
 Binding introductions in the lexical scope are done through a `where` form,
@@ -46,11 +46,12 @@ matching a conventional interface, and methods can have any arity, but can
 not be variadic.
 
 ```smalltalk
-take: size => internal-take apply: size with: this with: []
-              where
-                internal-take => [| size xs result |
-                                  (size = 0) then: result
-                                             else: internal-take apply: size with: xs rest with: xs first ++ result.
+take: size => 
+  internal-take apply: size with: this with: []
+  where
+    internal-take => [| size xs result |
+                      (size = 0) then: result
+                                 else: internal-take apply: size with: xs rest with: xs first ++ result.
 ```
 
 For making things easier to teach, the language provides primitives and syntax
