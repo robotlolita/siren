@@ -225,7 +225,7 @@ The way exceptions work is very similar to ML:
 ```smalltalk
 division-by-zero => Error { message => "Division by zero." }.
 
-divide: x by: y => (y = 0) then: [ raise division-by-zero ]
+divide: x by: y => (y = 0) then: [ division-by-zero raise ]
                            else: [ x / y ].
                            
 main: _ => divide: 1 by: 0
@@ -250,7 +250,15 @@ Prelude => Lobby module load: "./foo.maid" with: [ Arg1, Arg2 ].
 
 ### 2.11) Primitives
 
+Mermaid has the following primitives:
 
+ *  Numbers: always double, due to JavaScript (might change), `2.45`.
+ *  Strings: sequence of characters, `"Hello"`.
+ *  Lists: immutable linked lists, `<| 1, 2, 3 |>`.
+ *  Vectors: immutable vectors (efficient random access), `<1, 2, 3, 4>`.
+ *  Map: immutable hashmap, `< 1 => 2, 3 => 4, "hi" => "boo" >`.
+ *  Set: immutable hashsets, `#<1, 2, 3>`.
+ *  Range: immutable lazy ranges, `Range from: 0 to: 1000`.
 
 
 ## 3) Program structure
