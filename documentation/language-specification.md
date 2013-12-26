@@ -1,3 +1,5 @@
+Use numbered headers: True
+
 The Mermaid Language
 ====================
 
@@ -32,7 +34,7 @@ I do not think there will be enough time for working on that for now.
 ## 1) Overview
 
 Mermaid is a eagerly evaluated language allowing functional programming and
-object oriented programming. Semantics are inspired by Scheme, Self, ML,
+pure object oriented programming. Semantics are inspired by Scheme, Self, ML,
 and JavaScript, whereas the syntax is a simplified form of Smalltalk, and
 similar to [Purr](https://github.com/robotlolita/purr).
 
@@ -95,6 +97,9 @@ main: arguments => Root IO show: "Hello, " ++ arguments first.
 ```
 
 ## 2) Concepts
+
+### 2.1) Objects
+
 ## 3) Program structure
 ## 4) Standard library
 ## 5) Formal syntax
