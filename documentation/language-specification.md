@@ -80,9 +80,9 @@ this easy.
 delay: thunk => Reference { forced => False. value => thunk }.
 force: promise => (promise forced) then: promise value
                                    else: begin
-                                           promise forced := True.
-                                           promise value  := promise value apply.
-                                           promise value unwrap.
+                                           promise !! forced := True.
+                                           promise !! value  := promise value apply.
+                                           promise unwrap value.
                                          end.
 ```
 
