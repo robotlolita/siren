@@ -82,7 +82,7 @@ force: promise => (promise forced) then: promise value
                                    else: begin
                                            promise forced := True.
                                            promise value  := promise value apply.
-                                           promise value
+                                           promise value unwrap.
                                          end.
 ```
 
