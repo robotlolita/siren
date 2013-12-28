@@ -21,6 +21,8 @@ The language provides the following semantics:
  *  Untyped, but with strong run-time checking (and user-friendly error messages);
  *  Eager, applicative-order, run-to-completion;
  *  Built-in Monad support (for sequencing actions, not for achieving purity);
+ *  Controlled prototype mutation;
+ *  Second-class namespacing à lá Haskell/Racket/Clojure (though Clojure has 1st class ones);
  
 Besides the language takes uses a Smalltalk inspired syntax, which is as simple
 as Lisps', but in my humble opinion, easier to use without a good text editor,
@@ -47,7 +49,7 @@ not be variadic.
 
 ```smalltalk
 take: size => 
-  take' size: size from: this into: []
+  take' size: size from: this into: List new.
   where
     take' size: size from: xs into: result =>
       (size = 0) then: [ result ]
@@ -248,16 +250,57 @@ can never load any other code, only work with whatever you pass over to it.
 Prelude => Lobby module load: "./foo.maid" with: [ Arg1, Arg2 ].
 ```
 
-### 2.11) Primitives
+### 2.11) Controlled prototype mutations
+
+One controversial feature of JavaScript is mutating non-owned prototypes, which is a common
+idiom in other prototypical languages. Most of the aversion is due to the uncontrolled nature
+of the extensions, rather than the extensions per-se. Mermaid solves this by providing a
+second-class construct for controlling such mutations, in a way that the language can be
+more expressive, without having to pay the price for worsened reasoning.
+
+Extensions are declared with the `extends` construct:
+
+```smalltalk
+extends String where
+  slice-from: n to: m => (this drop: n) take: m.
+end.
+```
+
+But are never ran when the module is loaded, instead, the callee may opt-in to the constructs
+by "opening" the namespace, in which case all extensions are applied to the object referred
+to in the message. Ambiguous messages generate a non-recoverable run-time error.
+
+
+### 2.12) Namespacing
+
+Mermaid provides a second class construct for managing the current namespace, which should
+be similar to Clojure/Haskell/Racket's namespacing, and ECMAScript 6's module imports. The
+construct allows one to import a selected few names from another module, which become messages
+in the current module, and hide/transform messages using Traits' semantics to avoid conflicts.
+
+```smalltalk
+open "module" 
+  use { foo, bar:baz: => qux:do: }
+  ignore-extensions.
+```
+
+Modifiers for the `open` constructs include:
+
+ *  `use`, which takes in a set of names, and returns all messages that match.
+ *  `ignore-extensions`, which opens the namespaces, but doesn't apply the extensions.
+
+
+
+### 2.13) Primitives
 
 Mermaid has the following primitives:
 
  *  Numbers: always double, due to JavaScript (might change), `2.45`.
  *  Strings: sequence of characters, `"Hello"`.
- *  Lists: immutable linked lists, `<| 1, 2, 3 |>`.
- *  Vectors: immutable vectors (efficient random access), `<1, 2, 3, 4>`.
- *  Map: immutable hashmap, `< 1 => 2, 3 => 4, "hi" => "boo" >`.
- *  Set: immutable hashsets, `#<1, 2, 3>`.
+ *  Lists: immutable linked lists, `{ 1, 2, 3 }`.
+ *  Vectors: immutable vectors (efficient random access), `{| 1, 2, 3, 4 |}`.
+ *  Map: immutable hashmap, `&{ 1: 2, 3: 4, "hi": "boo" }`.
+ *  Set: immutable hashsets, `^{ 1, 2, 3 }`.
  *  Range: immutable lazy ranges, `Range from: 0 to: 1000`.
 
 
