@@ -38,7 +38,7 @@ pure object oriented programming. Semantics are inspired by Scheme, Self, ML,
 and JavaScript, whereas the syntax is a simplified form of Smalltalk, and
 similar to [Purr](https://github.com/robotlolita/purr).
 
-```smalltalk
+```ruby
 "Hello" reverse ++ ", " ++ "World!" reverse.
 ```
 
@@ -47,7 +47,7 @@ similar to Haskell's, and method arguments. Functions are provided as objects
 matching a conventional interface, and methods can have any arity, but can
 not be variadic.
 
-```smalltalk
+```ruby
 take: size => 
   take' size: size from: this into: List new.
   where
@@ -79,7 +79,7 @@ makes them the default), for a teaching language in an impure platform, you'll w
 to introduce the concepts of mutability at some point, and reference types make
 this easy.
 
-```smalltalk
+```ruby
 delay: thunk => Reference { forced => False. value => thunk }.
 force: promise => (promise !! forced) then: [ promise !! value ]
                                       else: [ begin
@@ -91,7 +91,7 @@ force: promise => (promise !! forced) then: [ promise !! value ]
 
 For providing functionality, Mermaid uses first-class parametrised modules.
 
-```smalltalk
+```ruby
 | Root |
 
 main: arguments => Root IO show: "Hello, " ++ arguments first.
@@ -148,7 +148,7 @@ The language uses lexical scoping, with similar semantics to JavaScript with res
 clsoures and so on. However, bindings can only be introduced by `where`, and `let` expressions,
 and message parameters. There are no variables in the language.
 
-```smalltalk
+```ruby
 take: n => n.    # n is introduced as a binding inside the message body.
 
 take: n => n + y
@@ -174,7 +174,7 @@ has no `Null` values.
 
 Functions in Mermaid are just objects matching the conventional interface for functions:
 
-```smalltalk
+```ruby
 Function0 => { apply => ... }
 Function1 => { apply: a => ... }
 Function2 => { apply: a with: b => ... }
@@ -203,7 +203,7 @@ down). Loops can be derived in terms of recursion, none the less, if such constr
 Concurrency is implemented in terms of asynchronous computations and futures, which map
 directly to the usual idioms in JavaScript (except for futures being more sane than Promises/A+).
 
-```smalltalk
+```ruby
 concatenate: path1 with: path2 => do
                                     file1 <- (File: path1) read.
                                     file2 <- (File: path2) read.
@@ -224,7 +224,7 @@ failures are best modelled as monads.
 
 The way exceptions work is very similar to ML:
 
-```smalltalk
+```ruby
 division-by-zero => Error { message => "Division by zero." }.
 
 divide: x by: y => (y = 0) then: [ division-by-zero raise ]
@@ -244,7 +244,7 @@ the messages it responds to (just like an object). And can only be loaded by the
 object, present in the `Lobby` object. If you don't pass the `ModuleLoader` to a module, it
 can never load any other code, only work with whatever you pass over to it.
 
-```smalltalk
+```ruby
 | Lobby |
 
 Prelude => Lobby module load: "./foo.maid" with: [ Arg1, Arg2 ].
@@ -260,7 +260,7 @@ more expressive, without having to pay the price for worsened reasoning.
 
 Extensions are declared with the `extend` construct:
 
-```smalltalk
+```ruby
 extend String with
   slice-from: n to: m => (this drop: n) take: m.
 end.
@@ -278,7 +278,7 @@ be similar to Clojure/Haskell/Racket's namespacing, and ECMAScript 6's module im
 construct allows one to import a selected few names from another module, which become messages
 in the current module, and hide/transform messages using Traits' semantics to avoid conflicts.
 
-```smalltalk
+```ruby
 open "module" 
   use ( foo, bar:baz: => qux:do: )
   ignore-extensions.
