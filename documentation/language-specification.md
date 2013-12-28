@@ -81,12 +81,12 @@ this easy.
 
 ```smalltalk
 delay: thunk => Reference { forced => False. value => thunk }.
-force: promise => (promise forced) then: [ promise value ]
-                                   else: [ begin
-                                             promise !! forced := True.
-                                             promise !! value  := promise value apply.
-                                             promise !! value.
-                                           end. ]
+force: promise => (promise !! forced) then: [ promise !! value ]
+                                      else: [ begin
+                                                promise !! forced := True.
+                                                promise !! value  := promise !! value apply.
+                                                promise !! value.
+                                              end. ]
 ```
 
 For providing functionality, Mermaid uses first-class parametrised modules.
@@ -149,17 +149,17 @@ clsoures and so on. However, bindings can only be introduced by `where`, and `le
 and message parameters. There are no variables in the language.
 
 ```smalltalk
-take: n => n.    ;; n is introduced as a binding inside the message body.
+take: n => n.    # n is introduced as a binding inside the message body.
 
 take: n => n + y
            where
-             y => n * n.            ;; y is introduced as a binding inside the message body.
+             y => n * n.            # y is introduced as a binding inside the message body.
            end.
              
 take: n => let
              y => n * n
            in
-             n + y.                 ;; y is introduced as a binding inside the message body.
+             n + y.                 # y is introduced as a binding inside the message body.
            end.
 ```
 
@@ -210,7 +210,7 @@ concatenate: path1 with: path2 => do
                                     yield file1 ++ file2.
                                   end.
                                   
-;; Or alternatively:
+# Or alternatively:
 
 (File: path1) read >>= [| file1 |
                         (File: path2) read map: [| file2 | file1 ++ file2 ]]
@@ -231,7 +231,7 @@ divide: x by: y => (y = 0) then: [ division-by-zero raise ]
                            else: [ x / y ].
                            
 main: _ => divide: 1 by: 0
-           rescue
+           recover
              division-by-zero: e => IO show: "Can't divide by zero"
              Error: e => raise e.
            end.
@@ -280,7 +280,7 @@ in the current module, and hide/transform messages using Traits' semantics to av
 
 ```smalltalk
 open "module" 
-  use { foo, bar:baz: => qux:do: }
+  use ( foo, bar:baz: => qux:do: )
   ignore-extensions.
 ```
 
@@ -297,10 +297,10 @@ Mermaid has the following primitives:
 
  *  Numbers: always double, due to JavaScript (might change), `2.45`.
  *  Strings: sequence of characters, `"Hello"`.
- *  Lists: immutable linked lists, `{ 1, 2, 3 }`.
- *  Vectors: immutable vectors (efficient random access), `{| 1, 2, 3, 4 |}`.
- *  Map: immutable hashmap, `&{ 1: 2, 3: 4, "hi": "boo" }`.
- *  Set: immutable hashsets, `^{ 1, 2, 3 }`.
+ *  Lists: immutable linked lists, `1 :: 2 :: 3 :: Empty`.
+ *  Vectors: immutable vectors (efficient random access), `{ 1, 2, 3, 4 }`.
+ *  Map: immutable hashmap, `{| 1 => 2, 3 => 4, "hi" => "boo" |}`.
+ *  Set: immutable hashsets, `@{ 1, 2, 3 }`.
  *  Range: immutable lazy ranges, `Range from: 0 to: 1000`.
 
 
