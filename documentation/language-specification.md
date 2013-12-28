@@ -258,10 +258,10 @@ of the extensions, rather than the extensions per-se. Mermaid solves this by pro
 second-class construct for controlling such mutations, in a way that the language can be
 more expressive, without having to pay the price for worsened reasoning.
 
-Extensions are declared with the `extends` construct:
+Extensions are declared with the `extend` construct:
 
 ```smalltalk
-extends String where
+extend String with
   slice-from: n to: m => (this drop: n) take: m.
 end.
 ```
