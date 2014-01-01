@@ -23,6 +23,7 @@ The language provides the following semantics:
  *  Built-in Monad support (for sequencing actions, not for achieving purity);
  *  Controlled prototype mutation;
  *  Second-class namespacing à lá Haskell/Racket/Clojure (though Clojure has 1st class ones);
+ *  Pattern-matching.
  
 Besides the language takes uses a Smalltalk inspired syntax, which is as simple
 as Lisps', but in my humble opinion, easier to use without a good text editor,
