@@ -48,7 +48,7 @@ similar to Haskell's, and method arguments. Functions are provided as objects
 matching a conventional interface, and methods can have any arity, but can
 not be variadic.
 
-```ruby
+```hs
 take: size => 
   take' size: size from: this into: List new.
   where
