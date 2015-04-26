@@ -1,0 +1,137 @@
+// # module: mermaid.parser
+//
+// Parser for the Mermaid language.
+
+// -- Dependencies -----------------------------------------------------
+var Expr = require('./ast').Expr;
+
+var reserved = [
+  'extend', 'let', 'this', 'true', 'false', 'do', 'module', 'export', 'open',
+  'only', 'excluding', '=', '>>', 'with'
+]
+
+function isValid(a) {
+  return reserved.indexOf(a) === -1
+}
+
+function get(k){ return function(o){ 
+  return o[k] 
+}}
+
+function keywordApply(meta, target, args) {
+  var id = Expr.Id(meta, args.map(get(0)).map(get('name')).join(''));
+  return Expr.Apply(meta, id, target, args.map(get(1)))
+}
+
+function keywordLambda(meta, args, body) {
+  var id = Expr.Id(meta, args.map(get(0)).map(get('name')).join(''));
+  return [id, Expr.Lambda(meta, args.map(get(1)), body)]
+}
+
+// ## object: MermaidParser
+ometa MermaidParser {
+  space   = ^space | comment,
+  comment = fromTo('//', '\n'),
+  ws      = space*,
+  symbol  = ~(letter | digit | space
+             | '$' | '@' | ';' | '|' | '.' | ':' | '{' | '}' | '(' | ')' | '[' | ']') char,
+  eof     = ~char,
+  kw :xs  = seq(xs) ~(letter | digit | symbol | ':'),
+
+
+  // Identifiers
+  idStart    = letter,
+  idRest     = letter | digit | symbol,
+  symbolChar = symbol | ':',
+  identifier = <idStart idRest*>:a     ?(isValid(a)) -> Expr.Id({}, a),
+  keyword    = <idStart idRest*>:a ':'               -> Expr.Id({}, a + ':'),
+  symbols    = <symbolChar+>:a         ?(isValid(a)) -> Expr.Id({}, a),
+
+
+  // Patterns
+  pattern = keywordPattern
+          | binaryPattern
+          | unaryPattern,
+
+  patternBody = '=' ws exprList:as -> as,
+
+  keywordArgs = (ws keyword:k ws identifier:n -> [k, n])+,
+  
+  keywordPattern = keywordArgs:as ws patternBody:v            -> keywordLambda({}, as, v),
+  unaryPattern   = identifier:a ws patternBody:v              -> [a, Expr.Lambda({}, [], v)],
+  binaryPattern  = symbols:a ws identifier:b ws patternBody:v -> [a, Expr.Lambda({}, [b], v)],
+
+
+  // Statements
+  letStmt = kw('let') ws identifier:a ws '=' ws expr:b -> Expr.Let({}, a, b),
+
+
+  // Expressions
+  expr = letStmt
+       | appExpr,
+
+  appExpr = keywordExpr
+          | binaryExpr,
+
+  keywordApp  = keyword:k ws binaryExpr:v -> [k, v],
+
+  keywordExpr = binaryExpr:a (ws keywordApp)+:as          -> keywordApply({}, a, as),
+  binaryExpr  = binaryExpr:a ws symbols:s ws unaryExpr:b  -> Expr.Apply({}, s, a, [b])
+              | unaryExpr,
+  unaryExpr   = unaryExpr:a ws identifier:i   -> Expr.Apply({}, i, a, [])
+              | unaryExpr:a ws record:v       -> Expr.Clone({}, a, v)
+              | unaryExpr:a '::' identifier:i -> Expr.Bind({}, a, i)
+              | primaryExpr,
+  primaryExpr = value
+              | identifier:a         -> Expr.Var({}, a)
+              | kw('this')           -> Expr.Self({})
+              | extendExpr:a         -> a
+              | ';'                  -> Expr.Empty
+              | '(' ws expr:a ws ')' -> a,
+
+  extendExpr = kw('extend') ws expr:a ws kw('with') ws record:v -> Expr.Extend({}, a, v),
+
+  exprList    = expr:a (ws ';' ws expr)*:as -> [a].concat(as),
+
+
+  // Values
+  value = number | string | vector | lambda | record,
+
+  octDigit = /[0-7_]/,
+  hexDigit = /[0-9a-fA-F_]/,
+  binDigit = '0' | '1' | '_',
+  digits = (digit | '_')+:as -> Number(as.join('').replace(/_/g, '')),
+  number = '-'?:s ( '0' 'b' <binDigit+>:n
+                    -> Expr.Num({}, +((s || '+') + parseInt(n.replace(/_/g, ''), 2)))
+                  | '0' 'o' <octDigit+>:n
+                    -> Expr.Num({}, +((s || '+') + parseInt(n.replace(/_/g, ''), 8)))
+                  | '0' 'x' <hexDigit+>:n
+                    -> Expr.Num({}, +((s || '+') + parseInt(n.replace(/_/g, ''), 16)))
+                  | digits:a ('.' digits:b exponent:c)?
+                    -> Expr.Num({}, +((s || '+') + a + '.' + (b || 0) + (c || 0)))
+                  ),
+  sign = '+' | '-',
+  exponent = ('e' | 'E') sign?:s digits:d -> s + d,
+  
+  stringEscape     = '\\' ( 'b' -> '\b'
+                          | 'f' -> '\f'
+                          | 'n' -> '\n'
+                          | 'r' -> '\r'
+                          | 't' -> '\t'
+                          | char),
+  stringChar       = (stringEscape | (~seq('"') char)):a -> a,
+  unescapableChars = ~seq('"""') char,
+  string           = seq('"""') <unescapableChars*>:as seq('"""') -> Expr.Str({}, as)
+                   | '"' (stringChar)*:as '"'                     -> Expr.Str({}, as.join('')),
+
+  vector = '[' ws expr:hd (ws ';' ws expr)*:tl ws ']' -> Expr.Vector({}, [hd].concat(tl))
+         | '[' ws ']'                                 -> Expr.Vector({}, []),
+  
+  record = '{' ws pattern:hd (ws ';' ws pattern)*:tl ws '}' -> Expr.Record({}, [hd].concat(tl))
+         | '{' ws '}'                                       -> Expr.Record({}, []),
+
+  lambda  = '{' ws '|' ws arglist:as ws '|' ws exprList:a '}' -> Expr.Lambda({}, as, a),
+  arglist = identifier:a (ws identifier)*:as                  -> [a].concat(as),
+
+  program = ws exprList:xs ws eof -> xs
+}
