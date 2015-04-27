@@ -16,6 +16,7 @@ var { Base } = require('adt-simple');
 // ## adt: Expr
 union Expr {
   Empty,
+  Program { statements: Array },
   Comment { meta: Object, comment: String },
   Id      { meta: Object, name: String },
   Self    { meta: Object },
@@ -31,7 +32,9 @@ union Expr {
   Apply  { meta: Object, selector: Id, target: Expr, args: Array },
   Clone  { meta: Object, source: Expr, bindings: Record },
   Extend { meta: Object, source: Expr, bindings: Record },
-  Var    { meta: Object, selector: Id }
+  Var    { meta: Object, selector: Id },
 } deriving (Base)
+
+Let::isStatement = true;
 
 exports.Expr = Expr;

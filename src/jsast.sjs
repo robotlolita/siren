@@ -12,20 +12,22 @@ var Maybe = require('data.maybe');
 // -- Validations ------------------------------------------------------
 function is(type) {
   return function(a) {
-    return a instanceof type?                 Success(a)
-    :      a.hasParent && a.hasParent(type)?  Success(a)
-    :      /* otherwise */                    Failure(c.Violation.Tag(type.name, a))
+    return a instanceof type?                      Success(a)
+    :      a && a.hasParent && a.hasParent(type)?  Success(a)
+    :      /* otherwise */                         Failure(c.Violation.Tag(type.name, a))
   }
 }
 
-var checkPar = λ a b -> a === b || b instanceof a || (b.hasParent && b.hasParent(a));
+var checkPar = λ a b -> a === b || (b && b.hasParent && b.hasParent(a));
 
 var a = λ f x -> c.assert(f(x));
 var maybe = λ[c.Or([c.Null, #])];
+var toObject = λ[#.toObject()];
 
 function maybeObject(a) {
   return Maybe.fromNullable(a).map(λ[#.toObject()]).getOrElse(null)
 }
+
 
 var unaryOp = c.Or([
   c.Value('-'), c.Value('+'), c.Value('!'), c.Value('~'),
@@ -82,7 +84,7 @@ var updateOp = c.Or([
 union Node {
   Prog {
     meta: Object,
-    body: a(c.ArrayOf(is(Statement)))
+    body: λ[a(c.ArrayOf(is(Statement)))(#)]
   }
 } deriving (Base)
 
@@ -91,92 +93,92 @@ union Statement {
   Empty { meta: Object },
   Block {
     meta: Object,
-    body: a(c.ArrayOf(is(Statement)))
+    body: λ[a(c.ArrayOf(is(Statement)))(#)]
   },
   ExprStmt {
     meta: Object,
-    expr: a(is(Expr))
+    expr: λ[a(is(Expr))(#)]
   },
   If {
     meta: Object,
-    test: a(is(Expr)),
-    consequent: a(is(Statement)),
-    alternate: a(maybe(is(Statement))),
+    test: λ[a(is(Expr))(#)],
+    consequent: λ[a(is(Statement))(#)],
+    alternate: λ[a(maybe(is(Statement)))(#)],
   },
   Label {
     meta: Object,
-    label: a(is(Id)),
-    body: a(is(Statement))
+    label: λ[a(is(Id))(#)],
+    body: λ[a(is(Statement))(#)]
   },
   Break {
     meta: Object,
-    label: a(maybe(is(Id)))
+    label: λ[a(maybe(is(Id)))(#)]
   },
   Continue {
     meta: Object,
-    label: a(maybe(is(Id)))
+    label: λ[a(maybe(is(Id)))(#)]
   },
   With {
     meta: Object,
-    obj: a(is(Expr)),
-    body: a(is(Statement))
+    obj: λ[a(is(Expr))(#)],
+    body: λ[a(is(Statement))(#)]
   },
   Switch {
     meta: Object,
-    discriminant: a(is(Expr)),
-    cases: a(c.ArrayOf(is(SwitchCase))),
+    discriminant: λ[a(is(Expr))(#)],
+    cases: λ[a(c.ArrayOf(is(SwitchCase)))(#)],
     lexical: a(c.Boolean)
   },
   Return {
     meta: Object,
-    arg: a(maybe(is(Expr)))
+    arg: λ[a(maybe(is(Expr)))(#)]
   },
   Throw {
     meta: Object,
-    arg: a(maybe(is(Expr)))
+    arg: λ[a(maybe(is(Expr)))(#)]
   },
   Try {
     meta: Object,
-    block: a(is(Block)),
-    handler: a(maybe(is(CatchClause))),
-    finalizer: a(maybe(is(Block)))
+    block: λ[a(is(Block))(#)],
+    handler: λ[a(maybe(is(CatchClause)))(#)],
+    finalizer: λ[a(maybe(is(Block)))(#)]
   },
   While {
     meta: Object,
-    test: a(is(Expr)),
-    body: a(is(Statement))
+    test: λ[a(is(Expr))(#)],
+    body: λ[a(is(Statement))(#)]
   },
   DoWhile {
     meta: Object,
-    test: a(is(Expr)),
-    body: a(is(Statement))
+    test: λ[a(is(Expr))(#)],
+    body: λ[a(is(Statement))(#)]
   },
   For {
-    meta: Object,
-    init: a(c.Or([is(VarDecl), is(Expr), c.Null])),
-    test: a(maybe(is(Expr))),
-    update: a(maybe(is(Expr))),
-    body: a(is(Statement))
+    meta   : Object,
+    init   : λ[a(c.Or([is(VarDecl), is(Expr), c.Null]))(#)],
+    test   : λ[a(maybe(is(Expr)))(#)],
+    update : λ[a(maybe(is(Expr)))(#)],
+    body   : λ[a(is(Statement))(#)]
   },
   ForIn {
-    meta: Object,
-    left: a(c.Or([is(VarDecl), is(Expr)])),
-    right: a(is(Expr)),
-    body: a(is(Statement))
+    meta  : Object,
+    left  : λ[a(c.Or([is(VarDecl), is(Expr)]))(#)],
+    right : λ[a(is(Expr))(#)],
+    body  : λ[a(is(Statement))(#)]
   },
   ForOf {
-    meta: Object,
-    left: a(c.Or([is(VarDecl), is(Expr)])),
-    right: a(is(Expr)),
-    body: a(is(Statement))
+    meta  : Object,
+    left  : λ[a(c.Or([is(VarDecl), is(Expr)]))(#)],
+    right : λ[a(is(Expr))(#)],
+    body  : λ[a(is(Statement))(#)]
   },
   Let {
-    meta: Object,
-    head: a(c.ArrayOf(is(VarDeclarator))),
-    body: a(is(Statement))
+    meta  : Object,
+    head  : λ[a(c.ArrayOf(is(VarDeclarator)))(#)],
+    body  : λ[a(is(Statement))(#)]
   },
   Debugger {
-    meta: Object
+    meta  : Object
   }
 } deriving (Base)
 Statement::hasParent = λ(a) -> [Node].some(checkPar(a));
@@ -184,23 +186,23 @@ Statement::hasParent = λ(a) -> [Node].some(checkPar(a));
 
 union Declaration {
   FnDecl {
-    meta: Object,
-    id: a(is(Id)),
-    params: a(c.ArrayOf(is(Pattern))),
-    defaults: a(c.ArrayOf(is(Expr))),
-    rest: a(maybe(is(Id))),
-    body: a(is(Block)),
-    generator: a(c.Boolean)
+    meta         : Object,
+    id           : λ[a(is(Id))(#)],
+    params       : λ[a(c.ArrayOf(is(Pattern)))(#)],
+    defaults     : λ[a(c.ArrayOf(is(Expr)))(#)],
+    rest         : λ[a(maybe(is(Id)))(#)],
+    body         : λ[a(is(Block))(#)],
+    generator    : λ[a(c.Boolean)(#)]
   },
   VarDecl {
-    meta: Object,
-    declarations: a(c.ArrayOf(VarDeclarator)),
-    kind: a(c.Or([c.Value("var"), c.Value("let"), c.Value("const")]))
+    meta         : Object,
+    declarations : λ[a(c.ArrayOf(is(VarDeclarator)))(#)],
+    kind         : λ[a(c.Or([c.Value("var"), c.Value("let"), c.Value("const")]))(#)]
   },
   VarDeclarator {
-    meta: Object,
-    id: a(is(Pattern)),
-    init: a(maybe(is(Expr)))
+    meta         : Object,
+    id           : λ[a(is(Pattern))(#)],
+    init         : λ[a(maybe(is(Expr)))(#)]
   }
 } deriving (Base)
 Declaration::hasParent = λ(a) -> [Statement].some(checkPar(a));
@@ -209,119 +211,119 @@ Declaration::hasParent = λ(a) -> [Statement].some(checkPar(a));
 union Expr {
   This { meta: Object },
   ArrayExpr {
-    meta: Object,
-    elements: a(c.ArrayOf(maybe(is(Expr))))
+    meta        : Object,
+    elements    : λ[a(c.ArrayOf(maybe(is(Expr))))(#)]
   },
   Obj {
-    meta: Object,
-    properties: a(c.ArrayOf(maybe(is(Expr))))
+    meta        : Object,
+    properties  : λ[a(c.ArrayOf(is(Property)))(#)]
   },
   FnExpr {
-    meta: Object,
-    id: a(maybe(is(Id))),
-    params: a(c.ArrayOf(is(Pattern))),
-    defaults: a(c.ArrayOf(is(Expr))),
-    rest: a(maybe(is(Id))),
-    body: a(c.Or([is(Block), is(Expr)])),
-    generator: a(c.Boolean)
+    meta        : Object,
+    id          : λ[a(maybe(is(Id)))(#)],
+    params      : λ[a(c.ArrayOf(is(Pattern)))(#)],
+    defaults    : λ[a(c.ArrayOf(is(Expr)))(#)],
+    rest        : λ[a(maybe(is(Id)))(#)],
+    body        : λ[a(c.Or([is(Block), is(Expr)]))(#)],
+    generator   : a(c.Boolean)
   },
   Arrow {
-    meta: Object,
-    params: a(c.ArrayOf(is(Pattern))),
-    defaults: a(c.ArrayOf(is(Expr))),
-    rest: a(maybe(is(Id))),
-    body: a(c.Or([is(Block), is(Expr)])),
-    generator: a(c.Boolean)
+    meta        : Object,
+    params      : λ[a(c.ArrayOf(is(Pattern)))(#)],
+    defaults    : λ[a(c.ArrayOf(is(Expr)))(#)],
+    rest        : λ[a(maybe(is(Id)))(#)],
+    body        : λ[a(c.Or([is(Block), is(Expr)]))(#)],
+    generator   : a(c.Boolean)
   },
   Seq {
-    meta: Object,
-    expressions: a(c.ArrayOf(is(Expr)))
+    meta        : Object,
+    expressions : λ[a(c.ArrayOf(is(Expr)))(#)]
   },
   Unary {
-    meta: Object,
-    operator: a(unaryOp),
-    prefix: a(c.Boolean),
-    argument: a(is(Expr))
+    meta        : Object,
+    operator    : a(unaryOp),
+    prefix      : a(c.Boolean),
+    argument    : λ[a(is(Expr))(#)]
   },
   Binary {
-    meta: Object,
-    operator: a(binaryOp),
-    left: a(is(Expr)),
-    right: a(is(Expr))
+    meta        : Object,
+    operator    : a(binaryOp),
+    left        : λ[a(is(Expr))(#)],
+    right       : λ[a(is(Expr))(#)]
   },
   Assignment {
-    meta: Object,
-    operator: a(assignmentOp),
-    left: a(is(Pattern)),
-    right: a(is(Expr))
+    meta        : Object,
+    operator    : a(assignmentOp),
+    left        : λ[a(is(Pattern))(#)],
+    right       : λ[a(is(Expr))(#)]
   },
   Update {
-    meta: Object,
-    operator: a(updateOp),
-    argument: a(is(Expr)),
-    prefix: c(c.Boolean)
+    meta        : Object,
+    operator    : a(updateOp),
+    argument    : λ[a(is(Expr))(#)],
+    prefix      : a(c.Boolean)
   },
   Logical {
-    meta: Object,
-    operator: a(logicalOp),
-    left: a(is(Expr)),
-    right: a(is(Expr))
+    meta        : Object,
+    operator    : a(logicalOp),
+    left        : λ[a(is(Expr))(#)],
+    right       : λ[a(is(Expr))(#)]
   },
   Conditional {
-    meta: Object,
-    test: a(is(Expr)),
-    consequent: a(is(Expr)),
-    alternate: a(is(Expr))
+    meta        : Object,
+    test        : λ[a(is(Expr))(#)],
+    consequent  : λ[a(is(Expr))(#)],
+    alternate   : λ[a(is(Expr))(#)]
   },
   New {
-    meta: Object,
-    callee: a(is(Expr)),
-    args: a(c.ArrayOf(is(Expr)))
+    meta        : Object,
+    callee      : λ[a(is(Expr))(#)],
+    args        : λ[a(c.ArrayOf(is(Expr)))(#)]
   },
   Call {
-    meta: Object,
-    callee: a(is(Expr)),
-    args: a(c.ArrayOf(is(Expr)))
+    meta        : Object,
+    callee      : λ[a(is(Expr))(#)],
+    args        : λ[a(c.ArrayOf(is(Expr)))(#)]
   },
   Member {
-    meta: Object,
-    object: a(is(Expr)),
-    property: a(maybe(is(Id))),
-    computed: a(c.Boolean)
+    meta        : Object,
+    object      : λ[a(is(Expr))(#)],
+    property    : λ[a(is(Expr))(#)],
+    computed    : a(c.Boolean)
   },
   Yield {
-    meta: Object,
-    argument: a(maybe(is(Expr)))
+    meta        : Object,
+    argument    : λ[a(maybe(is(Expr)))(#)]
   },
   Str {
-    meta: Object,
-    value: a(c.String)
+    meta        : Object,
+    value       : a(c.String)
   },
   Bool {
-    meta: Object,
-    value: a(c.Boolean)
+    meta        : Object,
+    value       : a(c.Boolean)
   },
   Null {
-    meta: Object,
-    value: a(c.Null)
+    meta        : Object,
+    value       : a(c.Null)
   },
   Num {
-    meta: Object,
-    value: a(c.Number)
+    meta        : Object,
+    value       : a(c.Number)
   },
   Regexp {
-    meta: Object,
-    value: a(is(RegExp))
+    meta        : Object,
+    value       : a(is(RegExp))
   },
 } deriving (Base)
 Expr::hasParent = λ(a) -> [Node].some(checkPar(a));
 
 
 data Property {
-  meta: Object,
-  key: a(c.Or([is(Literal), is(Id)])),
-  value: a(is(Expr)),
-  kind: a(c.Or([c.Value("init"), c.Value("get"), c.Value("set")]))
+  meta  : Object,
+  key   : λ[a(c.Or([is(Str), is(Id)]))(#)],
+  value : λ[a(is(Expr))(#)],
+  kind  : a(c.Or([c.Value("init"), c.Value("get"), c.Value("set")]))
 } deriving (Base)
 
 
@@ -334,12 +336,12 @@ Id::hasParent = λ(a) -> [Node, Expr].some(checkPar(a));
 
 union Clauses {
   SwitchCase {
-    test: a(maybe(is(Expr))),
-    consequent: a(c.ArrayOf(is(Statement)))
+    test       : λ[a(maybe(is(Expr)))(#)],
+    consequent : λ[a(c.ArrayOf(is(Statement)))(#)]
   },
   CatchClause {
-    param: a(is(Pattern)),
-    body: a(is(Block))
+    param      : λ[a(is(Pattern))(#)],
+    body       : λ[a(is(Block))(#)]
   }
 }
 Clauses::hasParent = λ(a) -> [Node].some(checkPar(a));
@@ -348,7 +350,7 @@ Clauses::hasParent = λ(a) -> [Node].some(checkPar(a));
 // -- ADT → Mozilla ----------------------------------------------------
 Prog::toObject = λ[extend(this.meta, {
   type: 'Program',
-  body: this.body.map(λ[#.toObject()])
+  body: this.body.map(toObject)
 })];
 
 Empty::toObject = λ[extend(this.meta, {
@@ -356,8 +358,8 @@ Empty::toObject = λ[extend(this.meta, {
 })];
 
 Block::toObject = λ[extend(this.meta, {
-  tpe: 'BlockStatement',
-  body: this.body.map(λ[#.toObject()])
+  type: 'BlockStatement',
+  body: this.body.map(toObject)
 })];
 
 ExprStmt::toObject = λ[extend(this.meta, {
@@ -397,7 +399,7 @@ With::toObject = λ[extend(this.meta, {
 Switch::toObject = λ[extend(this.meta, {
   type: 'SwitchStatement',
   discriminant: this.discriminant.toObject(),
-  cases: this.cases.map(λ[#.toObject()]),
+  cases: this.cases.map(toObject),
   lexical: this.lexical
 })];
 
@@ -454,7 +456,7 @@ ForOf::toObject = λ[extend(this.meta, {
 
 Let::toObject = λ[extend(this.meta, {
   type: 'LetStatement',
-  head: this.head.map(λ[#.toObject()]),
+  head: this.head.map(toObject),
   body: this.body.toObject()
 })];
 
@@ -465,8 +467,8 @@ Debugger::toObject = λ[extend(this.meta, {
 FnDecl::toObject = λ[extend(this.meta, {
   type: 'FunctionDeclaration',
   id: this.id.toObject(),
-  params: this.params.map(λ[#.toObject()]),
-  defaults: this.params.map(λ[#.toObject()]),
+  params: this.params.map(toObject),
+  defaults: this.params.map(toObject),
   rest: maybeObject(this.rest),
   body: this.body.toObject(),
   generator: this.generator
@@ -474,7 +476,7 @@ FnDecl::toObject = λ[extend(this.meta, {
 
 VarDecl::toObject = λ[extend(this.meta, {
   type: 'VariableDeclaration',
-  declarations: this.declarations.map(λ[#.toObject()]),
+  declarations: this.declarations.map(toObject),
   kind: this.kind
 })];
 
@@ -495,7 +497,7 @@ ArrayExpr::toObject = λ[extend(this.meta, {
 
 Obj::toObject = λ[extend(this.meta, {
   type: 'ObjectExpression',
-  properties: this.properties.map(λ[#.toObject()])
+  properties: this.properties.map(toObject)
 })];
 
 Property::toObject = λ[extend(this.meta, {
@@ -508,8 +510,8 @@ Property::toObject = λ[extend(this.meta, {
 FnExpr::toObject = λ[extend(this.meta, {
   type: 'FunctionExpression',
   id: maybeObject(this.id),
-  params: this.params.map(λ[#.toObject()]),
-  defaults: this.defaults.map(λ[#.toObject()]),
+  params: this.params.map(toObject),
+  defaults: this.defaults.map(toObject),
   rest: maybeObject(this.rest),
   body: this.body.toObject(),
   generator: this.generator
@@ -518,8 +520,8 @@ FnExpr::toObject = λ[extend(this.meta, {
 Arrow::toObject = λ[extend(this.meta, {
   type: 'ArrowExpression',
   id: maybeObject(this.id),
-  params: this.params.map(λ[#.toObject()]),
-  defaults: this.defaults.map(λ[#.toObject()]),
+  params: this.params.map(toObject),
+  defaults: this.defaults.map(toObject),
   rest: maybeObject(this.rest),
   body: this.body.toObject(),
   generator: this.generator
@@ -527,7 +529,7 @@ Arrow::toObject = λ[extend(this.meta, {
 
 Seq::toObject = λ[extend(this.meta, {
   type: 'SequenceExpression',
-  expressions: this.expressions.map(λ[#.toObject()])
+  expressions: this.expressions.map(toObject)
 })];
 
 Unary::toObject = λ[extend(this.meta, {
@@ -575,13 +577,13 @@ Conditional::toObject = λ[extend(this.meta, {
 New::toObject = λ[extend(this.meta, {
   type: 'NewExpression',
   callee: this.callee.toObject(),
-  'arguments': this.args.map(λ[#.toObject()])
+  'arguments': this.args.map(toObject)
 })];
 
 Call::toObject = λ[extend(this.meta, {
   type: 'CallExpression',
   callee: this.callee.toObject(),
-  'arguments': this.args.map(λ[#.toObject()])
+  'arguments': this.args.map(toObject)
 })];
 
 Member::toObject = λ[extend(this.meta, {
@@ -625,7 +627,7 @@ Id::toObject = λ[extend(this.meta, {
 SwitchCase::toObject = λ[extend(this.meta, {
   type: 'SwitchCase',
   test: maybe(this.test),
-  consequent: this.consequent.map(λ[#.toObject()])
+  consequent: this.consequent.map(toObject)
 })];
 
 CatchClause::toObject = λ[extend(this.meta, {
@@ -638,5 +640,7 @@ CatchClause::toObject = λ[extend(this.meta, {
 
 // -- Exports ----------------------------------------------------------
 module.exports = extend(
-  Node, Statement, Declaration, Expr, Pattern, Clauses, { Property: Property }
+  Node, Statement, Declaration, Expr, Pattern, Clauses,
+  { Property: Property, Statement: Statement, Expr: Expr, Node: Node,
+    Clauses: Clauses, Pattern: Pattern, Declaration: Declaration }
 )

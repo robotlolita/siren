@@ -42,10 +42,9 @@ ometa MermaidParser {
   // Identifiers
   idStart    = letter,
   idRest     = letter | digit | symbol,
-  symbolChar = symbol | ':',
   identifier = <idStart idRest*>:a     ?(isValid(a)) -> Expr.Id({}, a),
   keyword    = <idStart idRest*>:a ':'               -> Expr.Id({}, a + ':'),
-  symbols    = <symbolChar+>:a         ?(isValid(a)) -> Expr.Id({}, a),
+  symbols    = <symbol+>:a             ?(isValid(a)) -> Expr.Id({}, a),
 
 
   // Patterns
@@ -58,7 +57,7 @@ ometa MermaidParser {
   keywordArgs = (ws keyword:k ws identifier:n -> [k, n])+,
   
   keywordPattern = keywordArgs:as ws patternBody:v            -> keywordLambda({}, as, v),
-  unaryPattern   = identifier:a ws patternBody:v              -> [a, Expr.Lambda({}, [], v)],
+  unaryPattern   = identifier:a ~':' ws patternBody:v         -> [a, Expr.Lambda({}, [], v)],
   binaryPattern  = symbols:a ws identifier:b ws patternBody:v -> [a, Expr.Lambda({}, [b], v)],
 
 
@@ -78,12 +77,12 @@ ometa MermaidParser {
   keywordExpr = binaryExpr:a (ws keywordApp)+:as          -> keywordApply({}, a, as),
   binaryExpr  = binaryExpr:a ws symbols:s ws unaryExpr:b  -> Expr.Apply({}, s, a, [b])
               | unaryExpr,
-  unaryExpr   = unaryExpr:a ws identifier:i   -> Expr.Apply({}, i, a, [])
-              | unaryExpr:a ws record:v       -> Expr.Clone({}, a, v)
-              | unaryExpr:a '::' identifier:i -> Expr.Bind({}, a, i)
+  unaryExpr   = unaryExpr:a ws identifier:i ~':'      -> Expr.Apply({}, i, a, [])
+              | unaryExpr:a ws record:v               -> Expr.Clone({}, a, v)
+              | unaryExpr:a ':' ':' identifier:i ~':' -> Expr.Bind({}, a, i)
               | primaryExpr,
   primaryExpr = value
-              | identifier:a         -> Expr.Var({}, a)
+              | identifier:a ~':'    -> Expr.Var({}, a)
               | kw('this')           -> Expr.Self({})
               | extendExpr:a         -> a
               | ';'                  -> Expr.Empty
@@ -130,8 +129,8 @@ ometa MermaidParser {
   record = '{' ws pattern:hd (ws ';' ws pattern)*:tl ws '}' -> Expr.Record({}, [hd].concat(tl))
          | '{' ws '}'                                       -> Expr.Record({}, []),
 
-  lambda  = '{' ws '|' ws arglist:as ws '|' ws exprList:a '}' -> Expr.Lambda({}, as, a),
-  arglist = identifier:a (ws identifier)*:as                  -> [a].concat(as),
+  lambda  = '{' ws '|' ws arglist:as ws '|' ws exprList:a ws '}' -> Expr.Lambda({}, as, a),
+  arglist = identifier:a (ws identifier)*:as                     -> [a].concat(as),
 
-  program = ws exprList:xs ws eof -> xs
+  program = ws exprList:xs ws eof -> Expr.Program(xs)
 }
