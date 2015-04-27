@@ -43,7 +43,7 @@ function idToStr {
 function generateProperty(bind, pair) {
   return js.Property(
     pair[0].meta,
-    generate(bind, pair[0]),
+    idToStr(generate(bind, pair[0])),
     generate(bind, pair[1]),
     "init"
   )
