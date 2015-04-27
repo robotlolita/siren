@@ -139,7 +139,7 @@ function generate(bind, x) {
       js.Call(meta,
               js.Member(meta,
                         generate(bind, source),
-                        js.Str(meta, 'clone'),
+                        js.Str(meta, 'clone:'),
                         true),
               [generate(bind, bindings)]),
 
