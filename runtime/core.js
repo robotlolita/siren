@@ -39,7 +39,7 @@ function() {
   
   // -- Objects --------------------------------------------------------
   var p = Object.prototype;
-  p['clone'] = function(v) {
+  p['clone:'] = function(v) {
     return extend(Object.create(this), v);
   };
 
