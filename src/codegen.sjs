@@ -7,6 +7,11 @@
 // -- Dependencies -----------------------------------------------------
 var js = require('./jsast');
 var { Expr } = require('./ast');
+var show = require('core.inspect');
+
+function raise(e) {
+  throw e
+}
 
 function toStatement(x) {
   return x instanceof js.Statement?                      x
@@ -27,17 +32,42 @@ function returnLast(ys) {
   }
 }
 
+function fn(meta, id, args, body) {
+  return js.FnExpr(meta, id, args, [], null, js.Block({}, body.map(toStatement)), false)
+}
+
+function set(meta, id, expr) {
+  return js.Assignment(meta, '=', id, expr)
+}
+
+function letb(meta, name, expr) {
+  return js.VarDecl(meta,
+                    [js.VarDeclarator({}, name, expr)],
+                    "var")
+}
+
+function mem(meta, target, selector) {
+  if (selector instanceof js.Id) selector = idToStr(selector);
+  return js.Member(meta, target, selector, true)
+}
+
+function id(str) {
+  return js.Id({}, str)
+}
+
+function str(a) {
+  return js.Str({}, a)
+}
+
 function methCall(meta, target, selector, args) {
   return js.Call(meta,
-                 js.Member(meta,
-                           target,
-                           selector,
-                           true),
+                 js.Member(meta, target, selector, true),
                  args)
 }
 
 function idToStr {
-  js.Id(meta, x) => js.Str(meta, x)
+  js.Id(meta, x) => js.Str(meta, x),
+  a              => raise(new TypeError("No match: " + show(a)))
 }
 
 function generateProperty(bind, pair) {
@@ -87,7 +117,18 @@ function makeLambda(bind, meta, args, body, bound) {
   } else {
     return fn
   }
+}
 
+function generateModule(bind, meta, args, exports, body) {
+  return set(meta, mem({}, id('module'), id('exports')),
+             fn({}, null, generate(bind, args),
+                [
+                  letb({}, id('Module'),
+                       methCall({}, id('$Mermaid'), str('$module:'),
+                                [id('require'), id('__dirname'), id('module')]))
+                ].map(toStatement)
+                +++ generate(bind, body)
+                +++ (exports? [js.Return({}, generate(bind, exports))] : [])))
 }
 
 function BindingBox() {
@@ -131,11 +172,7 @@ function generate(bind, x) {
       js.Obj(meta, xs.map(λ[generateProperty(bind, #)])),
   
     Expr.Let(meta, name, value) =>
-      js.VarDecl(meta,
-                 [js.VarDeclarator(meta,
-                                   generate(bind, name),
-                                   generate(bind, value))],
-                 "var"),
+      letb(meta, generate(bind, name), generate(bind, value)),
   
     Expr.Bind(meta, target, selector) =>
       generateBind(bind, meta, target, selector),
@@ -157,7 +194,7 @@ function generate(bind, x) {
               [generate(bind, bindings)]),
 
     Expr.Extend(meta, source, bindings) =>
-      (function(){ throw new Error('Not supported yet.') })(),
+      raise(new Error("Not implemented.")),
 
     Expr.Var(meta, Expr.Id(_, selector)) =>
       js.Id(meta, selector),
@@ -165,7 +202,12 @@ function generate(bind, x) {
     Expr.Program(xs) =>
       js.Prog({}, generate(bind, xs).map(toStatement)),
 
-    x @ Array => x.map(λ[generate(bind, #)])
+    Expr.Module(meta, args, exports, body) =>
+      generateModule(bind, meta, args, exports, body),
+
+    x @ Array => x.map(λ[generate(bind, #)]),
+
+    a => raise(new TypeError("No match: " + show(a)))
   }
 }
 

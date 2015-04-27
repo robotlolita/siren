@@ -6,8 +6,8 @@
 var Expr = require('./ast').Expr;
 
 var reserved = [
-  'extend', 'let', 'this', 'true', 'false', 'do', 'module', 'export', 'open',
-  'only', 'excluding', '=', '>>', 'with'
+  'extend', 'let', 'this', 'true', 'false', 'do', 'module', 'exposing',
+  '=', '>>', 'with', 'where'
 ]
 
 function isValid(a) {
@@ -46,6 +46,9 @@ ometa MermaidParser {
   keyword    = <idStart idRest*>:a ':'               -> Expr.Id({}, a + ':'),
   symbols    = <symbol+>:a             ?(isValid(a)) -> Expr.Id({}, a),
 
+  selector   = identifier
+             | symbols
+             | keyword+:xs -> Expr.Id(xs[0].meta, xs.map(get('name')).join('')),
 
   // Patterns
   pattern = keywordPattern
@@ -60,9 +63,15 @@ ometa MermaidParser {
   unaryPattern   = identifier:a ~':' ws patternBody:v         -> [a, Expr.Lambda({}, [], v, false)],
   binaryPattern  = symbols:a ws identifier:b ws patternBody:v -> [a, Expr.Lambda({}, [b], v, false)],
 
+  
 
   // Statements
   letStmt = kw('let') ws identifier:a ws '=' ws expr:b -> Expr.Let({}, a, b),
+
+  module     = kw('module') ws moduleArgs?:a ws exportStmt?:b ws kw('where') ws exprList:cs
+             -> Expr.Module({}, a || [], b, cs),
+  moduleArgs = '|' ws identifier:a (ws identifier)*:as ws '|' -> [a].concat(as),
+  exportStmt = kw('exposing') ws expr:a -> a,
 
 
   // Expressions
@@ -134,5 +143,6 @@ ometa MermaidParser {
   
   arglist = identifier:a (ws identifier)*:as              -> [a].concat(as),
 
-  program = ws exprList:xs ws eof -> Expr.Program(xs)
+  program = ws module:m ws eof    -> m
+          | ws exprList:xs ws eof -> Expr.Program(xs)
 }

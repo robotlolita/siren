@@ -1,6 +1,5 @@
 // -- Mermaid's Runtime
-void
-function() {
+this.$Mermaid = function() {
   'use strict';
 
   // -- Helpers --------------------------------------------------------
@@ -218,6 +217,17 @@ function() {
       if (!f['call:'](this[i]))  return false;
     return true;
   };
+
+  // -- Global stuff ---------------------------------------------------
+  return {
+    '$module:': function(req, dir, mod) {
+      return {
+        'require:': function(p){ return req(p) },
+        'dirname': function(){ return dir },
+        'filename': function(){ return mod.filename }
+      }
+    }
+  }
 
 }.call(this);
 // -- Mermaid's Runtime ends here

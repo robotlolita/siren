@@ -254,7 +254,7 @@ union Expr {
   Assignment {
     meta        : Object,
     operator    : a(assignmentOp),
-    left        : λ[a(is(Pattern))(#)],
+    left        : λ[a(c.Or([is(Pattern), is(Member)]))(#)],
     right       : λ[a(is(Expr))(#)]
   },
   Update {
