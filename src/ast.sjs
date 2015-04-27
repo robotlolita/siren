@@ -21,7 +21,7 @@ union Expr {
   Id      { meta: Object, name: String },
   Self    { meta: Object },
 
-  Lambda  { meta: Object, args: Array, body: Array },
+  Lambda  { meta: Object, args: Array, body: Array, bound: Boolean },
   Num     { meta: Object, value: Number },
   Str     { meta: Object, value: String },
   Vector  { meta: Object, value: Array },

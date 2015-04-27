@@ -71,6 +71,25 @@ function generateBind(bind, meta, target, selector) {
                            [generate(bind, target)])
 }
 
+function makeLambda(bind, meta, args, body, bound) {
+  var fn = js.FnExpr(meta,
+                     null,
+                     generate(bind, args),
+                     [], null,
+                     js.Block(meta,
+                              returnLast(generate(bind, body).map(toStatement))),
+                     false);
+
+  if (bound) {
+    return js.Call(meta,
+                   js.Member(meta, fn, js.Str(meta, 'bind'), true),
+                   [js.This(meta)])
+  } else {
+    return fn
+  }
+
+}
+
 function BindingBox() {
   this.bindings = {};
 }
@@ -96,14 +115,8 @@ function generate(bind, x) {
       js.This(meta),
   
     // Values
-    Expr.Lambda(meta, args, body) =>
-      js.FnExpr(meta,
-                null,
-                generate(bind, args),
-                [], null,
-                js.Block(meta,
-                         returnLast(generate(bind, body).map(toStatement))),
-                false),
+    Expr.Lambda(meta, args, body, bound) =>
+      makeLambda(bind, meta, args, body, bound),
   
     Expr.Num(meta, val) =>
       js.Num(meta, val),
