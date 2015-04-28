@@ -8,8 +8,8 @@ var Expr = ast.Expr;
 var Do = ast.DoClause;
 
 var reserved = [
-  'extend', 'let', 'this', 'true', 'false', 'do', 'module', 'exposing',
-  '=', '>>', 'with', 'where'
+  'extend', 'let', 'this', 'do', 'module', 'exposing',
+  '=', '>>', 'with', 'where', 'use', 'in', 'using'
 ]
 
 function isValid(a) {
@@ -75,9 +75,15 @@ ometa MermaidParser {
   moduleArgs = '|' ws identifier:a (ws identifier)*:as ws '|' -> [a].concat(as),
   exportStmt = kw('exposing') ws expr:a -> a,
 
+  useStmt = kw('use') ws listOf(#expr, ','):xs ws kw('in') ws '{' ws exprList:ys ws '}'
+          -> Expr.Use({}, xs, ys),
+
+  usingStmt = kw('using') ws listOf(#expr, ','):xs -> Expr.Using({}, xs),
 
   // Expressions
   expr = letStmt
+       | usingStmt
+       | useStmt
        | pipeExpr,
 
   pipeExpr = pipeExpr:a ws ">>" ws identifier:i ~':'        -> Expr.Apply({}, i, a, [])
@@ -106,7 +112,7 @@ ometa MermaidParser {
               | ';'                  -> Expr.Empty
               | '(' ws expr:a ws ')' -> a,
 
-  extendExpr = kw('extend') ws expr:a ws kw('with') ws record:v -> Expr.Extend({}, a, v),
+  extendExpr = kw('extend') ws expr:a ws kw('with') ws expr:v -> Expr.Extend({}, a, v),
 
   exprList    = expr:a (ws ';' ws expr)*:as -> [a].concat(as),
 

@@ -33,7 +33,9 @@ union Expr {
   Bind   { meta: Object, target: Expr, selector: Id },
   Apply  { meta: Object, selector: Id, target: Expr, args: Array },
   Clone  { meta: Object, source: Expr, bindings: Record },
-  Extend { meta: Object, source: Expr, bindings: Record },
+  Extend { meta: Object, source: Expr, bindings: Expr },
+  Use    { meta: Object, traits: Array, exprs: Array },
+  Using  { meta: Object, traits: Array },
   Var    { meta: Object, selector: Id },
   Do     { meta: Object, actions: Array }
 } deriving (Base)

@@ -48,8 +48,19 @@ function boundFn(meta, id, args, body) {
   return methCall(meta, fn({}, id, args, body), str('bind'), [js.This({})])
 }
 
+function binding(meta, a, b) {
+  return methCall(meta, a, str('bind'), [b])
+}
+
 function set(meta, id, expr) {
   return js.Assignment(meta, '=', id, expr)
+}
+
+function send(meta, obj, sel, args) {
+  return methCall(meta,
+                  obj,
+                  id('$send'),
+                  [sel, id('$methods'), js.ArrayExpr({}, args)]);
 }
 
 function letb(meta, name, expr) {
@@ -61,6 +72,25 @@ function letb(meta, name, expr) {
 function mem(meta, target, selector) {
   if (selector instanceof js.Id) selector = idToStr(selector);
   return js.Member(meta, target, selector, true)
+}
+
+function dot(meta, names) {
+  return names.map(id).reduce(function(a, b){
+    return mem(meta, a, b)
+  })
+}
+
+function selector(meta, name) {
+  if (name instanceof js.Id)  name = idToStr(name);
+  return name;
+}
+
+function cloneMethods(meta, parent) {
+  parent = parent || dot({}, ['Mermaid', '$methods']);
+  return [
+    letb(meta, id('$send'), dot({}, ['Mermaid', '$send'])),
+    letb(meta, id('$methods'), methCall({}, parent, str('clone'), []))
+  ]
 }
 
 function id(str) {
@@ -94,23 +124,13 @@ function generateProperty(bind, pair) {
 function generateBind(bind, meta, target, selector) {
   var ref = bind.free('$ref');
   return js.Call(meta,
-                 js.FnExpr(meta,
-                           null,
-                           [js.Id(meta, ref)],
-                           [], null,
-                           js.Block(
-                             meta,
-                             [js.Return(meta,
-                                        methCall(meta,
-                                                 js.Member(meta,
-                                                           js.Id(meta, ref),
-                                                           idToStr(generate(bind, selector)),
-                                                           true),
-                                                 js.Str(meta, 'bind'),
-                                                 [js.Id(meta, ref)]))
-                             ]),
-                           false),
-                           [generate(bind, target)])
+                 fexpr(meta,
+                       [js.Id(meta, ref)],
+                       methCall(meta,
+                                mem(meta, js.Id(meta, ref), generate(bind, selector)),
+                                str('bind'),
+                                [js.Id(meta, ref)])),
+                 [generate(bind, target)])
 }
 
 function makeLambda(bind, meta, args, body, bound) {
@@ -134,7 +154,7 @@ function makeLambda(bind, meta, args, body, bound) {
 function generateModule(bind, meta, args, exports, body) {
   return set(meta, mem({}, id('module'), id('exports')),
              fn({}, null, generate(bind, args),
-                [
+                cloneMethods({}) +++ [
                   letb({}, id('Module'),
                        methCall({}, id('$Mermaid'), str('$module:'),
                                 [id('require'), id('__dirname'), id('module')]))
@@ -145,11 +165,11 @@ function generateModule(bind, meta, args, exports, body) {
 
 function generateApply(bind, apExpr) {
   var [holes, expr] = replaceHoles(bind, apExpr);
-  
-  var call = methCall(expr.meta,
-                      generate(bind, expr.target),
-                      idToStr(generate(bind, expr.selector)),
-                      generate(bind, expr.args));
+
+  var call = send(expr.meta,
+                  generate(bind, expr.target),
+                  selector(expr.meta, generate(bind, expr.selector)),
+                  generate(bind, expr.args));
   
   if (holes.length > 0) {
     return boundFn(expr.meta, null, generate(bind, holes), [js.Return({}, call)]);
@@ -231,11 +251,11 @@ function generateDo(bind, meta, xs) {
   }
 
   function map(m, r, i, e) {
-    return methCall(m, r, str('map:'), [fexpr(e.meta, [i], e)])
+    return methCall(m, r, selector({}, str('map:')), [fexpr(e.meta, [i], e)])
   }
 
   function chain(m, r, i, e) {
-    return methCall(m, r, str('chain:'), [fexpr(e.meta, [i], e)])
+    return methCall(m, r, selector({}, str('chain:')), [fexpr(e.meta, [i], e)])
   }
 }
 
@@ -312,31 +332,40 @@ function generate(bind, x) {
     Expr.Let(meta, name, value) =>
       letb(meta, generate(bind, name), generate(bind, value)),
   
-    Expr.Bind(meta, target, selector) =>
-      generateBind(bind, meta, target, selector),
+    Expr.Bind(meta, target, sel) =>
+      generateBind(bind, meta, target, sel),
     
-    n @ Expr.Apply(meta, selector, target, args) =>
+    n @ Expr.Apply(meta, sel, target, args) =>
       generateApply(bind, n),
 
     Expr.Clone(meta, source, bindings) =>
-      js.Call(meta,
-              js.Member(meta,
-                        generate(bind, source),
-                        js.Str(meta, 'clone:'),
-                        true),
-              [generate(bind, bindings)]),
+      send(meta,
+           generate(bind, source),
+           selector({}, str('clone:')),
+           generate(bind, bindings)),
 
     Expr.Extend(meta, source, bindings) =>
-      raise(new Error("Not implemented.")),
+      methCall(meta, id('Mermaid'), str('$extend'),
+               [generate(bind, source), generate(bind, bindings)]),
 
-    Expr.Var(meta, Expr.Id(_, selector)) =>
-      js.Id(meta, selector),
+    Expr.Use(meta, traits, xs) =>
+      js.Call(meta,
+              fn({}, null, [id('$methods')],
+                 [methCall(meta, id('$methods'), str('merge'), generate(bind, traits))]
+                 +++ generate(bind, xs)),
+              [methCall({}, id('$methods'), str('clone'), [])]),
+
+    Expr.Using(meta, traits) =>
+      methCall(meta, id('$methods'), str('merge'), generate(bind, traits)),
+
+    Expr.Var(meta, Expr.Id(_, sel)) =>
+      js.Id(meta, sel),
 
     Expr.Do(meta, xs) =>
       generateDo(bind, meta, xs),
 
     Expr.Program(xs) =>
-      js.Prog({}, generate(bind, xs).map(toStatement)),
+      js.Prog({}, cloneMethods({}) +++ generate(bind, xs).map(toStatement)),
 
     Expr.Module(meta, args, exports, body) =>
       generateModule(bind, meta, args, exports, body),
