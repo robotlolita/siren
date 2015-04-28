@@ -1,5 +1,5 @@
 // -- Mermaid's Runtime
-this.$Mermaid = function() {
+this.Mermaid = function() {
   'use strict';
 
   // -- Helpers --------------------------------------------------------
@@ -41,6 +41,9 @@ this.$Mermaid = function() {
   p['clone:'] = function(v) {
     return extend(Object.create(this), v);
   };
+  p['to-string'] = function() {
+    return this.toString()
+  }
 
   // -- Functions ------------------------------------------------------
   Function.prototype.value = function() {
@@ -169,6 +172,11 @@ this.$Mermaid = function() {
   p['=/='] = function(b) {
     return this.valueOf() !== b;
   };
+  p['+'] = function(b) {
+    checkClass('String', b);
+    return this + b;
+  };
+  
 
 
   // -- Array ----------------------------------------------------------
@@ -218,6 +226,19 @@ this.$Mermaid = function() {
     return true;
   };
 
+  // -- Unit -----------------------------------------------------------
+  var unit = Object.create(null);
+  unit['to-string'] = function(){
+    return '<unit>'
+  };
+  unit['==='] = function(b) {
+    return this === b
+  };
+  unit['=/='] = function(b) {
+    return this !== b
+  };
+  
+
   // -- Global stuff ---------------------------------------------------
   return {
     '$module:': function(req, dir, mod) {
@@ -226,6 +247,27 @@ this.$Mermaid = function() {
         'dirname': function(){ return dir },
         'filename': function(){ return mod.filename }
       }
+    },
+    'String': function() {
+      return String.prototype
+    },
+    'Number': function() {
+      return Number.prototype
+    },
+    'Boolean': function() {
+      return Boolean.prototype
+    },
+    'Function': function() {
+      return Function.prototype
+    },
+    'Array': function() {
+      return Array.prototype
+    },
+    'Root': function() {
+      return Object.prototype
+    },
+    'unit': function() {
+      return unit
     }
   }
 
