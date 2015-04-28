@@ -13,6 +13,10 @@ function raise(e) {
   throw e
 }
 
+function flatten(xs) {
+  return xs.reduce(λ[# +++ #], []);
+}
+
 function toStatement(x) {
   return x instanceof js.Statement?                      x
   :      x && x.hasParent && x.hasParent(js.Statement)?  x
@@ -34,6 +38,10 @@ function returnLast(ys) {
 
 function fn(meta, id, args, body) {
   return js.FnExpr(meta, id, args, [], null, js.Block({}, body.map(toStatement)), false)
+}
+
+function boundFn(meta, id, args, body) {
+  return methCall(meta, fn({}, id, args, body), str('bind'), [js.This({})])
 }
 
 function set(meta, id, expr) {
@@ -131,15 +139,59 @@ function generateModule(bind, meta, args, exports, body) {
                 +++ (exports? [js.Return({}, generate(bind, exports))] : [])))
 }
 
+function generateApply(bind, apExpr) {
+  var [holes, expr] = replaceHoles(bind, apExpr);
+  
+  var call = methCall(expr.meta,
+                      generate(bind, expr.target),
+                      idToStr(generate(bind, expr.selector)),
+                      generate(bind, expr.args));
+  
+  if (holes.length > 0) {
+    return boundFn(expr.meta, null, generate(bind, holes), [js.Return({}, call)]);
+  } else {
+    return call;
+  }
+}
+
 function BindingBox() {
   this.bindings = {};
 }
 BindingBox::free = function(name) {
   var suffix = this.bindings[name] || 0;
   this.bindings[name] = suffix + 1;
-  return name + suffix;  
+  return name + (suffix || '');
 }
 
+function replaceHoles(bind, x) {
+  match x {
+    case Expr.Apply(meta, selector, target, args):
+      var repArgs = [];
+      if (target.isHole) {
+        var id = Expr.Id(target.meta, bind.free('$_'));
+        repArgs = [id];
+        target = id;
+      }
+
+      repArgs = repArgs +++ args.filter(λ[#.isHole]).map(λ[Expr.Id(#.meta, bind.free('$_'))]);
+      var apArgs   = args.reduce(function(r, x) {
+        return x.isHole?  { n: r.n + 1, args: r.args +++ [repArgs[r.n]] }
+        :      /* _ */    { n: r.n,     args: r.args +++ [x] }
+      }, { n: 0, args: [] });
+
+      var [targs, texpr] = replaceHoles(bind, target);
+      var newArgs = apArgs.args.map(λ[replaceHoles(bind, #)]);
+      var newArgsHoles = flatten(newArgs.map(λ[#[0]]));
+      var newArgsExprs = newArgs.map(λ[#[1]]);
+
+
+      return [repArgs +++ targs +++ newArgsHoles,
+              Expr.Apply(meta, selector, texpr, newArgsExprs)];
+
+    default:
+      return [[], x]
+  }
+}
 
 function generate(bind, x) {
   return match x {
@@ -177,13 +229,8 @@ function generate(bind, x) {
     Expr.Bind(meta, target, selector) =>
       generateBind(bind, meta, target, selector),
     
-    Expr.Apply(meta, selector, target, args) =>
-      js.Call(meta,
-              js.Member(meta,
-                        generate(bind, target),
-                        idToStr(generate(bind, selector)),
-                        true),
-              generate(bind, args)),
+    n @ Expr.Apply(meta, selector, target, args) =>
+      generateApply(bind, n),
 
     Expr.Clone(meta, source, bindings) =>
       js.Call(meta,

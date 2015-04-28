@@ -34,7 +34,7 @@ ometa MermaidParser {
   comment = fromTo('//', '\n'),
   ws      = space*,
   symbol  = ~(letter | digit | space
-             | '$' | '@' | ';' | ',' | '|' | ':' | '{' | '}' | '(' | ')' | '[' | ']') char,
+             | '_' | '$' | '@' | ';' | ',' | '|' | ':' | '{' | '}' | '(' | ')' | '[' | ']') char,
   eof     = ~char,
   kw :xs  = seq(xs) ~(letter | digit | symbol | ':'),
 
@@ -76,8 +76,13 @@ ometa MermaidParser {
 
   // Expressions
   expr = letStmt
-       | appExpr,
+       | pipeExpr,
 
+  pipeExpr = pipeExpr:a ws ">>" ws identifier:i ~':'        -> Expr.Apply({}, i, a, [])
+           | pipeExpr:a ws ">>" ws symbols:s ws unaryExpr:b -> Expr.Apply({}, s, a, [b])
+           | pipeExpr:a ws ">>" (ws keywordApp)+:as         -> keywordApply({}, a, as)
+           | appExpr,
+  
   appExpr = keywordExpr
           | binaryExpr,
 
@@ -90,7 +95,8 @@ ometa MermaidParser {
               | unaryExpr:a ws record:v               -> Expr.Clone({}, a, v)
               | unaryExpr:a ':' ':' identifier:i ~':' -> Expr.Bind({}, a, i)
               | primaryExpr,
-  primaryExpr = value
+  primaryExpr = '_'                  -> Expr.Hole({})
+              | value
               | identifier:a ~':'    -> Expr.Var({}, a)
               | kw('this')           -> Expr.Self({})
               | extendExpr:a         -> a
