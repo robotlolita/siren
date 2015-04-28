@@ -6,7 +6,7 @@
 
 // -- Dependencies -----------------------------------------------------
 var js = require('./jsast');
-var { Expr } = require('./ast');
+var { DoClause:Do, Expr } = require('./ast');
 var show = require('core.inspect');
 
 function raise(e) {
@@ -38,6 +38,10 @@ function returnLast(ys) {
 
 function fn(meta, id, args, body) {
   return js.FnExpr(meta, id, args, [], null, js.Block({}, body.map(toStatement)), false)
+}
+
+function fexpr(meta, args, expr) {
+  return fn(meta, null, args, [js.Return(expr.meta, expr)])
 }
 
 function boundFn(meta, id, args, body) {
@@ -154,6 +158,88 @@ function generateApply(bind, apExpr) {
   }
 }
 
+function last(xs) {
+  return xs[xs.length - 1];
+}
+
+function generateDo(bind, meta, xs) {
+  return compile(collapseReturns(xs));
+
+  function collapseReturns {
+    [] => [],
+
+    [n @ Do.Return] => 
+      [Do.MultiReturn([n])],
+
+    [n @ Do.MultiReturn] =>
+      [n],
+
+    [n @ Do.Action, ...ys] => 
+      [n] +++ collapseReturns(ys),
+
+    [n @ Do.Return, m @ Do.Action, ...ys] =>
+      [Do.MultiReturn([n]), m] +++ collapseReturns(ys),
+
+    [n @ Do.MultiReturn, m @ Do.Action, ...ys] =>
+      [n, m] +++ collapseReturns(ys),
+
+    [n @ Do.Return, m @ Do.Return, ...ys] =>
+      collapseReturns([Do.MultiReturn([n, m])] +++ ys),
+
+    [Do.MultiReturn(xs), n @ Do.Return, ...ys] =>
+      collapseReturns([Do.MultiReturn(xs +++ [n])] +++ ys),
+
+    n => raise(new Error("No match: " + show(n)))
+  }
+
+  function compile {
+    [Do.Action(m, _, e)] => generate(bind, e),
+    [Do.MultiReturn(xs)] =>
+      compileMulti([[xs[0].binding, generate(bind, xs[0].expr)]] +++ xs.slice(1)),
+    
+    [Do.Action(m, i, e), Do.MultiReturn(es)] =>
+      compileMulti([[i, generate(bind, e)]] +++ es),
+
+    [Do.Action(m, i, e), Do.MultiReturn(es), ...ys] =>
+      chain(m,
+            compileMulti([
+              [i, generate(bind, e)]
+            ] +++ es),
+            generate(bind, last(es).binding),
+            compile(ys)),
+   
+    [Do.Action(m, i, e), ...ys] =>
+      chain(m, generate(bind, e), generate(bind, i), compile(ys)),
+
+
+    [Do.MultiReturn(xs), n @ Do.Action(m, i, e), ...ys] =>
+      chain(last(xs).meta,
+            compileMulti([[xs[0].binding, generate(bind, xs[0].expr)]] +++ xs.slice(1)),
+            generate(bind, last(xs).binding),
+            compile([n] +++ ys)),
+
+    n => raise(new Error("No match: " + show(n)))
+  };
+
+  function compileMulti {
+    [[i, r], Do.Return(m, i2, e), ...ys] =>
+      compileMulti([[i2, map(m, r, generate(bind, i), generate(bind, e))]] +++ ys),
+
+    [[i, r]] => r,
+
+    n => raise(new Error("No match: " + show(n)))
+  }
+
+  function map(m, r, i, e) {
+    return methCall(m, r, str('map:'), [fexpr(e.meta, [i], e)])
+  }
+
+  function chain(m, r, i, e) {
+    return methCall(m, r, str('chain:'), [fexpr(e.meta, [i], e)])
+  }
+}
+
+
 function BindingBox() {
   this.bindings = {};
 }
@@ -245,6 +331,9 @@ function generate(bind, x) {
 
     Expr.Var(meta, Expr.Id(_, selector)) =>
       js.Id(meta, selector),
+
+    Expr.Do(meta, xs) =>
+      generateDo(bind, meta, xs),
 
     Expr.Program(xs) =>
       js.Prog({}, generate(bind, xs).map(toStatement)),

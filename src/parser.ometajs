@@ -3,7 +3,9 @@
 // Parser for the Mermaid language.
 
 // -- Dependencies -----------------------------------------------------
-var Expr = require('./ast').Expr;
+var ast = require('./ast');
+var Expr = ast.Expr;
+var Do = ast.DoClause;
 
 var reserved = [
   'extend', 'let', 'this', 'true', 'false', 'do', 'module', 'exposing',
@@ -96,6 +98,7 @@ ometa MermaidParser {
               | unaryExpr:a ':' ':' identifier:i ~':' -> Expr.Bind({}, a, i)
               | primaryExpr,
   primaryExpr = '_'                  -> Expr.Hole({})
+              | doExpr
               | value
               | identifier:a ~':'    -> Expr.Var({}, a)
               | kw('this')           -> Expr.Self({})
@@ -107,6 +110,18 @@ ometa MermaidParser {
 
   exprList    = expr:a (ws ';' ws expr)*:as -> [a].concat(as),
 
+  doExpr = kw('do') ws '{' ws (doCase:c ws ';' ws -> c)*:xs ws doTailCase:x ws '}'
+         -> Expr.Do({}, xs.concat([x])),
+  doAction     = identifier:i ws "<-" ws expr:e -> Do.Action({}, i, e)
+               | doTailAction,
+  doTailAction = expr:e                         -> Do.Action({}, Expr.Id({}, '_'), e),
+  doPure       = identifier:i ws "<-" ws kw('return') ws expr:e -> Do.Return({}, i, e)
+               | doTailPure,
+  doTailPure   = kw('return') ws expr:e                         -> Do.Return({},
+                                                                             Expr.Id({}, '_'),
+                                                                             e),
+  doCase       = doPure | doAction,
+  doTailCase   = doTailPure | doTailAction,
 
   // Values
   value = number | string | vector | lambda | record,

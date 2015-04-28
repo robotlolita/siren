@@ -35,8 +35,18 @@ union Expr {
   Clone  { meta: Object, source: Expr, bindings: Record },
   Extend { meta: Object, source: Expr, bindings: Record },
   Var    { meta: Object, selector: Id },
+  Do     { meta: Object, actions: Array }
 } deriving (Base)
 
 Let::isStatement = true;
 
+
+union DoClause {
+  Action { meta: Object, binding: Id, expr: Expr },
+  Return { meta: Object, binding: Id, expr: Expr },
+  MultiReturn { exprs: Array }
+} deriving (Base)
+
+
 exports.Expr = Expr;
+exports.DoClause = DoClause;
