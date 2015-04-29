@@ -361,8 +361,8 @@ function generate(bind, x) {
     Expr.Record(meta, xs) =>
       methCall(meta,
                id('Mermaid'),
-               id('$make'),
-               [generatePlainRecord(bind, xs)]),
+               str('$make'),
+               [generatePlainRecord(bind, Expr.Record(meta, xs))]),
   
     Expr.Let(meta, name, value) =>
       letb(meta, generate(bind, name), generate(bind, value)),
