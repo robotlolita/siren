@@ -397,7 +397,7 @@ function(root) {
       'Array': Array.prototype,
       'Function': Function.prototype,
       'unit': unit
-    }
+    },
     '$methods': methods,
     '$meta': $meta,
     '$extend': extendObj,
