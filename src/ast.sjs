@@ -26,6 +26,7 @@ union Expr {
   Lambda  { meta: Object, args: Array, body: Array, bound: Boolean },
   Num     { meta: Object, value: Number },
   Str     { meta: Object, value: String },
+  Bool    { meta: Object, value: Boolean },
   Vector  { meta: Object, value: Array },
   Record  { meta: Object, value: Array },
 
@@ -33,7 +34,7 @@ union Expr {
   Bind   { meta: Object, target: Expr, selector: Id },
   Apply  { meta: Object, selector: Id, target: Expr, args: Array },
   Clone  { meta: Object, source: Expr, bindings: Record },
-  Extend { meta: Object, source: Expr, bindings: Expr },
+  Extend { meta: Object, source: Expr, bindings: Record },
   Use    { meta: Object, traits: Array, exprs: Array },
   Using  { meta: Object, traits: Array },
   Var    { meta: Object, selector: Id },

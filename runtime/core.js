@@ -60,6 +60,12 @@ function(root) {
     return [o, toObj(syms)];
   }
 
+  function makeObj(o, proto) {
+    var result = Object.create(proto || Object.prototype);
+    methods.merge(extendObj(result, o));
+    return result
+  }
+
   // -- Method box -----------------------------------------------------
   function MethodBox(parent) {
     this.parent = parent;
@@ -128,7 +134,7 @@ function(root) {
   }
   extendProto(Object.prototype, {
     'clone:': function(v) {
-      return extend(Object.create(this), v) 
+      return makeObj(v, this)
     }
   });
           
@@ -354,7 +360,8 @@ function(root) {
     '$methods': methods,
     '$meta': $meta,
     '$extend': extendObj,
-    '$send': send
+    '$send': send,
+    '$make': makeObj
   }
 
 }( typeof global !== 'undefined'? global

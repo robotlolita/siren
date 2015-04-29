@@ -299,6 +299,15 @@ function replaceHoles(bind, x) {
   }
 }
 
+function generatePlainRecord(bind, x) {
+  return match x {
+    Expr.Record(meta, xs) =>
+      js.Obj(meta, xs.map(λ[generateProperty(bind, #)])),
+
+    n => raise(new Error("No match: " + show(n)))
+  }
+}
+
 function generate(bind, x) {
   return match x {
     Expr.Empty =>
@@ -322,12 +331,18 @@ function generate(bind, x) {
   
     Expr.Str(meta, val) =>
       js.Str(meta, val),
+
+    Expr.Bool(meta, val) =>
+      js.Bool(meta, val),
   
     Expr.Vector(meta, xs) =>
       js.ArrayExpr(meta, generate(bind, xs)),
   
     Expr.Record(meta, xs) =>
-      js.Obj(meta, xs.map(λ[generateProperty(bind, #)])),
+      methCall(meta,
+               id('Mermaid'),
+               id('$make'),
+               [generatePlainRecord(bind, xs)]),
   
     Expr.Let(meta, name, value) =>
       letb(meta, generate(bind, name), generate(bind, value)),
@@ -342,11 +357,11 @@ function generate(bind, x) {
       send(meta,
            generate(bind, source),
            selector({}, str('clone:')),
-           generate(bind, bindings)),
+           generatePlainRecord(bind, bindings)),
 
     Expr.Extend(meta, source, bindings) =>
       methCall(meta, id('Mermaid'), str('$extend'),
-               [generate(bind, source), generate(bind, bindings)]),
+               [generate(bind, source), generatePlainRecord(bind, bindings)]),
 
     Expr.Use(meta, traits, xs) =>
       js.Call(meta,

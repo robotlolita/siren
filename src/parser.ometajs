@@ -9,7 +9,8 @@ var Do = ast.DoClause;
 
 var reserved = [
   'extend', 'let', 'this', 'do', 'module', 'exposing',
-  '=', '>>', 'with', 'where', 'use', 'in', 'using'
+  '=', '>>', 'with', 'where', 'use', 'in', 'using',
+  'true', 'false'
 ]
 
 function isValid(a) {
@@ -112,7 +113,7 @@ ometa MermaidParser {
               | ';'                  -> Expr.Empty
               | '(' ws expr:a ws ')' -> a,
 
-  extendExpr = kw('extend') ws expr:a ws kw('with') ws expr:v -> Expr.Extend({}, a, v),
+  extendExpr = kw('extend') ws expr:a ws kw('with') ws record:v -> Expr.Extend({}, a, v),
 
   exprList    = expr:a (ws ';' ws expr)*:as -> [a].concat(as),
 
@@ -130,8 +131,11 @@ ometa MermaidParser {
   doTailCase   = doTailPure | doTailAction,
 
   // Values
-  value = number | string | vector | lambda | record,
+  value = bool | number | string | vector | lambda | record,
 
+  bool = kw('true') -> Expr.Bool({}, true)
+       | kw('false') -> Expr.Bool({}, false),
+  
   octDigit = /[0-7_]/,
   hexDigit = /[0-9a-fA-F_]/,
   binDigit = '0' | '1' | '_',
