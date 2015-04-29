@@ -377,7 +377,7 @@ function generate(bind, x) {
       send(meta,
            generate(bind, source),
            selector({}, str('clone:')),
-           generatePlainRecord(bind, bindings)),
+           [generatePlainRecord(bind, bindings)]),
 
     Expr.Extend(meta, source, bindings) =>
       methCall(meta, id('Mermaid'), str('$extend'),
