@@ -176,7 +176,7 @@ function generateModule(bind, meta, args, exports, body) {
              fn({}, null, generate(bind, args),
                 cloneMethods({}) +++ unpackGlobals({}) +++ [
                   letb({}, id('Module'),
-                       methCall({}, id('$Mermaid'), str('$module:'),
+                       methCall({}, id('Mermaid'), str('$module:'),
                                 [id('require'), id('__dirname'), id('module')]))
                 ].map(toStatement)
                 +++ generate(bind, body)
