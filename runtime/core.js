@@ -1,6 +1,4 @@
-// -- Mermaid's Runtime
-void
-function(root) {
+module.exports = function() {
   'use strict';
 
   // -- Helpers --------------------------------------------------------
@@ -381,13 +379,25 @@ function(root) {
   })
 
   // -- Global stuff ---------------------------------------------------
-  root.Mermaid = {
+  var moduleCache = {}
+  function loadModule(name) {
+    if (name in moduleCache) {
+      return moduleCache[name]
+    } else {
+      moduleCache[name] = require(name);
+      return moduleCache[name];
+    }
+  }
+  
+  var Mermaid = {
     '$module:': function(req, dir, mod) {
-      return {
-        'require:': function(p){ return req(p) },
+      return makeObj({
+        'require:': function(p){
+          return coreModules[p]? coreModules[p] : req(p)
+        },
         'dirname': function(){ return dir },
         'filename': function(){ return mod.filename }
-      }
+      })
     },
     '$globals': {
       'String': String.prototype,
@@ -403,9 +413,11 @@ function(root) {
     '$extend': extendObj,
     '$send': send,
     '$make': makeObj
-  }
+  };
 
-}( typeof global !== 'undefined'? global
- : typeof window !== 'undefined'? window
- : /* otherwise */                this);
-// -- Mermaid's Runtime ends here
+  extendProto(Mermaid, {
+    'Console': function(){ return loadModule('./Console') }
+  });
+
+  return Mermaid
+}()

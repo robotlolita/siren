@@ -400,8 +400,14 @@ function generate(bind, x) {
       generateDo(bind, meta, xs),
 
     Expr.Program(xs) =>
-      js.Prog({}, cloneMethods({}) +++ unpackGlobals({}) +++ generate(bind, xs).map(toStatement)),
-
+      js.ExprStmt({},
+                  js.Call({},
+                          fn({}, null, [], 
+                             cloneMethods({})
+                             +++ unpackGlobals({})
+                             +++ returnLast(generate(bind, xs).map(toStatement))),
+                          [])),
+              
     Expr.Module(meta, args, exports, body) =>
       generateModule(bind, meta, args, exports, body),
 

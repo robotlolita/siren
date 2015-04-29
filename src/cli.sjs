@@ -7,6 +7,7 @@ var doc = [
   '',
   'Usage:',
   '  mermaid [options] <file>',
+  '  mermaid [options]',
   '  mermaid --version',
   '  mermaid --help',
   '',
@@ -23,21 +24,31 @@ var inspect = require('core.inspect');
 var pkg = require('../package.json');
 var fs = require('fs');
 var path = require('path');
-var { parse, compile, run:runInVm } = require('./');
+var { parse, compile, run:runInVm, makeRuntime } = require('./');
 
 
 // -- Helpers ----------------------------------------------------------
-var log     = console.log.bind(console);
-var show    = inspectComplex ->> log;
-var read    = λ a -> fs.readFileSync(a, 'utf-8');
-var prelude = λ[read(path.join(__dirname, '../runtime/core.js'))];
-var ast     = read ->> parse;
-var js      = read ->> compile;
-var run     = λ(f) -> js(f) |> λ[prelude() + #] |> λ[runInVm(#, f)];
+var log      = console.log.bind(console);
+var show     = inspectComplex ->> log;
+var read     = λ a -> fs.readFileSync(a, 'utf-8');
+var ast      = read ->> parse;
+var js       = read ->> compile;
+var run      = λ(f) -> js(f) |> λ[runInVm(#, makeRuntime(), path.resolve(f))];
+var runStdin = λ(s) -> runInVm(compile(s), makeRuntime(), '<stdin>')
 
 function inspectComplex {
-  a @ String => a,
-  any        => inspect(any)
+  a @ String     => a,
+  a if a == null => '',
+  any            => inspect(any)
+}
+
+function readStdin() {
+  return fs.readFileSync("/dev/stdin").toString();
+}
+
+function branch(args, f, g) {
+  return args['<file>']? g(args['<file>'])
+  :      /* otherwise */ f(readStdin())
 }
 
 // -- Main -------------------------------------------------------------
@@ -46,8 +57,8 @@ module.exports = function Main() {
 
   ; args['--help']?                     log(doc)
   : args['--version']?                  log('Mermaid version ' + pkg.version)
-  : args['--ast']?                      show(ast(args['<file>']))
-  : args['--compile']?                  log(js(args['<file>']))
-  : /* otherwise */                     show(run(args['<file>']))
+  : args['--ast']?                      show(branch(args, parse, ast))
+  : args['--compile']?                  show(branch(args, compile, js))
+  : /* otherwise */                     show(branch(args, runStdin, run))
 }
 

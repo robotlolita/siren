@@ -6,8 +6,9 @@
 var Parser = require('./parser').MermaidParser;
 var { generate, BindingBox } = require('./codegen');
 var escodegen = require('escodegen');
-var vm = require('vm');
 var path = require('path');
+var fs = require('fs');
+var vm = require('vm');
 
 exports.parse = parse;
 function parse(text) {
@@ -24,18 +25,16 @@ function generateJs(ast) {
   return escodegen.generate(ast.toObject());
 }
 
-exports.run = run;
-function run(code, filename) {
-  filename = filename || '.';
-  var context = vm.createContext({
-    process: process,
-    console: console,
-    require: λ(p) -> /^\./.test(p)? require(path.join(filename, p)) : require(p),
-    __dirname: path.dirname(path.resolve(filename)),
-    module: { exports: {}, filename: filename }
-  });
+exports.makeRuntime = makeRuntime;
+function makeRuntime() {
+  var prelude = path.join(__dirname, '../runtime/core.js');
+  return require(prelude);
+}
 
-  return vm.runInNewContext(code, context, filename);
+exports.run = run;
+function run(source, runtime, filename) {
+  global.Mermaid = runtime;
+  vm.runInThisContext(source, { filename: filename });
 }
 
 exports.compile = parse ->> toJsAst ->> generateJs;
