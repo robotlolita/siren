@@ -69,6 +69,14 @@ function letb(meta, name, expr) {
                     "var")
 }
 
+function declVars(meta, bindings) {
+  return js.VarDecl(meta,
+                    Object.keys(bindings).map(function(k) {
+                      return js.VarDeclarator({}, id(k), bindings[k])
+                    }),
+                    "var")
+}
+
 function mem(meta, target, selector) {
   if (selector instanceof js.Id) selector = idToStr(selector);
   return js.Member(meta, target, selector, true)
@@ -91,6 +99,18 @@ function cloneMethods(meta, parent) {
     letb(meta, id('$send'), dot({}, ['Mermaid', '$send'])),
     letb(meta, id('$methods'), methCall({}, parent, str('clone'), []))
   ]
+}
+
+function unpackGlobals(meta) {
+  return declVars(meta, {
+    'String'   : dot({}, ['Mermaid', '$globals', 'String']),
+    'Boolean'  : dot({}, ['Mermaid', '$globals', 'Boolean']),
+    'Object'   : dot({}, ['Mermaid', '$globals', 'Object']),
+    'Number'   : dot({}, ['Mermaid', '$globals', 'Number']),
+    'Array'    : dot({}, ['Mermaid', '$globals', 'Array']),
+    'Function' : dot({}, ['Mermaid', '$globals', 'Function']),
+    'unit'     : dot({}, ['Mermaid', '$globals', 'unit'])
+  })
 }
 
 function id(str) {
@@ -154,7 +174,7 @@ function makeLambda(bind, meta, args, body, bound) {
 function generateModule(bind, meta, args, exports, body) {
   return set(meta, mem({}, id('module'), id('exports')),
              fn({}, null, generate(bind, args),
-                cloneMethods({}) +++ [
+                cloneMethods({}) +++ unpackGlobals({}) +++ [
                   letb({}, id('Module'),
                        methCall({}, id('$Mermaid'), str('$module:'),
                                 [id('require'), id('__dirname'), id('module')]))
@@ -380,7 +400,7 @@ function generate(bind, x) {
       generateDo(bind, meta, xs),
 
     Expr.Program(xs) =>
-      js.Prog({}, cloneMethods({}) +++ generate(bind, xs).map(toStatement)),
+      js.Prog({}, cloneMethods({}) +++ unpackGlobals({}) +++ generate(bind, xs).map(toStatement)),
 
     Expr.Module(meta, args, exports, body) =>
       generateModule(bind, meta, args, exports, body),

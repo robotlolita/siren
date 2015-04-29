@@ -135,11 +135,17 @@ function(root) {
   extendProto(Object.prototype, {
     'clone:': function(v) {
       return makeObj(v, this)
+    },
+    'as-string': function() {
+      return '<Object>'
     }
   });
           
 
   extendProto(Function.prototype, {
+    'as-string': function() {
+      return '<function#' + this.arity + '>'
+    },
     'value': function() {
       checkArity(this, 0);
       return this();
@@ -188,6 +194,9 @@ function(root) {
 
 
   extendProto(Number.prototype, {
+    'as-string': function() {
+      return String(this)
+    },
     '+': function(b) {
       checkClass('Number', b);
       return this + b;
@@ -258,6 +267,9 @@ function(root) {
   
 
   extendProto(Boolean.prototype, {
+    'as-string': function() {
+      return String(this)
+    },
     '&&': function(b) {
       checkClass('Boolean', b);
       return this && b;
@@ -281,7 +293,11 @@ function(root) {
     }
   });
 
+
   extendProto(String.prototype, {
+    'as-string': function() {
+      return this
+    },
     '===': function(b) {
       return this.valueOf() === b.valueOf()
     },
@@ -320,7 +336,15 @@ function(root) {
     }
   });
 
+
   extendProto(Array.prototype, {
+    'as-string': function() {
+      return '[' 
+           + this.map(function(a){
+                        return a[send]('as-string', methods)
+                      }).join(', ')
+           + ']'
+    },
     '+': function(b) {
       checkClass('Array', b);
       return this.concat(b);
@@ -348,6 +372,14 @@ function(root) {
     }
   });
 
+
+  var unit = {};
+  extendProto(unit, {
+    'as-string': function() {
+      return '<unit>'
+    }
+  })
+
   // -- Global stuff ---------------------------------------------------
   root.Mermaid = {
     '$module:': function(req, dir, mod) {
@@ -357,6 +389,15 @@ function(root) {
         'filename': function(){ return mod.filename }
       }
     },
+    '$globals': {
+      'String': String.prototype,
+      'Boolean': Boolean.prototype,
+      'Object': Object.prototype,
+      'Number': Number.prototype,
+      'Array': Array.prototype,
+      'Function': Function.prototype,
+      'unit': unit
+    }
     '$methods': methods,
     '$meta': $meta,
     '$extend': extendObj,
