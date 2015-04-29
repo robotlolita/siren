@@ -339,7 +339,7 @@ module.exports = function() {
     'as-string': function() {
       return '[' 
            + this.map(function(a){
-                        return a[send]('as-string', methods)
+                        return a[send]('as-string', methods, [])
                       }).join(', ')
            + ']'
     },
@@ -376,7 +376,46 @@ module.exports = function() {
     'as-string': function() {
       return '<unit>'
     }
-  })
+  });
+
+  var Dictionary = { $data: Object.create(null) };
+  extendProto(Dictionary, {
+    'at:': function(key) {
+      if (key in this.$data)
+        return this.$data[key];
+      else
+        throw new Error("Key not found: " + key);
+    },
+    'at:put:': function(key, value) {
+      this.$data[key] = value;
+      return this
+    },
+    'has?:': function(key) {
+      return key in this.$data
+    },
+    'keys': function() {
+      return Object.keys(this.$data)
+    },
+    'values': function() {
+      var data = this.$data;
+      return Object.keys(data).map(function(k){ return data[k] });
+    },
+    'items': function() {
+      var data = this.$data;
+      return Object.keys(data).map(function(k){ return [k, data[k]] });
+    },
+    'clone:': function(v) {
+      var result = makeObj(v, this);
+      result.$data = Object.create(null);
+      return result;
+    }
+  });
+
+  function toDict(v) {
+    var result = Object.create(Dictionary);
+    result.$data = v;
+    return result;
+  }
 
   // -- Global stuff ---------------------------------------------------
   var moduleCache = {}
@@ -412,11 +451,14 @@ module.exports = function() {
     '$meta': $meta,
     '$extend': extendObj,
     '$send': send,
-    '$make': makeObj
+    '$make': makeObj,
+    '$toDict': toDict
   };
 
   extendProto(Mermaid, {
-    'Console': function(){ return loadModule('./Console') }
+    'Console': function(){ return loadModule('./Console') },
+    'Process': function(){ return loadModule('./Process') },
+    'Dictionary': function(){ return Dictionary }
   });
 
   return Mermaid
