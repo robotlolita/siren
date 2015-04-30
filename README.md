@@ -8,8 +8,6 @@ Mermaid
 > changing, the feedback is horrible, and there are absolutely **no
 > optimisations whatsoever**. But feel free to play around with it :3
 
-The language is still in REALLY EARLY STAGES of development. While it's usable, there's absolutely no optimisations in the compiler whatsoever, and the standard library and tooling are lacking many features. Do note also that the language is constantly changing at this stage.
-
 Mermaid is an experiment on interactive programming platform. The idea is to
 take a familiar tool for most programmers (the command line shell), and improve
 both the ways people can interact with it, and the feedback provided by this
