@@ -24,15 +24,20 @@ module.exports = function(Mermaid) {
   }
 
   // -- Wrapper --------------------------------------------------------
+  var $unpack = Symbol('js->mermaid');
   function wrap(instance, namespace) {
-    return {
+    var wrapper = {
       send: function(message, args) {
         return wrap(
           instance[Mermaid.$send](message, namespace, args),
           namespace
         )
       }
-    }
+    };
+    wrapper[$unpack] = function() {
+      return instance
+    };
+    return wrapper;
   }
 
   // -- Module ---------------------------------------------------------
@@ -43,7 +48,8 @@ module.exports = function(Mermaid) {
       :      isBoolean(anObject)?      Boolean(anObject)
       :      isNumber(anObject)?       Number(anObject)
       :      isFunction(anObject)?     anObject
-      :      Array.isArray(anObject)?  anObject
+      :      Array.isArray(anObject)?  anObject.map(FFI['import:'])
+      :      anObject[$unpack]?        anObject[$unpack]()
       :      /* otherwise */           Mermaid.$toDict(anObject)
     }, {
       name: 'import:',
