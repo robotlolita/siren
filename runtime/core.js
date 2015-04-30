@@ -64,6 +64,13 @@ module.exports = function() {
     return result
   }
 
+  function fn(f, meta) {
+    meta = meta || {};
+    if (meta.name) f.displayName = meta.name;
+    $meta.set(f, meta);
+    return f;
+  }
+
   // -- Method box -----------------------------------------------------
   function MethodBox(parent) {
     this.parent = parent;
@@ -423,7 +430,7 @@ module.exports = function() {
     if (name in moduleCache) {
       return moduleCache[name]
     } else {
-      moduleCache[name] = require(name);
+      moduleCache[name] = require(name)(Mermaid);
       return moduleCache[name];
     }
   }
@@ -450,13 +457,14 @@ module.exports = function() {
     '$extend': extendObj,
     '$send': send,
     '$make': makeObj,
-    '$toDict': toDict
+    '$toDict': toDict,
+    '$fn': fn
   };
 
   extendProto(Mermaid, {
     'Console': function(){ return loadModule('./Console') },
     'Process': function(){ return loadModule('./Process') },
-    'Dictionary': function(){ return Dictionary }
+    'Dictionary': function(){ return Dictionary },
   });
 
   return Mermaid
