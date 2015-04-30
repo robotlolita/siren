@@ -7,7 +7,7 @@ module.exports = function() {
   function nameOf(f) {
     return '<' + (f.name || 'anonymous-function') + '#' + f.length + '>'
   }
-  
+
   function checkArity(f, n) {
     if (f.length !== n) {
       throw new RangeError('Wrong number of arguments (' + n + ') provided for ' + nameOf(f) )
@@ -25,7 +25,7 @@ module.exports = function() {
     :      x === undefined?  'Undefined'
     :      /* otherwise */   {}.toString.call(x).slice(8, -1);
   }
-  
+
   function checkClass(c, x) {
     if (classOf(x) !== c) {
       throw new TypeError("Expected an object of type " + c + ", got " + classOf(x));
@@ -43,7 +43,7 @@ module.exports = function() {
       return r
     }, Object.create(null))
   }
-  
+
   function extendProto(p, rec) {
     methods.merge(extendObj(p, rec));
   }
@@ -77,7 +77,7 @@ module.exports = function() {
   };
   MethodBox.prototype.lookup = function(p, k) {
     if (p == null)  return null;
-    
+
     var box = this.get(p);
     if (box) {
       var selector = box[k];
@@ -110,7 +110,7 @@ module.exports = function() {
     '$send:in:args:': send
   });
   var $meta = new WeakMap();
-  
+
 
   // -- Objects --------------------------------------------------------
   Object.prototype[messageNotUnderstood] = function(s, v) {
@@ -138,7 +138,7 @@ module.exports = function() {
       return '<Object>'
     }
   });
-          
+
 
   extendProto(Function.prototype, {
     'as-string': function() {
@@ -262,7 +262,7 @@ module.exports = function() {
       return this ^ b;
     }
   });
-  
+
 
   extendProto(Boolean.prototype, {
     'as-string': function() {
@@ -337,7 +337,7 @@ module.exports = function() {
 
   extendProto(Array.prototype, {
     'as-string': function() {
-      return '[' 
+      return '['
            + this.map(function(a){
                         return a[send]('as-string', methods, [])
                       }).join(', ')
@@ -427,13 +427,11 @@ module.exports = function() {
       return moduleCache[name];
     }
   }
-  
+
   var Mermaid = {
     '$module:': function(req, dir, mod) {
       return makeObj({
-        'require:': function(p){
-          return coreModules[p]? coreModules[p] : req(p)
-        },
+        'require:': function(p){ return req(p) },
         'dirname': function(){ return dir },
         'filename': function(){ return mod.filename }
       })
