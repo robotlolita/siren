@@ -52,8 +52,8 @@ Hello, world
 
 ## More
 
- -  Feel always free to ask [@robotlolita](https://twitter.com/robotlolita)
-    anything on Twitter.
+ -  Feel free to ask [@robotlolita](https://twitter.com/robotlolita) anything
+    related to this project on Twitter.
 
  -  Things will eventually be added to the Wiki, but also blogged about on
     http://robotlolita.me/
