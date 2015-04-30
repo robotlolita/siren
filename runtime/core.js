@@ -464,7 +464,8 @@ module.exports = function() {
   extendProto(Mermaid, {
     'Console': function(){ return loadModule('./Console') },
     'Process': function(){ return loadModule('./Process') },
-    'Dictionary': function(){ return Dictionary },
+    'FFI': function() { return loadModule('./FFI') },
+    'Dictionary': function(){ return Dictionary }
   });
 
   return Mermaid

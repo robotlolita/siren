@@ -16,6 +16,7 @@
     "deep-equal": "~0.2.1",
     "docopt": "^0.4.1",
     "escodegen": "^1.6.1",
+    "is-string": "^1.0.4",
     "ometajs": "~3.3.7",
     "polygamous": "^1.0.3",
     "text.pretty-printing": "^1.0.2",
