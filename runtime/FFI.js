@@ -22,6 +22,13 @@ module.exports = function(Mermaid) {
   function isNamespace(a) {
     return Object.getPrototypeOf(Mermaid.$methods).isPrototypeOf(a)
   }
+  function isPrimitive(a) {
+    return isNumber(a)
+        || isBoolean(a)
+        || isString(a)
+        || isFunction(a)
+        || Array.isArray(a)
+  }
 
   // -- Wrapper --------------------------------------------------------
   var $unpack = Symbol('js->mermaid');
@@ -59,7 +66,9 @@ module.exports = function(Mermaid) {
     }),
 
     'export:': Mermaid.$fn(function(anObject) {
-      return wrap(anObject, Mermaid.$methods)
+      return anObject === Mermaid.$globals.unit?  null
+      :      isPrimitive(anObject)?               anObject
+      :      /* otherwise */                      wrap(anObject, Mermaid.$methods)
     }, {
       name: 'export:',
       arguments: ['anObject']
