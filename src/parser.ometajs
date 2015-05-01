@@ -26,9 +26,9 @@ function keywordApply(meta, target, args) {
   return Expr.Apply(meta, id, target, args.map(get(1)))
 }
 
-function keywordLambda(meta, args, body) {
+function keywordLambda(meta, args, body, docs) {
   var id = Expr.Id(meta, args.map(get(0)).map(get('name')).join(''));
-  return [id, Expr.Lambda(meta, args.map(get(1)), body, false)]
+  return [id, Expr.Lambda(meta, args.map(get(1)), body, false, docs)]
 }
 
 // ## object: MermaidParser
@@ -37,7 +37,7 @@ ometa MermaidParser {
   comment = fromTo('//', '\n'),
   ws      = space*,
   symbol  = ~(letter | digit | space
-             | '_' | '$' | '@' | ';' | ',' | '|' | ':' | '{' | '}' | '(' | ')' | '[' | ']') char,
+             | '_' | '$' | '^' | '@' | ';' | ',' | '|' | ':' | '{' | '}' | '(' | ')' | '[' | ']') char,
   eof     = ~char,
   kw :xs  = seq(xs) ~(letter | digit | symbol | ':'),
 
@@ -58,13 +58,13 @@ ometa MermaidParser {
           | binaryPattern
           | unaryPattern,
 
-  patternBody = '=' ws exprList:as -> as,
+  patternBody = '=' (ws string)?:a ws exprList:as -> [as, a? a.value : ''],
 
   keywordArgs = (ws keyword:k ws identifier:n -> [k, n])+,
   
-  keywordPattern = keywordArgs:as ws patternBody:v            -> keywordLambda({}, as, v),
-  unaryPattern   = identifier:a ~':' ws patternBody:v         -> [a, Expr.Lambda({}, [], v, false)],
-  binaryPattern  = symbols:a ws identifier:b ws patternBody:v -> [a, Expr.Lambda({}, [b], v, false)],
+  keywordPattern = keywordArgs:as ws patternBody:v            -> keywordLambda({}, as, v[0], v[1]),
+  unaryPattern   = identifier:a ~':' ws patternBody:v         -> [a, Expr.Lambda({}, [], v[0], false, v[1])],
+  binaryPattern  = symbols:a ws identifier:b ws patternBody:v -> [a, Expr.Lambda({}, [b], v[0], false, v[1])],
 
   
 
@@ -169,8 +169,8 @@ ometa MermaidParser {
   record = '{' ws pattern:hd (ws ',' ws pattern)*:tl ws '}' -> Expr.Record({}, [hd].concat(tl))
          | '{' ws '}'                                       -> Expr.Record({}, []),
 
-  lambda  = '{' ws arglist:as ws '|' ws exprList:a ws '}' -> Expr.Lambda({}, as, a, true)
-          | '{' ws exprList:a ws '}'                      -> Expr.Lambda({}, [], a, true),
+  lambda  = '{' ws arglist:as ws '|' ws exprList:a ws '}' -> Expr.Lambda({}, as, a, true, '')
+          | '{' ws exprList:a ws '}'                      -> Expr.Lambda({}, [], a, true, ''),
   
   arglist = identifier:a (ws identifier)*:as              -> [a].concat(as),
 

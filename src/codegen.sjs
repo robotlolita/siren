@@ -133,10 +133,24 @@ function idToStr {
 }
 
 function generateProperty(bind, pair) {
+  var _id = pair[0];
+  var _fn = pair[1];
   return js.Property(
     pair[0].meta,
-    idToStr(generate(bind, pair[0])),
-    generate(bind, pair[1]),
+    idToStr(generate(bind, _id)),
+    methCall(_fn.meta,
+             id('Mermaid'),
+             str('$fn'),
+             [
+               generate(bind, _fn),
+               js.Obj({},
+                      [
+                        js.Property({}, str('name'), str(_id.name), "init"),
+                        js.Property({}, str('documentation'), str(_fn.docs), "init"), 
+                        js.Property({}, str('arguments'),
+                                    js.ArrayExpr({}, _fn.args.map(λ[str(#.name)])), "init")
+                      ])
+             ]),
     "init"
   )
 }
@@ -343,7 +357,7 @@ function generate(bind, x) {
       js.This(meta),
   
     // Values
-    Expr.Lambda(meta, args, body, bound) =>
+    Expr.Lambda(meta, args, body, bound, _) =>
       makeLambda(bind, meta, args, body, bound),
   
     Expr.Num(meta, val) =>
