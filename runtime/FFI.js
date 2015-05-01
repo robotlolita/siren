@@ -10,12 +10,8 @@ module.exports = function(Mermaid) {
   // -- Helpers --------------------------------------------------------
   var classOf = Object.prototype.toString;
   var isString = require('is-string');
-  function isNumber(a) {
-    return classOf.call(a) === '[object Number]';
-  }
-  function isBoolean(a) {
-    return classOf.call(a) === '[object Boolean]';
-  }
+  var isNumber = require('is-number-object');
+  var isBoolean = require('is-boolean-object');
   function isFunction(a) {
     return typeof a === 'function';
   }

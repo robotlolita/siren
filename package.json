@@ -16,6 +16,8 @@
     "deep-equal": "~0.2.1",
     "docopt": "^0.4.1",
     "escodegen": "^1.6.1",
+    "is-boolean-object": "^1.0.0",
+    "is-number-object": "^1.0.3",
     "is-string": "^1.0.4",
     "ometajs": "~3.3.7",
     "polygamous": "^1.0.3",
