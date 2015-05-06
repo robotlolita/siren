@@ -306,16 +306,17 @@ BindingBox::free = function(name) {
 function replaceHoles(bind, x) {
   match x {
     case Expr.Apply(meta, selector, target, args):
-      var repArgs = [];
+      var repArgs = [], offset = 0;
       if (target.isHole) {
         var id = Expr.Id(target.meta, bind.free('$_'));
         repArgs = [id];
         target = id;
+        offset = 1;
       }
 
       repArgs = repArgs +++ args.filter(λ[#.isHole]).map(λ[Expr.Id(#.meta, bind.free('$_'))]);
       var apArgs   = args.reduce(function(r, x) {
-        return x.isHole?  { n: r.n + 1, args: r.args +++ [repArgs[r.n]] }
+        return x.isHole?  { n: r.n + 1, args: r.args +++ [repArgs[r.n + offset]] }
         :      /* _ */    { n: r.n,     args: r.args +++ [x] }
       }, { n: 0, args: [] });
 
@@ -325,7 +326,7 @@ function replaceHoles(bind, x) {
       var newArgsExprs = newArgs.map(λ[#[1]]);
 
 
-      return [repArgs +++ targs +++ newArgsHoles,
+      return [targs +++ repArgs +++ newArgsHoles,
               Expr.Apply(meta, selector, texpr, newArgsExprs)];
 
     default:
