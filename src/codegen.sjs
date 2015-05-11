@@ -103,6 +103,8 @@ function cloneMethods(meta, parent) {
 
 function unpackGlobals(meta) {
   return declVars(meta, {
+    'Module'   : methCall({}, id('Mermaid'), str('$module:'),
+                          [id('require'), id('__dirname'), id('module')]),
     'String'   : dot({}, ['Mermaid', '$globals', 'String']),
     'Boolean'  : dot({}, ['Mermaid', '$globals', 'Boolean']),
     'Object'   : dot({}, ['Mermaid', '$globals', 'Object']),
@@ -188,11 +190,7 @@ function makeLambda(bind, meta, args, body, bound) {
 function generateModule(bind, meta, args, exports, body) {
   return set(meta, mem({}, id('module'), id('exports')),
              fn({}, null, generate(bind, args),
-                cloneMethods({}) +++ unpackGlobals({}) +++ [
-                  letb({}, id('Module'),
-                       methCall({}, id('Mermaid'), str('$module:'),
-                                [id('require'), id('__dirname'), id('module')]))
-                ].map(toStatement)
+                cloneMethods({}) +++ unpackGlobals({})
                 +++ generate(bind, body)
                 +++ (exports? [js.Return({}, generate(bind, exports))] : [])))
 }

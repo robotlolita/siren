@@ -34,7 +34,20 @@ function makeRuntime() {
 exports.run = run;
 function run(source, runtime, filename) {
   global.Mermaid = runtime;
-  vm.runInThisContext(source, { filename: filename });
+  installExtensions(runtime);
+  return filename && filename !== '<stdin>'?
+    require(filename).exports
+  : vm.runInThisContext(source, { filename: filename });
 }
 
-exports.compile = parse ->> toJsAst ->> generateJs;
+exports.installExtensions = installExtensions;
+function installExtensions(runtime) {
+  if (!require.extensions['.maid']) {
+    require.extensions['.maid'] = function(module, filename) {
+      var code = fs.readFileSync(filename, 'utf8');
+      module._compile(compile(code), filename);
+    };
+  }
+}
+
+var compile = exports.compile = parse ->> toJsAst ->> generateJs;

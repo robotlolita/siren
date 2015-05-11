@@ -59,6 +59,6 @@ module.exports = function Main() {
   : args['--version']?                  log('Mermaid version ' + pkg.version)
   : args['--ast']?                      show(branch(args, parse, ast))
   : args['--compile']?                  show(branch(args, compile, js))
-  : /* otherwise */                     show(branch(args, runStdin, run))
+  : /* otherwise */                     branch(args, runStdin, run)
 }
 
