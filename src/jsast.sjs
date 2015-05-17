@@ -89,7 +89,7 @@ union Node {
 } deriving (Base)
 
 
-union Statement {  
+union Statement {
   Empty { meta: Object },
   Block {
     meta: Object,

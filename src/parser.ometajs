@@ -17,8 +17,8 @@ function isValid(a) {
   return reserved.indexOf(a) === -1
 }
 
-function get(k){ return function(o){ 
-  return o[k] 
+function get(k){ return function(o){
+  return o[k]
 }}
 
 function keywordApply(meta, target, args) {
@@ -61,12 +61,12 @@ ometa MermaidParser {
   patternBody = '=' (ws string)?:a ws exprList:as -> [as, a? a.value : ''],
 
   keywordArgs = (ws keyword:k ws identifier:n -> [k, n])+,
-  
+
   keywordPattern = keywordArgs:as ws patternBody:v            -> keywordLambda({}, as, v[0], v[1]),
   unaryPattern   = identifier:a ~':' ws patternBody:v         -> [a, Expr.Lambda({}, [], v[0], false, v[1])],
   binaryPattern  = symbols:a ws identifier:b ws patternBody:v -> [a, Expr.Lambda({}, [b], v[0], false, v[1])],
 
-  
+
 
   // Statements
   letStmt = kw('let') ws identifier:a ws '=' ws expr:b -> Expr.Let({}, a, b),
@@ -91,7 +91,7 @@ ometa MermaidParser {
            | pipeExpr:a ws ">>" ws symbols:s ws unaryExpr:b -> Expr.Apply({}, s, a, [b])
            | pipeExpr:a ws ">>" (ws keywordApp)+:as         -> keywordApply({}, a, as)
            | appExpr,
-  
+
   appExpr = keywordExpr
           | binaryExpr,
 
@@ -135,7 +135,7 @@ ometa MermaidParser {
 
   bool = kw('true') -> Expr.Bool({}, true)
        | kw('false') -> Expr.Bool({}, false),
-  
+
   octDigit = /[0-7_]/,
   hexDigit = /[0-9a-fA-F_]/,
   binDigit = '0' | '1' | '_',
@@ -151,7 +151,7 @@ ometa MermaidParser {
                   ),
   sign = '+' | '-',
   exponent = ('e' | 'E') sign?:s digits:d -> s + d,
-  
+
   stringEscape     = '\\' ( 'b' -> '\b'
                           | 'f' -> '\f'
                           | 'n' -> '\n'
@@ -165,13 +165,13 @@ ometa MermaidParser {
 
   vector = '[' ws expr:hd (ws ',' ws expr)*:tl ws ']' -> Expr.Vector({}, [hd].concat(tl))
          | '[' ws ']'                                 -> Expr.Vector({}, []),
-  
+
   record = '{' ws pattern:hd (ws ',' ws pattern)*:tl ws '}' -> Expr.Record({}, [hd].concat(tl))
          | '{' ws '}'                                       -> Expr.Record({}, []),
 
   lambda  = '{' ws arglist:as ws '|' ws exprList:a ws '}' -> Expr.Lambda({}, as, a, true, '')
           | '{' ws exprList:a ws '}'                      -> Expr.Lambda({}, [], a, true, ''),
-  
+
   arglist = identifier:a (ws identifier)*:as              -> [a].concat(as),
 
   program = ws module:m ws eof    -> m

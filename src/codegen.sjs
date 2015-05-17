@@ -148,7 +148,7 @@ function generateProperty(bind, pair) {
                js.Obj({},
                       [
                         js.Property({}, str('name'), str(_id.name), "init"),
-                        js.Property({}, str('documentation'), str(_fn.docs), "init"), 
+                        js.Property({}, str('documentation'), str(_fn.docs), "init"),
                         js.Property({}, str('arguments'),
                                     js.ArrayExpr({}, _fn.args.map(λ[str(#.name)])), "init")
                       ])
@@ -202,7 +202,7 @@ function generateApply(bind, apExpr) {
                   generate(bind, expr.target),
                   selector(expr.meta, generate(bind, expr.selector)),
                   generate(bind, expr.args));
-  
+
   if (holes.length > 0) {
     return boundFn(expr.meta, null, generate(bind, holes), [js.Return({}, call)]);
   } else {
@@ -220,13 +220,13 @@ function generateDo(bind, meta, xs) {
   function collapseReturns {
     [] => [],
 
-    [n @ Do.Return] => 
+    [n @ Do.Return] =>
       [Do.MultiReturn([n])],
 
     [n @ Do.MultiReturn] =>
       [n],
 
-    [n @ Do.Action, ...ys] => 
+    [n @ Do.Action, ...ys] =>
       [n] +++ collapseReturns(ys),
 
     [n @ Do.Return, m @ Do.Action, ...ys] =>
@@ -248,7 +248,7 @@ function generateDo(bind, meta, xs) {
     [Do.Action(m, _, e)] => generate(bind, e),
     [Do.MultiReturn(xs)] =>
       compileMulti([[xs[0].binding, generate(bind, xs[0].expr)]] +++ xs.slice(1)),
-    
+
     [Do.Action(m, i, e), Do.MultiReturn(es)] =>
       compileMulti([[i, generate(bind, e)]] +++ es),
 
@@ -259,7 +259,7 @@ function generateDo(bind, meta, xs) {
             ] +++ es),
             generate(bind, last(es).binding),
             compile(ys)),
-   
+
     [Do.Action(m, i, e), ...ys] =>
       chain(m, generate(bind, e), generate(bind, i), compile(ys)),
 
@@ -345,44 +345,44 @@ function generate(bind, x) {
   return match x {
     Expr.Empty =>
       js.Empty({}),
-  
+
     Expr.Comment(meta, comment) =>
       js.Empty(meta), // Doesn't look like Mozilla supports comments
-  
+
     Expr.Id(meta, name) =>
       js.Id(meta, name),
-  
+
     Expr.Self(meta) =>
       js.This(meta),
-  
+
     // Values
     Expr.Lambda(meta, args, body, bound, _) =>
       makeLambda(bind, meta, args, body, bound),
-  
+
     Expr.Num(meta, val) =>
       js.Num(meta, val),
-  
+
     Expr.Str(meta, val) =>
       js.Str(meta, val),
 
     Expr.Bool(meta, val) =>
       js.Bool(meta, val),
-  
+
     Expr.Vector(meta, xs) =>
       js.ArrayExpr(meta, generate(bind, xs)),
-  
+
     Expr.Record(meta, xs) =>
       methCall(meta,
                id('Mermaid'),
                str('$make'),
                [generatePlainRecord(bind, Expr.Record(meta, xs))]),
-  
+
     Expr.Let(meta, name, value) =>
       letb(meta, generate(bind, name), generate(bind, value)),
-  
+
     Expr.Bind(meta, target, sel) =>
       generateBind(bind, meta, target, sel),
-    
+
     n @ Expr.Apply(meta, sel, target, args) =>
       generateApply(bind, n),
 
@@ -415,12 +415,12 @@ function generate(bind, x) {
     Expr.Program(xs) =>
       js.ExprStmt({},
                   js.Call({},
-                          fn({}, null, [], 
+                          fn({}, null, [],
                              cloneMethods({})
                              +++ unpackGlobals({})
                              +++ returnLast(generate(bind, xs).map(toStatement))),
                           [])),
-              
+
     Expr.Module(meta, args, exports, body) =>
       generateModule(bind, meta, args, exports, body),
 

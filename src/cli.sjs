@@ -61,4 +61,3 @@ module.exports = function Main() {
   : args['--compile']?                  show(branch(args, compile, js))
   : /* otherwise */                     branch(args, runStdin, run)
 }
-
