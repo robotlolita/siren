@@ -18,7 +18,10 @@ let VM = {
   = FFI send: "lookup" to: box with: [object, name],
 
   list: box for: object
-  = this dict: (FFI send: "list" to: box with: [object])
+  = this dict: (FFI send: "list" to: box with: [object]),
+
+  get: name for: object
+  = FFI send: "$at" to: root with: [object, name]
 };
 
 let meta = {
@@ -84,7 +87,7 @@ let Object-Mirror = {
   
   method: name
     """Returns the method with the given name."""
-  = Dictionary clone: this reflectee >> at: (this method-selector: name),
+  = VM get: (this method-selector: name) for: this reflectee,
 
   prototype
     """Returns the immediate prototype of the reflectee."""

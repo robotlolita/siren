@@ -451,6 +451,10 @@ module.exports = function() {
     return obj
   }
 
+  function $at(obj, name) {
+    return obj[name]
+  }
+
   // -- Global stuff ---------------------------------------------------
   var moduleCache = {}
   function loadModule(name) {
@@ -478,7 +482,8 @@ module.exports = function() {
     '$toDict': toDict,
     '$fn': fn,
     '$proto': Object.getPrototypeOf,
-    '$setMeta': $setMeta
+    '$setMeta': $setMeta,
+    '$at': $at
   };
 
   extendProto(Mermaid, {
