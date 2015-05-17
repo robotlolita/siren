@@ -127,9 +127,20 @@ function idToStr {
   a              => raise(new TypeError("No match: " + show(a)))
 }
 
+function findDecoratedLambda(node) {
+  return match node {
+    Expr.Apply(_, _, _, [n]) =>
+      findDecoratedLambda(n),
+
+    n @ Expr.Lambda => n
+  }
+}
+
 function generateProperty(bind, pair) {
   var _id = pair[0];
   var _fn = pair[1];
+  var _l  = findDecoratedLambda(_fn);
+  console.log('prop>', _id.toString(), _fn.toString())
   return js.Property(
     pair[0].meta,
     idToStr(generate(bind, _id)),
@@ -141,9 +152,9 @@ function generateProperty(bind, pair) {
                js.Obj({},
                       [
                         js.Property({}, str('name'), str(_id.name), "init"),
-                        js.Property({}, str('documentation'), str(_fn.docs), "init"),
+                        js.Property({}, str('documentation'), str(_l.docs), "init"),
                         js.Property({}, str('arguments'),
-                                    js.ArrayExpr({}, _fn.args.map(λ[str(#.name)])), "init")
+                                    js.ArrayExpr({}, _l.args.map(λ[str(#.name)])), "init")
                       ])
              ]),
     "init"

@@ -54,11 +54,15 @@ ometa MermaidParser {
              | keyword+:xs -> Expr.Id(xs[0].meta, xs.map(get('name')).join('')),
 
   // Patterns
-  pattern = keywordPattern
+  pattern = decoratedPattern
+          | keywordPattern
           | binaryPattern
           | unaryPattern,
 
-  patternBody = '=' (ws string)?:a ws exprList:as -> [as, a? a.value : ''],
+  decoratedPattern = '@' expr:a ws ';' ws pattern:p
+                  -> [p[0], Expr.Apply({}, Expr.Id({}, 'call:'), a, [p[1]])],
+
+  patternBody = string?:a ws '=' ws exprList:as -> [as, a? a.value : ''],
 
   keywordArgs = (ws keyword:k ws identifier:n -> [k, n])+,
 
