@@ -24,7 +24,7 @@ var inspect = require('core.inspect');
 var pkg = require('../package.json');
 var fs = require('fs');
 var path = require('path');
-var { parse, compile, run:runInVm, makeRuntime } = require('./');
+var { parse, compile, run:runInVm, makeRuntime } = require('../');
 
 
 // -- Helpers ----------------------------------------------------------

@@ -27,7 +27,7 @@ which aren't in Node stable yet), Make, Git, clone this repository, then run
 $ git clone git://github.com:mermaid-language/mermaid.git
 $ cd mermaid
 $ npm install
-$ make compile
+$ make all
 $ bin/mermaid
 ```
 

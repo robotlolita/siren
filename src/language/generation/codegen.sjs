@@ -6,7 +6,7 @@
 
 // -- Dependencies -----------------------------------------------------
 var js = require('./jsast');
-var { DoClause:Do, Expr } = require('./ast');
+var { DoClause:Do, Expr } = require('../ast');
 var show = require('core.inspect');
 
 function raise(e) {

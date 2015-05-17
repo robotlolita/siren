@@ -3,22 +3,25 @@ ometa = $(bin)/ometajs2js
 sjs = $(bin)/sjs
 
 # -- CONFIGURATION -----------------------------------------------------
-LIB_DIR = lib
-SRC_DIR = src
-SRC = $(wildcard $(SRC_DIR)/*.sjs \
-                 $(SRC_DIR)/**/*.sjs \
-                 $(SRC_DIR)/**/**/*.sjs \
-                 $(SRC_DIR)/*.ometajs \
-                 $(SRC_DIR)/**/*.ometajs)
-TGT = ${SRC:$(SRC_DIR)/%.sjs=$(LIB_DIR)/%.js} ${SRC:$(SRC_DIR)/%.ometajs=$(LIB_DIR)/%.js}
+LANG_TGT_DIR := lib
+LANG_SRC_DIR := src
+LANG_SRC := $(shell find $(LANG_SRC_DIR) -name '*.sjs') \
+            $(shell find $(LANG_SRC_DIR) -name '*.ometajs')
+LANG_TGT := ${LANG_SRC:$(LANG_SRC_DIR)/%.sjs=$(LANG_TGT_DIR)/%.js} \
+            ${LANG_SRC:$(LANG_SRC_DIR)/%.ometajs=$(LANG_TGT_DIR)/%.js}
+
+VM_TGT_DIR := vm
+VM_SRC_DIR := vm
+VM_SRC := $(shell find $(VM_SRC_DIR) -name '*.sjs')
+VM_TGT := ${VM_SRC:$(VM_SRC_DIR)/%.sjs=$(VM_TGT_DIR)/%.js}
 
 
 # -- COMPILATION -------------------------------------------------------
-$(LIB_DIR)/%.js: $(SRC_DIR)/%.ometajs
+$(LANG_TGT_DIR)/%.js: $(LANG_SRC_DIR)/%.ometajs
 	mkdir -p $(dir $@)
 	$(ometa) --beautify < $< > $@
 
-$(LIB_DIR)/%.js: $(SRC_DIR)/%.sjs
+$(LANG_TGT_DIR)/%.js: $(LANG_SRC_DIR)/%.sjs
 	mkdir -p $(dir $@)
 	$(sjs) --readable-names \
 	       --module lambda-chop/macros \
@@ -29,10 +32,25 @@ $(LIB_DIR)/%.js: $(SRC_DIR)/%.sjs
 	       --output $@ \
 	       $<
 
+$(VM_TGT_DIR)/%.js: $(VM_SRC_DIR)/%.sjs
+	$(sjs) --readable-names \
+	       --module lambda-chop/macros \
+	       --module adt-simple/macros \
+	       --module sparkler/macros \
+	       --module es6-macros/macros/destructure \
+	       --module macros.operators \
+	       --output $@ \
+	       $<
+
+
 # -- TASKS -------------------------------------------------------------
-compile: $(TGT)
+language: $(LANG_TGT)
+
+vm: $(VM_TGT)
+
+all: vm language
 
 clean:
-	rm -rf $(LIB_DIR)
+	rm $(LANG_TGT) $(VM_TGT)
 
 .PHONY: clean

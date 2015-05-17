@@ -4,6 +4,7 @@
   "bin": {
     "mermaid": "bin/mermaid"
   },
+  "main": "./lib/index.js",
   "dependencies": {
     "adt-simple": "^0.1.3",
     "boo": "~2.0.0",

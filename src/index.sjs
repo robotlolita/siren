@@ -3,8 +3,8 @@
 // A small object oriented language for teaching.
 
 // -- Dependencies -----------------------------------------------------
-var Parser = require('./parser').MermaidParser;
-var { generate, BindingBox } = require('./codegen');
+var Parser = require('./language/parser').MermaidParser;
+var { generate, BindingBox } = require('./language/generation/codegen');
 var escodegen = require('escodegen');
 var path = require('path');
 var fs = require('fs');
