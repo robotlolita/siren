@@ -1,0 +1,93 @@
+module | root |
+  exposing { Meta-Mirror = Meta-Mirror
+           , Object-Mirror = Object-Mirror
+           }
+where
+
+let mermaid-meta = (FFI import: root) at: "$meta";
+let mermaid-methods = (FFI import: root) at: "$methods";
+
+let VM = {
+  dict: value
+  = FFI send: "$toDict" to: root with: [value],
+
+  proto: object
+  = FFI send: "$proto" to: root with: [object],
+
+  lookup: name in: box for: object
+  = FFI send: "lookup" to: box with: [object, name],
+
+  list: box for: object
+  = this dict: (FFI send: "list" to: box with: [object])
+};
+
+let meta = {
+  for: object at: name
+    """Retrieves the meta-data with the given name for the object."""
+  = FFI send: "get" to: mermaid-meta with: [object, name]
+};
+
+let Meta-Mirror = {
+  on: reflectee
+    """Constructs a Meta-Mirror for the reflectee."""
+  = Meta-Mirror { reflectee = reflectee },
+
+  name
+    """Retrieves the name of the object."""
+  = meta for: this reflectee at: "name",
+
+  arguments
+    """Retrieves the arguments that the object takes (for blocks)."""
+  = meta for: this reflectee at: "arguments",
+
+  filename
+    """Retrieves the file name where the object was defined."""
+  = meta for: this reflectee at: "filename",
+
+  source
+    """Retrieves the source code of the object."""
+  = meta for: this reflectee at: "source",
+
+  category
+    """Retrieves the category of the object."""
+  = meta for: this reflectee at: "category"
+};
+
+let Object-Mirror = {
+  on: reflectee
+    """Constructs a message mirror for the reflectee using the global method box."""
+  = this { reflectee = reflectee, method-box = mermaid-methods },
+
+  on: reflectee using: methods
+    """Constructs a message mirror for the reflectee using the given method box."""
+  = this { reflectee = reflectee, method-box = methods },
+
+  methods
+    """Returns all methods the reflectee responds to in the method box."""
+  = VM list: this method-box for: this reflectee,
+
+  method-names
+    """Returns only the method names that the reflectee responds to."""
+  = this methods keys,
+
+  method-selectors
+    """Returns only the method selectors that the reflectee responds to."""
+  = this methods values,
+
+  responds-to?: name
+    """True if the reflectee can respond to the given message."""
+  = this methods has?: name,
+
+  method-selector: name
+    """Returns the selector for the given name."""
+  = VM lookup: name in: this method-box for: this reflectee,
+  
+  method: name
+    """Returns the method with the given name."""
+  = Dictionary clone: this reflectee >> at: (this method-selector: name),
+
+  prototype
+    """Returns the immediate prototype of the reflectee."""
+  = VM proto: this reflectee
+
+}

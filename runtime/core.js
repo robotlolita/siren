@@ -37,6 +37,10 @@ module.exports = function() {
     return a;
   }
 
+  function merge(a, b) {
+    return extend(extend({}, a), b);
+  }
+
   function toObj(xs) {
     return xs.reduce(function(r, p) {
       r[p[0]] = p[1];
@@ -96,6 +100,14 @@ module.exports = function() {
     }
     return this.lookup(protoOf(p), k);
   };
+  MethodBox.prototype.list = function(p) {
+    if (p == null)  return {};
+
+    var methods = extend({}, this.get(p) || {});
+    if (this.parent)  extend(this.parent.list(p), methods);
+    extend(this.list(protoOf(p)), methods);
+    return methods;
+  };
   MethodBox.prototype.clone = function() {
     return new MethodBox(this);
   };
@@ -143,6 +155,9 @@ module.exports = function() {
     },
     'as-string': function() {
       return '<Object>'
+    },
+    'meta:': function(name) {
+      return $meta.get(this, name) || unit;
     }
   });
 
@@ -429,6 +444,13 @@ module.exports = function() {
     return result;
   }
 
+  function $setMeta(obj, name, value) {
+    var meta = $meta.get(obj) || {};
+    meta[meta] = value;
+    $meta.set(obj, meta);
+    return obj
+  }
+
   // -- Global stuff ---------------------------------------------------
   var moduleCache = {}
   function loadModule(name) {
@@ -454,13 +476,17 @@ module.exports = function() {
     '$send': send,
     '$make': makeObj,
     '$toDict': toDict,
-    '$fn': fn
+    '$fn': fn,
+    '$proto': Object.getPrototypeOf,
+    '$setMeta': $setMeta
   };
 
   extendProto(Mermaid, {
     'Console': function(){ return loadModule('./Console') },
     'Process': function(){ return loadModule('./Process') },
     'FFI': function() { return loadModule('./FFI') },
+    'Meta': function(){ return loadModule('./Meta') },
+    'Reflection': function(){ return loadModule('./Reflection') },
     'Dictionary': function(){ return Dictionary },
     'String': function(){ return String.prototype },
     'Boolean': function(){ return Boolean.prototype },

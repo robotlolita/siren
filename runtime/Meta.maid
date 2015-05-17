@@ -1,0 +1,23 @@
+module | root |
+  exposing Meta
+where
+
+let m = {
+  meta: name value: value = { fn |
+    FFI send: "$setMeta" to: root with: [fn, name, value]
+  }
+};
+
+let Meta = {
+  category: name
+  """Categorises an object."""
+  = m meta: "Category" value: name,
+
+  name: name
+  """Names an object."""
+  = m meta: "Name" value: name,
+
+  version: version
+  """Versions an object."""
+  = m meta: "Version" value: version
+}

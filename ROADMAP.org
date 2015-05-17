@@ -68,7 +68,7 @@ avoid the overhead by having a simple pass where we revert the ~bound~ state of
 the lambda if it doesn't use a ~this~ expression inside of it.
 
 ** Libraries
-*** TODO Meta-data and Mirror-based reflection
+*** WORKING Meta-data and Mirror-based reflection
 Should allow people to add meta-data to an object, and query meta-data about
 that object. Meta-data includes things like "which messages this object
 responds to?", and "which objects does this object delegate to?" as well.
