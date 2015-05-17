@@ -61,6 +61,34 @@ module.exports = function(Mermaid) {
       source: '<native>'
     }),
 
+    'invoke:in:with:': Mermaid.$fn(function(aFunction, anObject, anArray) {
+      return aFunction.apply(anObject, anArray)
+    }, {
+      name: 'invoke:in:with:',
+      arguments: ['aFunction', 'anObject', 'anArray'],
+      filename: '<built-in>',
+      source: '<native>'
+    }),
+
+    'send:to:with:': Mermaid.$fn(function(aMessage, anObject, anArray) {
+      return anObject[aMessage].apply(anObject, anArray)
+    }, {
+      name: 'send:to:with:',
+      arguments: ['aMessage', 'anObject', 'anArray'],
+      filename: '<built-in>',
+      source: '<native>'
+    }),
+
+    'set:in:to:': Mermaid.$fn(function(aString, anObject, aValue) {
+      anObject[aString] = aValue;
+      return anObject
+    }, {
+      name: 'set:in:to:',
+      arguments: ['aString', 'anObject', 'avalue'],
+      filename: '<built-in>',
+      source: '<native>'
+    }),
+
     'export:': Mermaid.$fn(function(anObject) {
       return anObject === Mermaid.$globals.unit?  null
       :      isPrimitive(anObject)?               anObject
