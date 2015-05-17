@@ -1,4 +1,6 @@
 #+STARTUP: content indent
+#+TODO: TODO WORKING(w) | DONE(d) DROPPED(D)
+#+TYP_TODO: ENHANCEMENT(e) FEATURE(f) BUG(b) TODO(t) | DONE
 
 * Mermaid 1.0 - Seashore
 
@@ -12,7 +14,7 @@ with the server. The IDE would be a client, but the information from the VM
 could also be used by text editors (like Emacs), external debuggers, etc.
 
 ** Language
-*** TODO [#C] Don't inherit from ~Object.prototype~ by default
+*** BUG [#C] Don't inherit from ~Object.prototype~ by default
 Currently all objects inherit from Object.prototype, implicitly. With the
 current settings, this isn't a problem because there aren't many behaviours set
 in ~Object.prototype~. This might change in the future, so it's interesting to
@@ -21,13 +23,14 @@ require people to explicitly inherit from ~Object.prototype~ instead.
 If objects inherit from ~null~, they won't have a ~send-to:in:with:~ message
 defined, however, so we'd need to define that for these objects as well.
 
-*** TODO Add interfaces for structural contracts
+*** FEATURE Add interfaces for structural contracts
 Contracts would help with feedback in using objects in the system, and avoid
 errors from sending incorrect messages to objects. I'm not quite sure how the
 system could use this information to provide better feedback for the user yet
 though, so it's something to think about.
 
-*** TODO [#A] Have global bindings resolve as messages sent to the Global object
+*** DONE [#A] Have global bindings resolve as messages sent to the Global object
+CLOSED: [2015-05-17 Sun 00:15]
 We should have Self's equivalent of ~Lobby~, a global namespace that's the
 entrypoint for all objects in the system. Variables that don't exist in the
 current namespace should be message sends to the global object.
@@ -36,25 +39,25 @@ We can move several things that are currently ad-hoc (e.g.: ~String~, ~Object~,
 etc.) to this global namespace. It makes sense to have messages go
 ~Local Bindings -> Module -> Global~ as well.
 
-*** TODO [#B] Allow expressions in ~extend~
+*** FEATURE [#B] Allow expressions in ~extend~
 The ~extend~ construct supports only literal objects for now, because it must
 construct a mapping of message names to selector values. It would be
 interesting to support arbitrary expressions that resolve to objects in this
 construct, but we need to be able to gather all message names for the selector
 values the object supports.
 
-*** TODO Get rid of ~=~ in message definitions
+*** ENHANCEMENT Get rid of ~=~ in message definitions
 It's not strictly necessary in the grammar, and we could have a cleaner
 language overall, but it's mostly a cosmetic change, and I'm not sure it
 delivers that much value.
 
-*** TODO [#A] Allow rebinding names in ~using/use~
+*** FEATURE [#A] Allow rebinding names in ~using/use~
 Currently there's no way of resolving namespacing conflicts when introducing
 new message resolutions with ~using/use~. Allowing one to remap message names
 when unpacking a particular trait in the namespace would solve this.
 
 ** Compiler
-*** TODO Functions only need to be bound if they contain ~this~ expressions
+*** ENHANCEMENT Functions only need to be bound if they contain ~this~ expressions
 Currently all lambda functions compile to ~(function(...){ ... }).bind(this)~,
 which is unnecessary when ~this~ doesn't happen inside that expression. We can
 avoid the overhead by having a simple pass where we revert the ~bound~ state of
@@ -100,12 +103,12 @@ Should wrap the Node libraries for:
 - [ ] Better date handling (maybe wrap Moment.js)
 - [ ] Wrapping all core JS objects
 ** Tooling
-*** TODO VM-as-a-service
+*** FEATURE VM-as-a-service
 The VM should be a background server that can be queried by clients.
 ** VM
-*** TODO VM snapshots and versioning
+*** FEATURE VM snapshots and versioning
 We need to be able to serialise the living objects and restore them. Versioning
 in this would be essential for a robust solution, which basically means we'd
 end up creating our own VCS :x
 ** IDE
-*** TODO A ~nw.js~ based visual REPL
+*** FEATURE A ~nw.js~ based visual REPL

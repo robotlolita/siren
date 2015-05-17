@@ -104,14 +104,7 @@ function cloneMethods(meta, parent) {
 function unpackGlobals(meta) {
   return declVars(meta, {
     'Module'   : methCall({}, id('Mermaid'), str('$module:'),
-                          [id('require'), id('__dirname'), id('module')]),
-    'String'   : dot({}, ['Mermaid', '$globals', 'String']),
-    'Boolean'  : dot({}, ['Mermaid', '$globals', 'Boolean']),
-    'Object'   : dot({}, ['Mermaid', '$globals', 'Object']),
-    'Number'   : dot({}, ['Mermaid', '$globals', 'Number']),
-    'Array'    : dot({}, ['Mermaid', '$globals', 'Array']),
-    'Function' : dot({}, ['Mermaid', '$globals', 'Function']),
-    'unit'     : dot({}, ['Mermaid', '$globals', 'unit'])
+                          [id('require'), id('__dirname'), id('module')])
   })
 }
 
@@ -408,6 +401,9 @@ function generate(bind, x) {
 
     Expr.Var(meta, Expr.Id(_, sel)) =>
       js.Id(meta, sel),
+
+    Expr.Global(meta, Expr.Id(_, sel)) =>
+      send(meta, id('Mermaid'), selector({}, str(sel)), []),
 
     Expr.Do(meta, xs) =>
       generateDo(bind, meta, xs),

@@ -4,7 +4,7 @@
 
 // -- Dependencies -----------------------------------------------------
 var Parser = require('./language/parser').MermaidParser;
-var { generate, BindingBox } = require('./language/generation/codegen');
+var generate = require('./language/generation');
 var escodegen = require('escodegen');
 var path = require('path');
 var fs = require('fs');
@@ -17,7 +17,7 @@ function parse(text) {
 
 exports.toJsAst = toJsAst;
 function toJsAst(ast) {
-  return generate(new BindingBox(), ast);
+  return generate(ast);
 }
 
 exports.generateJs = generateJs;

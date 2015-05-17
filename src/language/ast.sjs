@@ -21,6 +21,7 @@ union Expr {
   Module  { meta: Object, args: Array, exports: *, body: Array },
   Comment { meta: Object, comment: String },
   Id      { meta: Object, name: String },
+  Free    { meta: Object, selector: Id },
   Self    { meta: Object },
 
   Lambda  { meta: Object, args: Array, body: Array, bound: Boolean, docs: String },
@@ -38,6 +39,7 @@ union Expr {
   Use    { meta: Object, traits: Array, exprs: Array },
   Using  { meta: Object, traits: Array },
   Var    { meta: Object, selector: Id },
+  Global { meta: Object, selector: Id },
   Do     { meta: Object, actions: Array }
 } deriving (Base)
 

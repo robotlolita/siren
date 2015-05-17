@@ -443,15 +443,6 @@ module.exports = function() {
         'filename': function(){ return mod.filename }
       })
     },
-    '$globals': {
-      'String': String.prototype,
-      'Boolean': Boolean.prototype,
-      'Object': Object.prototype,
-      'Number': Number.prototype,
-      'Array': Array.prototype,
-      'Function': Function.prototype,
-      'unit': unit
-    },
     '$methods': methods,
     '$meta': $meta,
     '$extend': extendObj,
@@ -465,7 +456,14 @@ module.exports = function() {
     'Console': function(){ return loadModule('./Console') },
     'Process': function(){ return loadModule('./Process') },
     'FFI': function() { return loadModule('./FFI') },
-    'Dictionary': function(){ return Dictionary }
+    'Dictionary': function(){ return Dictionary },
+    'String': function(){ return String.prototype },
+    'Boolean': function(){ return Boolean.prototype },
+    'Object': function(){ return Object.prototype },
+    'Number': function(){ return Number.prototype },
+    'Array': function(){ return Array.prototype },
+    'Function': function(){ return Function.prototype },
+    'unit': function(){ return unit }
   });
 
   return Mermaid

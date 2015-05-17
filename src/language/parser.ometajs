@@ -107,7 +107,7 @@ ometa MermaidParser {
   primaryExpr = '_'                  -> Expr.Hole({})
               | doExpr
               | value
-              | identifier:a ~':'    -> Expr.Var({}, a)
+              | identifier:a ~':'    -> Expr.Free({}, a)
               | kw('this')           -> Expr.Self({})
               | extendExpr:a         -> a
               | ';'                  -> Expr.Empty
