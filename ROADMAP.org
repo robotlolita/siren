@@ -56,6 +56,10 @@ Currently there's no way of resolving namespacing conflicts when introducing
 new message resolutions with ~using/use~. Allowing one to remap message names
 when unpacking a particular trait in the namespace would solve this.
 
+*** FEATURE [#B] Define module & language version in modules
+Modules should provide their version and the version of the language they
+use. This could allow migration from older versions of the language, or better
+error reporting on older/newer compilers.
 ** Compiler
 *** ENHANCEMENT Functions only need to be bound if they contain ~this~ expressions
 Currently all lambda functions compile to ~(function(...){ ... }).bind(this)~,
