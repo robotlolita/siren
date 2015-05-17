@@ -23,6 +23,12 @@ function toStatement(x) {
   :      /* otherwise */                                 js.ExprStmt(x.meta, x)
 }
 
+function safeId(a) {
+  return a.replace(/(\W)/g, function(_, a){
+    return '$' + a.charCodeAt(0) + '_';
+  });
+}
+
 function returnLast(ys) {
   if (!ys.length)  return ys;
 
@@ -140,7 +146,6 @@ function generateProperty(bind, pair) {
   var _id = pair[0];
   var _fn = pair[1];
   var _l  = findDecoratedLambda(_fn);
-  console.log('prop>', _id.toString(), _fn.toString())
   return js.Property(
     pair[0].meta,
     idToStr(generate(bind, _id)),
@@ -381,8 +386,8 @@ function generate(bind, x) {
                str('$make'),
                [generatePlainRecord(bind, Expr.Record(meta, xs))]),
 
-    Expr.Let(meta, name, value) =>
-      letb(meta, generate(bind, name), generate(bind, value)),
+    Expr.Let(meta, Expr.Id(_, name), value) =>
+      letb(meta, id(safeId(name)), generate(bind, value)),
 
     Expr.Bind(meta, target, sel) =>
       generateBind(bind, meta, target, sel),
@@ -411,7 +416,7 @@ function generate(bind, x) {
       methCall(meta, id('$methods'), str('merge'), generate(bind, traits)),
 
     Expr.Var(meta, Expr.Id(_, sel)) =>
-      js.Id(meta, sel),
+      js.Id(meta, safeId(sel)),
 
     Expr.Global(meta, Expr.Id(_, sel)) =>
       send(meta, id('Mermaid'), selector({}, str(sel)), []),
