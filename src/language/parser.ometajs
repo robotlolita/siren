@@ -62,7 +62,7 @@ ometa MermaidParser {
   decoratedPattern = '@' expr:a ws ';' ws pattern:p
                   -> [p[0], Expr.Apply({}, Expr.Id({}, 'call:'), a, [p[1]])],
 
-  patternBody = string?:a ws '=' ws exprList:as -> [as, a? a.value : ''],
+  patternBody = string?:a ws '=' ws stmtList:as -> [as, a? a.value : ''],
 
   keywordArgs = (ws keyword:k ws identifier:n -> [k, n])+,
 
@@ -75,20 +75,23 @@ ometa MermaidParser {
   // Statements
   letStmt = kw('let') ws identifier:a ws '=' ws expr:b -> Expr.Let({}, a, b),
 
-  module     = kw('module') ws moduleArgs?:a ws exportStmt?:b ws kw('where') ws exprList:cs
+  module     = kw('module') ws moduleArgs?:a ws exportStmt?:b ws kw('where') ws stmtList:cs
              -> Expr.Module({}, a || [], b, cs),
   moduleArgs = '|' ws identifier:a (ws identifier)*:as ws '|' -> [a].concat(as),
   exportStmt = kw('exposing') ws expr:a -> a,
 
-  useStmt = kw('use') ws listOf(#expr, ','):xs ws kw('in') ws '{' ws exprList:ys ws '}'
+  useExpr = kw('use') ws listOf(#expr, ','):xs ws kw('in') ws '{' ws stmtList:ys ws '}'
           -> Expr.Use({}, xs, ys),
 
   usingStmt = kw('using') ws listOf(#expr, ','):xs -> Expr.Using({}, xs),
 
   // Expressions
-  expr = letStmt
+  stmt = letStmt
        | usingStmt
-       | useStmt
+       | ';'        -> Expr.Empty
+       | expr,
+
+  expr = useExpr
        | pipeExpr,
 
   pipeExpr = pipeExpr:a ws ">>" ws identifier:i ~':'        -> Expr.Apply({}, i, a, [])
@@ -114,12 +117,11 @@ ometa MermaidParser {
               | identifier:a ~':'    -> Expr.Free({}, a)
               | kw('this')           -> Expr.Self({})
               | extendExpr:a         -> a
-              | ';'                  -> Expr.Empty
               | '(' ws expr:a ws ')' -> a,
 
   extendExpr = kw('extend') ws expr:a ws kw('with') ws record:v -> Expr.Extend({}, a, v),
 
-  exprList    = expr:a (ws ';' ws expr)*:as -> [a].concat(as),
+  stmtList = stmt:a (ws ';' ws stmt)*:as -> [a].concat(as),
 
   doExpr = kw('do') ws '{' ws (doCase:c ws ';' ws -> c)*:xs ws doTailCase:x ws '}'
          -> Expr.Do({}, xs.concat([x])),
@@ -173,11 +175,11 @@ ometa MermaidParser {
   record = '{' ws pattern:hd (ws ',' ws pattern)*:tl ws '}' -> Expr.Record({}, [hd].concat(tl))
          | '{' ws '}'                                       -> Expr.Record({}, []),
 
-  lambda  = '{' ws arglist:as ws '|' ws exprList:a ws '}' -> Expr.Lambda({}, as, a, true, '')
-          | '{' ws exprList:a ws '}'                      -> Expr.Lambda({}, [], a, true, ''),
+  lambda  = '{' ws arglist:as ws '|' ws stmtList:a ws '}' -> Expr.Lambda({}, as, a, true, '')
+          | '{' ws stmtList:a ws '}'                      -> Expr.Lambda({}, [], a, true, ''),
 
   arglist = identifier:a (ws identifier)*:as              -> [a].concat(as),
 
   program = ws module:m ws eof    -> m
-          | ws exprList:xs ws eof -> Expr.Program(xs)
+          | ws stmtList:xs ws eof -> Expr.Program(xs)
 }
