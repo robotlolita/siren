@@ -194,6 +194,11 @@ module.exports = function() {
     'apply:': function(xs) {
       checkArity(this, xs.length);
       return this.apply(null, xs);
+    },
+    'while:': function(predicate) {
+      checkArity(this, 0);
+      while (predicate[send]('value', methods, []))
+        this();
     }
   });
 
