@@ -5,14 +5,14 @@ sjs = $(bin)/sjs
 # -- CONFIGURATION -----------------------------------------------------
 LANG_TGT_DIR := lib
 LANG_SRC_DIR := src
-LANG_SRC := $(shell find $(LANG_SRC_DIR) -name '*.sjs') \
-            $(shell find $(LANG_SRC_DIR) -name '*.ometajs')
-LANG_TGT := ${LANG_SRC:$(LANG_SRC_DIR)/%.sjs=$(LANG_TGT_DIR)/%.js} \
-            ${LANG_SRC:$(LANG_SRC_DIR)/%.ometajs=$(LANG_TGT_DIR)/%.js}
+LANG_SRC_SJS := $(shell find $(LANG_SRC_DIR)/ -name '*.sjs')
+LANG_SRC_OMETA := $(shell find $(LANG_SRC_DIR)/ -name '*.ometajs')
+LANG_TGT := ${LANG_SRC_SJS:$(LANG_SRC_DIR)/%.sjs=$(LANG_TGT_DIR)/%.js} \
+            ${LANG_SRC_OMETA:$(LANG_SRC_DIR)/%.ometajs=$(LANG_TGT_DIR)/%.js}
 
 VM_TGT_DIR := vm
 VM_SRC_DIR := vm
-VM_SRC := $(shell find $(VM_SRC_DIR) -name '*.sjs')
+VM_SRC := $(shell find $(VM_SRC_DIR)/ -name '*.sjs')
 VM_TGT := ${VM_SRC:$(VM_SRC_DIR)/%.sjs=$(VM_TGT_DIR)/%.js}
 
 
@@ -44,13 +44,17 @@ $(VM_TGT_DIR)/%.js: $(VM_SRC_DIR)/%.sjs
 
 
 # -- TASKS -------------------------------------------------------------
+node_modules: package.json
+	npm install
+
 language: $(LANG_TGT)
 
 vm: $(VM_TGT)
 
-all: vm language
+all: node_modules vm language
 
 clean:
-	rm $(LANG_TGT) $(VM_TGT)
+	rm -rf node_modules
+	rm -f $(VM_TGT) $(LANG_TGT)
 
 .PHONY: clean
