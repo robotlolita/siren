@@ -386,13 +386,13 @@ module.exports = function() {
     'map:': function(f) {
       var res = [];
       for (var i = 0; i < this.length; ++i)
-        res[i] = f[send]('call:', methods, this[i]);
+        res[i] = f[send]('call:', methods, [this[i]]);
       return res;
     },
     'each:': function(f) {
       var res = [];
       for (var i = 0; i < this.length; ++i)
-        f[send]('call:', methods, this[i]);
+        f[send]('call:', methods, [this[i]]);
       return this;
     }
   });
