@@ -5,18 +5,18 @@ module.exports = function() {
   var protoOf = Object.getPrototypeOf;
 
   function nameOf(f) {
-    return '<' + (f.name || 'anonymous-function') + '#' + f.length + '>'
+    return '<' + (f.name || 'anonymous-function') + '#' + f.length + '>';
   }
 
   function checkArity(f, n) {
     if (f.length !== n) {
-      throw new RangeError('Wrong number of arguments (' + n + ') provided for ' + nameOf(f) )
+      throw new RangeError('Wrong number of arguments (' + n + ') provided for ' + nameOf(f) );
     }
   }
 
   function checkRange(min, max, n) {
     if (n < min || n > max) {
-      throw new RangeError("Index " + n + " out of bounds " + min + "..." + max)
+      throw new RangeError("Index " + n + " out of bounds " + min + "..." + max);
     }
   }
 
@@ -44,8 +44,8 @@ module.exports = function() {
   function toObj(xs) {
     return xs.reduce(function(r, p) {
       r[p[0]] = p[1];
-      return r
-    }, Object.create(null))
+      return r;
+    }, Object.create(null));
   }
 
   function extendProto(p, rec) {
@@ -56,7 +56,7 @@ module.exports = function() {
     var syms = Object.keys(rec).map(function(k) {
       var selector = Symbol(k);
       o[selector] = rec[k];
-      return [k, selector]
+      return [k, selector];
     });
 
     return [o, toObj(syms)];
@@ -65,7 +65,7 @@ module.exports = function() {
   function makeObj(o, proto) {
     var result = Object.create(proto || Object.prototype);
     methods.merge(extendObj(result, o));
-    return result
+    return result;
   }
 
   function fn(f, meta) {
@@ -148,13 +148,13 @@ module.exports = function() {
     } else {
       return this[messageNotUnderstood](message, args);
     }
-  }
+  };
   extendProto(Object.prototype, {
     'clone:': function(v) {
-      return makeObj(v, this)
+      return makeObj(v, this);
     },
     'as-string': function() {
-      return '<Object>'
+      return '<Object>';
     },
     'meta:': function(name) {
       return $meta.get(this, name) || unit;
@@ -164,7 +164,7 @@ module.exports = function() {
 
   extendProto(Function.prototype, {
     'as-string': function() {
-      return '<function#' + this.length + '>'
+      return '<function#' + this.length + '>';
     },
     'value': function() {
       checkArity(this, 0);
@@ -220,7 +220,7 @@ module.exports = function() {
 
   extendProto(Number.prototype, {
     'as-string': function() {
-      return String(this)
+      return String(this);
     },
     '+': function(b) {
       checkClass('Number', b);
@@ -246,7 +246,7 @@ module.exports = function() {
       return this.valueOf() === b.valueOf();
     },
     '=/=': function(b) {
-      return this.valueOf() === b.valueOf()
+      return this.valueOf() === b.valueOf();
     },
     '>': function(b) {
       checkClass('Number', b);
@@ -293,7 +293,7 @@ module.exports = function() {
 
   extendProto(Boolean.prototype, {
     'as-string': function() {
-      return String(this)
+      return String(this);
     },
     '&&': function(b) {
       checkClass('Boolean', b);
@@ -304,16 +304,16 @@ module.exports = function() {
       return this || b;
     },
     '===': function(b) {
-      return this.valueOf() === b.valueOf()
+      return this.valueOf() === b.valueOf();
     },
     '=/=': function(b) {
-      return this.valueOf() !== b.valueOf()
+      return this.valueOf() !== b.valueOf();
     },
     'then:else:': function(f, g) {
       if (this == true) {
-        return f[send]('value', methods, [])
+        return f[send]('value', methods, []);
       } else {
-        return g[send]('value', methods, [])
+        return g[send]('value', methods, []);
       }
     }
   });
@@ -321,13 +321,13 @@ module.exports = function() {
 
   extendProto(String.prototype, {
     'as-string': function() {
-      return this
+      return this;
     },
     '===': function(b) {
-      return this.valueOf() === b.valueOf()
+      return this.valueOf() === b.valueOf();
     },
     '=/=': function(b) {
-      return this.valueOf() === b.valueOf()
+      return this.valueOf() === b.valueOf();
     },
     '+': function(b) {
       checkClass('String', b);
@@ -366,9 +366,9 @@ module.exports = function() {
     'as-string': function() {
       return '['
            + this.map(function(a){
-                        return a[send]('as-string', methods, [])
+                        return a[send]('as-string', methods, []);
                       }).join(', ')
-           + ']'
+           + ']';
     },
     '+': function(b) {
       checkClass('Array', b);
@@ -387,7 +387,7 @@ module.exports = function() {
       var res = [];
       for (var i = 0; i < this.length; ++i)
         res[i] = f[send]('call:', methods, this[i]);
-      return res
+      return res;
     },
     'each:': function(f) {
       var res = [];
@@ -410,7 +410,7 @@ module.exports = function() {
   var unit = {};
   extendProto(unit, {
     'as-string': function() {
-      return '<unit>'
+      return '<unit>';
     }
   });
 
@@ -424,13 +424,13 @@ module.exports = function() {
     },
     'at:put:': function(key, value) {
       this.$data[key] = value;
-      return this
+      return this;
     },
     'has?:': function(key) {
-      return key in this.$data
+      return key in this.$data;
     },
     'keys': function() {
-      return Object.keys(this.$data)
+      return Object.keys(this.$data);
     },
     'values': function() {
       var data = this.$data;
@@ -457,18 +457,18 @@ module.exports = function() {
     var meta = $meta.get(obj) || {};
     meta[meta] = value;
     $meta.set(obj, meta);
-    return obj
+    return obj;
   }
 
   function $at(obj, name) {
-    return obj[name]
+    return obj[name];
   }
 
   // -- Global stuff ---------------------------------------------------
-  var moduleCache = {}
+  var moduleCache = {};
   function loadModule(name) {
     if (name in moduleCache) {
-      return moduleCache[name]
+      return moduleCache[name];
     } else {
       moduleCache[name] = require(name)(Mermaid);
       return moduleCache[name];
@@ -481,7 +481,7 @@ module.exports = function() {
         'require:': function(p){ return req(p) },
         'dirname': function(){ return dir },
         'filename': function(){ return mod.filename }
-      })
+      });
     },
     '$methods': methods,
     '$meta': $meta,
@@ -513,5 +513,5 @@ module.exports = function() {
     'unit': function(){ return unit }
   });
 
-  return Mermaid
-}()
+  return Mermaid;
+}();
