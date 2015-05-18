@@ -164,7 +164,7 @@ module.exports = function() {
 
   extendProto(Function.prototype, {
     'as-string': function() {
-      return '<function#' + this.arity + '>'
+      return '<function#' + this.length + '>'
     },
     'value': function() {
       checkArity(this, 0);
