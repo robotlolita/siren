@@ -60,6 +60,28 @@ when unpacking a particular trait in the namespace would solve this.
 Modules should provide their version and the version of the language they
 use. This could allow migration from older versions of the language, or better
 error reporting on older/newer compilers.
+*** FEATURE [#B] Have ~let a = b~ propagate ~a~ as the name metadata for ~b~
+*** FEATURE [#A] Implement non-local returns for blocks
+For now, this can probably be handled by using try/catch:
+
+extend Array with {
+  empty?
+  = this each: { a | ^false }; true
+}
+
+Turns into:
+
+Array.prototype['empty?'] = function() {
+  try {
+    this.forEach(function(a) {
+      throw false;
+    });
+    return true;
+  } catch(result) {
+    return result;
+  }
+}
+
 ** Compiler
 *** ENHANCEMENT Functions only need to be bound if they contain ~this~ expressions
 Currently all lambda functions compile to ~(function(...){ ... }).bind(this)~,
