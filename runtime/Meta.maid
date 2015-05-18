@@ -19,7 +19,7 @@ let Meta = {
 
   version: version
     """Versions an object."""
-  = m meta: "version" value: version
+  = m meta: "version" value: version,
 
   documentation: text
     """Provides documentation for a value."""
