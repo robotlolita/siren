@@ -31,6 +31,12 @@ function keywordLambda(meta, args, body, docs) {
   return [id, Expr.Lambda(meta, args.map(get(1)), body, false, docs)]
 }
 
+function decorateLet(letNode, expr) {
+  return Expr.Let(expr.meta,
+                  letNode.name,
+                  Expr.Apply(letNode.meta, Expr.Id({}, 'call:'), expr, [letNode.value]))
+}
+
 // ## object: MermaidParser
 ometa MermaidParser {
   space   = ^space | comment,
@@ -73,7 +79,8 @@ ometa MermaidParser {
 
 
   // Statements
-  letStmt = kw('let') ws identifier:a ws '=' ws expr:b -> Expr.Let({}, a, b),
+  letStmt = '@' expr:a ws ';' ws letStmt:b             -> decorateLet(b, a)
+          | kw('let') ws identifier:a ws '=' ws expr:b -> Expr.Let({}, a, b),
 
   module     = kw('module') ws moduleArgs?:a ws exportStmt?:b ws kw('where') ws stmtList:cs
              -> Expr.Module({}, a || [], b, cs),
