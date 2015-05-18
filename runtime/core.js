@@ -464,6 +464,10 @@ module.exports = function() {
     return obj[name];
   }
 
+  function Return(value) {
+    this.value = value;
+  }
+
   // -- Global stuff ---------------------------------------------------
   var moduleCache = {};
   function loadModule(name) {
@@ -492,7 +496,14 @@ module.exports = function() {
     '$fn': fn,
     '$proto': Object.getPrototypeOf,
     '$setMeta': $setMeta,
-    '$at': $at
+    '$at': $at,
+    '$return': function(value){ throw new Return(value) },
+    '$handleReturn': function(value) {
+      if (value instanceof Return)
+        return value.value;
+      else
+        throw value;
+    }
   };
 
   extendProto(Mermaid, {

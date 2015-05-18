@@ -61,7 +61,8 @@ Modules should provide their version and the version of the language they
 use. This could allow migration from older versions of the language, or better
 error reporting on older/newer compilers.
 *** FEATURE [#B] Have ~let a = b~ propagate ~a~ as the name metadata for ~b~
-*** FEATURE [#A] Implement non-local returns for blocks
+*** DONE [#A] Implement non-local returns for blocks
+CLOSED: [2015-05-18 Mon 20:02]
 For now, this can probably be handled by using try/catch:
 
 extend Array with {

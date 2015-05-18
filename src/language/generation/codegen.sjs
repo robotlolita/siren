@@ -6,6 +6,7 @@
 
 // -- Dependencies -----------------------------------------------------
 var js = require('./jsast');
+var nonLocalReturns = require('./returns');
 var { DoClause:Do, Expr } = require('../ast');
 var show = require('core.inspect');
 
@@ -157,7 +158,7 @@ function generateProperty(bind, pair) {
                js.Obj({},
                       [
                         js.Property({}, str('name'), str(_id.name), "init"),
-                        js.Property({}, str('documentation'), str(_l.docs), "init"),
+                        js.Property({}, str('documentation'), str(_l.meta.docs || ''), "init"),
                         js.Property({}, str('arguments'),
                                     js.ArrayExpr({}, _l.args.map(λ[str(#.name)])), "init")
                       ])
@@ -178,22 +179,26 @@ function generateBind(bind, meta, target, selector) {
                  [generate(bind, target)])
 }
 
-function makeLambda(bind, meta, args, body, bound) {
-  var fn = js.FnExpr(meta,
-                     null,
-                     generate(bind, args),
+function makeLambda(bind, meta, args, body) {
+  var compiledBody = js.Block(meta, returnLast(generate(bind, body).map(toStatement)));
+  if (nonLocalReturns.has(body)) {
+    compiledBody = nonLocalReturns.wrap(compiledBody);
+  }
+
+  var fn = js.FnExpr(meta, null, generate(bind, args), [], null, compiledBody, false);
+
+  return fn
+}
+
+function makeBlock(bind, meta, args, body) {
+  var fn = js.FnExpr(meta, null, generate(bind, args),
                      [], null,
-                     js.Block(meta,
-                              returnLast(generate(bind, body).map(toStatement))),
+                     js.Block({}, returnLast(generate(bind, body).map(toStatement))),
                      false);
 
-  if (bound) {
-    return js.Call(meta,
-                   js.Member(meta, fn, js.Str(meta, 'bind'), true),
-                   [js.This(meta)])
-  } else {
-    return fn
-  }
+  return js.Call(meta,
+                 js.Member(meta, fn, js.Str(meta, 'bind'), true),
+                 [js.This(meta)]);
 }
 
 function generateModule(bind, meta, args, exports, body) {
@@ -365,8 +370,11 @@ function generate(bind, x) {
       js.This(meta),
 
     // Values
-    Expr.Lambda(meta, args, body, bound, _) =>
-      makeLambda(bind, meta, args, body, bound),
+    Expr.Lambda(meta, args, body) =>
+      makeLambda(bind, meta, args, body),
+
+    Expr.Block(meta, args, body) =>
+      makeBlock(bind, meta, args, body),
 
     Expr.Num(meta, val) =>
       js.Num(meta, val),
@@ -404,6 +412,9 @@ function generate(bind, x) {
     Expr.Extend(meta, source, bindings) =>
       methCall(meta, id('Mermaid'), str('$extend'),
                [generate(bind, source), generatePlainRecord(bind, bindings)]),
+
+    Expr.Return(meta, expr) =>
+      methCall(meta, id('Mermaid'), str('$return'), [generate(bind, expr)]),
 
     Expr.Use(meta, traits, xs) =>
       js.Call(meta,

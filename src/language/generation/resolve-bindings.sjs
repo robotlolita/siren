@@ -56,12 +56,15 @@ function resolve(scope, node) {
       |> λ(newScope) ->
            Expr.Module(m, args, resolve(newScope, expt), resolve(newScope, xs)),
 
-    Expr.Lambda(meta, args, body, bound, docs) =>
+    Expr.Lambda(meta, args, body) =>
       Expr.Lambda(meta,
                   args,
-                  resolve(scope +++ unpack(args) +++ collect(body), body),
-                  bound,
-                  docs),
+                  resolve(scope +++ unpack(args) +++ collect(body), body)),
+
+    Expr.Block(meta, args, body) =>
+      Expr.Block(meta,
+                 args,
+                 resolve(scope +++ unpack(args) +++ collect(body), body)),
 
     Expr.Vector(meta, xs) =>
       Expr.Vector(meta, resolve(scope, xs)),
@@ -83,6 +86,9 @@ function resolve(scope, node) {
 
     Expr.Extend(meta, source, bindings) =>
       Expr.Extend(meta, resolve(scope, source), resolve(scope, bindings)),
+
+    Expr.Return(meta, expr) =>
+      Expr.Return(meta, resolve(scope, expr)),
 
     Expr.Use(meta, traits, exprs) =>
       Expr.Use(meta, resolve(scope, traits), resolve(scope, exprs)),

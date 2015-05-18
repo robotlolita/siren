@@ -4,6 +4,7 @@
 
 // -- Dependencies -----------------------------------------------------
 var ast = require('./ast');
+var extend = require('xtend');
 var Expr = ast.Expr;
 var Do = ast.DoClause;
 
@@ -28,7 +29,7 @@ function keywordApply(meta, target, args) {
 
 function keywordLambda(meta, args, body, docs) {
   var id = Expr.Id(meta, args.map(get(0)).map(get('name')).join(''));
-  return [id, Expr.Lambda(meta, args.map(get(1)), body, false, docs)]
+  return [id, Expr.Lambda(extend(meta, { docs: docs }), args.map(get(1)), body)]
 }
 
 function decorateLet(letNode, expr) {
@@ -73,8 +74,8 @@ ometa MermaidParser {
   keywordArgs = (ws keyword:k ws identifier:n -> [k, n])+,
 
   keywordPattern = keywordArgs:as ws patternBody:v            -> keywordLambda({}, as, v[0], v[1]),
-  unaryPattern   = identifier:a ~':' ws patternBody:v         -> [a, Expr.Lambda({}, [], v[0], false, v[1])],
-  binaryPattern  = symbols:a ws identifier:b ws patternBody:v -> [a, Expr.Lambda({}, [b], v[0], false, v[1])],
+  unaryPattern   = identifier:a ~':' ws patternBody:v         -> [a, Expr.Lambda({ docs: v[1] }, [], v[0])],
+  binaryPattern  = symbols:a ws identifier:b ws patternBody:v -> [a, Expr.Lambda({ docs: v[1] }, [b], v[0])],
 
 
 
@@ -130,6 +131,10 @@ ometa MermaidParser {
 
   stmtList = stmt:a (ws ';' ws stmt)*:as -> [a].concat(as),
 
+  blockStmt = stmt
+            | '^' ws expr:a -> Expr.Return({}, a),
+  blockStmtList = blockStmt:a (ws ';' ws blockStmt)*:as -> [a].concat(as),
+
   doExpr = kw('do') ws '{' ws (doCase:c ws ';' ws -> c)*:xs ws doTailCase:x ws '}'
          -> Expr.Do({}, xs.concat([x])),
   doAction     = identifier:i ws "<-" ws expr:e -> Do.Action({}, i, e)
@@ -182,8 +187,8 @@ ometa MermaidParser {
   record = '{' ws pattern:hd (ws ',' ws pattern)*:tl ws '}' -> Expr.Record({}, [hd].concat(tl))
          | '{' ws '}'                                       -> Expr.Record({}, []),
 
-  lambda  = '{' ws arglist:as ws '|' ws stmtList:a ws '}' -> Expr.Lambda({}, as, a, true, '')
-          | '{' ws stmtList:a ws '}'                      -> Expr.Lambda({}, [], a, true, ''),
+  lambda  = '{' ws arglist:as ws '|' ws blockStmtList:a ws '}' -> Expr.Block({}, as, a)
+          | '{' ws blockStmtList:a ws '}'                      -> Expr.Block({}, [], a),
 
   arglist = identifier:a (ws identifier)*:as              -> [a].concat(as),
 
