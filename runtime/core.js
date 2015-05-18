@@ -398,6 +398,15 @@ module.exports = function() {
   });
 
 
+  extendProto(Error.prototype, {
+    'panic!:': function(reason) {
+      var e = new Error(reason);
+      e.name = 'PANIC!';
+      throw e;
+    }
+  });
+
+
   var unit = {};
   extendProto(unit, {
     'as-string': function() {
@@ -492,6 +501,7 @@ module.exports = function() {
     'FFI': function() { return loadModule('./FFI') },
     'Meta': function(){ return loadModule('./Meta') },
     'Reflection': function(){ return loadModule('./Reflection') },
+    'Result': function(){ return loadModule('./data/Result') },
     'Dictionary': function(){ return Dictionary },
     'String': function(){ return String.prototype },
     'Boolean': function(){ return Boolean.prototype },
@@ -499,6 +509,7 @@ module.exports = function() {
     'Number': function(){ return Number.prototype },
     'Array': function(){ return Array.prototype },
     'Function': function(){ return Function.prototype },
+    'Error': function(){ return Error.prototype },
     'unit': function(){ return unit }
   });
 
