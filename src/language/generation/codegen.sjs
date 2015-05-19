@@ -297,11 +297,13 @@ function generateDo(bind, meta, xs) {
   }
 
   function map(m, r, i, e) {
-    return send(m, r, selector({}, str('map:')), [fexpr(e.meta, [i], e)])
+    return send(m, r, selector({}, str('map:')),
+                [binding({}, fexpr(e.meta, [i], e), js.This({}))])
   }
 
   function chain(m, r, i, e) {
-    return send(m, r, selector({}, str('chain:')), [fexpr(e.meta, [i], e)])
+    return send(m, r, selector({}, str('chain:')),
+                [binding({}, fexpr(e.meta, [i], e), js.This({}))])
   }
 }
 
