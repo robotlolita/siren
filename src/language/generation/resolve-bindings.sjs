@@ -32,10 +32,10 @@ function unpack(ids) {
 function propagate(scope, nodes) {
   return match nodes {
     [a @ Do.Action(_, Expr.Id(_, name), _), ...xs] =>
-      [a] +++ propagate(scope +++ [name], xs),
+      [resolve(scope, a)] +++ propagate(scope +++ [name], xs),
 
     [a @ Do.Return(_, Expr.Id(_, name), _), ...xs] =>
-      [a] +++ propagate(scope +++ [name], xs),
+      [resolve(scope, a)] +++ propagate(scope +++ [name], xs),
 
     [] => []
   }
@@ -98,6 +98,12 @@ function resolve(scope, node) {
 
     Expr.Do(meta, actions) =>
       Expr.Do(meta, propagate(scope, actions)),
+
+    Do.Action(meta, binding, expr) =>
+      Do.Action(meta, binding, resolve(scope, expr)),
+
+    Do.Return(meta, binding, expr) =>
+      Do.Return(meta, binding, resolve(scope, expr)),
 
     n @ Array => n.map(λ[resolve(scope, #)]),
     n => n
