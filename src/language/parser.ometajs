@@ -11,7 +11,7 @@ var Do = ast.DoClause;
 var reserved = [
   'extend', 'let', 'this', 'do', 'module', 'exposing',
   '=', '>>', 'with', 'where', 'use', 'in', 'using', 'return',
-  'true', 'false'
+  'true', 'false', 'def'
 ]
 
 function isValid(a) {
@@ -40,11 +40,13 @@ function decorateLet(letNode, expr) {
 
 // ## object: MermaidParser
 ometa MermaidParser {
-  space   = ^space | comment,
-  comment = fromTo('//', '\n'),
-  ws      = space*,
-  symbol  = ~(letter | digit | space
-             | '_' | '$' | '^' | '@' | ';' | ',' | '|' | ':' | '{' | '}' | '(' | ')' | '[' | ']') char,
+  space   = /\s/,
+  ignored = space | comment,
+  comment = fromTo('(*', '*)'):a -> a.slice(2, -2).trim(),
+  ws      = ignored*,
+  symbol  = ~( letter | digit | space
+             | '_' | '$' | '^' | '@' | ';' | ',' | '|' | ':' | '{' | '}' | '(' | ')' | '[' | ']'
+             ) char,
   eof     = ~char,
   kw :xs  = seq(xs) ~(letter | digit | symbol | ':'),
 
@@ -62,20 +64,22 @@ ometa MermaidParser {
 
   // Patterns
   pattern = decoratedPattern
-          | keywordPattern
-          | binaryPattern
-          | unaryPattern,
+          | kw('def') ws (keywordPattern | binaryPattern | unaryPattern),
 
   decoratedPattern = '@' expr:a ws ';' ws pattern:p
                   -> [p[0], Expr.Apply({}, Expr.Id({}, 'call:'), a, [p[1]])],
 
-  patternBody = string?:a ws '=' ws stmtList:as -> [as, a? a.value : ''],
+  docComment  = space* comment:a ws -> a,
+  patternBody = docComment?:a ws stmtList:as -> [as, a || ''],
 
   keywordArgs = (ws keyword:k ws identifier:n -> [k, n])+,
 
-  keywordPattern = keywordArgs:as ws patternBody:v            -> keywordLambda({}, as, v[0], v[1]),
-  unaryPattern   = identifier:a ~':' ws patternBody:v         -> [a, Expr.Lambda({ docs: v[1] }, [], v[0])],
-  binaryPattern  = symbols:a ws identifier:b ws patternBody:v -> [a, Expr.Lambda({ docs: v[1] }, [b], v[0])],
+  keywordPattern = keywordArgs:as space* patternBody:v
+                -> keywordLambda({}, as, v[0], v[1]),
+  unaryPattern   = identifier:a ~':' space* patternBody:v
+                -> [a, Expr.Lambda({ docs: v[1] }, [], v[0])],
+  binaryPattern  = symbols:a ws identifier:b space* patternBody:v
+                -> [a, Expr.Lambda({ docs: v[1] }, [b], v[0])],
 
 
 
@@ -184,8 +188,8 @@ ometa MermaidParser {
   vector = '[' ws expr:hd (ws ',' ws expr)*:tl ws ']' -> Expr.Vector({}, [hd].concat(tl))
          | '[' ws ']'                                 -> Expr.Vector({}, []),
 
-  record = '{' ws pattern:hd (ws ',' ws pattern)*:tl ws '}' -> Expr.Record({}, [hd].concat(tl))
-         | '{' ws '}'                                       -> Expr.Record({}, []),
+  record = '{' ws pattern:hd (ws pattern)*:tl ws '}' -> Expr.Record({}, [hd].concat(tl))
+         | '{' ws '}'                                -> Expr.Record({}, []),
 
   lambda  = '{' ws arglist:as ws '|' ws blockStmtList:a ws '}' -> Expr.Block({}, as, a)
           | '{' ws blockStmtList:a ws '}'                      -> Expr.Block({}, [], a),
