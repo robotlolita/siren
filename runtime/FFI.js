@@ -79,16 +79,6 @@ module.exports = function(Mermaid, Primitives) {
       source: '<native>'
     }),
 
-    'set:in:to:': Mermaid.$fn(function(aString, anObject, aValue) {
-      anObject[aString] = aValue;
-      return anObject
-    }, {
-      name: 'set:in:to:',
-      arguments: ['aString', 'anObject', 'avalue'],
-      filename: '<built-in>',
-      source: '<native>'
-    }),
-
     'export:': Mermaid.$fn(function(anObject) {
       return anObject === Mermaid.$globals.unit?  null
       :      isPrimitive(anObject)?               anObject
