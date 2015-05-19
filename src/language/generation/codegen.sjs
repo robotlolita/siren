@@ -204,7 +204,8 @@ function makeBlock(bind, meta, args, body) {
 function generateModule(bind, meta, args, exports, body) {
   return set(meta, mem({}, id('module'), id('exports')),
              fn({}, null, generate(bind, args),
-                cloneMethods({}) +++ unpackGlobals({})
+                [js.ExprStmt({}, str('use strict'))]
+                +++ cloneMethods({}) +++ unpackGlobals({})
                 +++ generate(bind, body)
                 +++ (exports? [js.Return({}, generate(bind, exports))] : [])))
 }
@@ -441,7 +442,8 @@ function generate(bind, x) {
       js.ExprStmt({},
                   js.Call({},
                           fn({}, null, [],
-                             cloneMethods({})
+                             [js.ExprStmt({}, str('use strict'))]
+                             +++ cloneMethods({})
                              +++ unpackGlobals({})
                              +++ returnLast(generate(bind, xs).map(toStatement))),
                           [])),
