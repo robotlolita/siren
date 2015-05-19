@@ -10,7 +10,7 @@ var Do = ast.DoClause;
 
 var reserved = [
   'extend', 'let', 'this', 'do', 'module', 'exposing',
-  '=', '>>', 'with', 'where', 'use', 'in', 'using',
+  '=', '>>', 'with', 'where', 'use', 'in', 'using', 'return',
   'true', 'false'
 ]
 
