@@ -1,33 +1,15 @@
-module | root |
+module | root vm |
   exposing { Meta-Mirror = Meta-Mirror
            , Object-Mirror = Object-Mirror
            }
 where
 
-let mermaid-meta = (FFI import: root) at: "$meta";
-let mermaid-methods = (FFI import: root) at: "$methods";
-
-let VM = {
-  dict: value
-  = FFI send: "$toDict" to: root with: [value],
-
-  proto: object
-  = FFI send: "$proto" to: root with: [object],
-
-  lookup: name in: box for: object
-  = FFI send: "lookup" to: box with: [object, name],
-
-  list: box for: object
-  = this dict: (FFI send: "list" to: box with: [object]),
-
-  get: name for: object
-  = FFI send: "$at" to: root with: [object, name]
-};
-
 let meta = {
-  for: object at: name
-    """Retrieves the meta-data with the given name for the object."""
-  = FFI send: "get" to: mermaid-meta with: [object, name]
+  get: name for: obj
+  = let value = vm get-meta: name for: obj;
+    (vm failed?: value)
+      then: { Result failure: "No meta-data " + name + " for " + obj as-string }
+      else: { Result ok: value }
 };
 
 let Meta-Mirror = {
@@ -37,29 +19,33 @@ let Meta-Mirror = {
 
   name
     """Retrieves the name of the object."""
-  = meta for: this reflectee at: "name",
+  = meta get: "name" for: this reflectee,
 
   arguments
     """Retrieves the arguments that the object takes (for blocks)."""
-  = meta for: this reflectee at: "arguments",
+  = meta get: "arguments" for: this reflectee,
 
   filename
     """Retrieves the file name where the object was defined."""
-  = meta for: this reflectee at: "filename",
+  = meta get: "filename" for: this reflectee,
 
   source
     """Retrieves the source code of the object."""
-  = meta for: this reflectee at: "source",
+  = meta get: "source" for: this reflectee,
 
   category
     """Retrieves the category of the object."""
-  = meta for: this reflectee at: "category"
+  = meta get: "category" for: this reflectee,
+
+  documentation
+    """Retrieves the documentation of the object."""
+  = meta get: "documentation" for: this reflectee
 };
 
 let Object-Mirror = {
   on: reflectee
     """Constructs a message mirror for the reflectee using the global method box."""
-  = this { reflectee = reflectee, method-box = mermaid-methods },
+  = this { reflectee = reflectee, method-box = vm methods },
 
   on: reflectee using: methods
     """Constructs a message mirror for the reflectee using the given method box."""
@@ -67,7 +53,7 @@ let Object-Mirror = {
 
   methods
     """Returns all methods the reflectee responds to in the method box."""
-  = VM list: this method-box for: this reflectee,
+  = vm list: this method-box for: this reflectee,
 
   method-names
     """Returns only the method names that the reflectee responds to."""
@@ -83,14 +69,22 @@ let Object-Mirror = {
 
   method-selector: name
     """Returns the selector for the given name."""
-  = VM lookup: name in: this method-box for: this reflectee,
+  = let selector = vm lookup: name in: this method-box for: this reflectee;
+    (vm failed?: selector)
+      then: { Result failure: (this reflectee as-string + " does not understand " + name) }
+      else: { Result ok: selector },
   
   method: name
     """Returns the method with the given name."""
-  = VM get: (this method-selector: name) for: this reflectee,
+  = do { selector <- this method-selector: name
+       ; return vm get: selector for: this reflectee
+       },
 
   prototype
     """Returns the immediate prototype of the reflectee."""
-  = VM proto: this reflectee
+  = let proto = vm prototype-of: this reflectee;
+    (vm failed?: selector)
+      then: { Result failure: ("No prototype for " + this reflectee as-string) }
+      else: { Result ok: proto }
 
 }

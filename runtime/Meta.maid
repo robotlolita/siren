@@ -1,10 +1,11 @@
-module | root |
+module | root vm |
   exposing Meta
 where
 
 let m = {
   meta: name value: value = { fn |
-    FFI send: "$setMeta" to: root with: [fn, name, value]
+    vm set-meta: name to: value for: fn;
+    fn
   }
 };
 

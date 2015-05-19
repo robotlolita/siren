@@ -2,7 +2,7 @@
 //
 // Provides a way for JavaScript and Mermaid to talk to each other, respecting
 // each other's semantics.
-module.exports = function(Mermaid) {
+module.exports = function(Mermaid, Primitives) {
 
   var $send = Mermaid.$send;
   var $methods = Mermaid.$methods;
@@ -46,14 +46,14 @@ module.exports = function(Mermaid) {
   // -- Module ---------------------------------------------------------
   var FFI = {
     'import:': Mermaid.$fn(function(anObject) {
-      return anObject == null?         Mermaid.$globals.unit
+      return anObject == null?         Primitives.unit
       :      isString(anObject)?       String(anObject)
       :      isBoolean(anObject)?      Boolean(anObject)
       :      isNumber(anObject)?       Number(anObject)
       :      isFunction(anObject)?     anObject
       :      Array.isArray(anObject)?  anObject.map(FFI['import:'])
       :      anObject[$unpack]?        anObject[$unpack]()
-      :      /* otherwise */           Mermaid.$toDict(anObject)
+      :      /* otherwise */           Primitives.$toDict(anObject)
     }, {
       name: 'import:',
       arguments: ['anObject'],

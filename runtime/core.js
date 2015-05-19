@@ -5,7 +5,7 @@ module.exports = function() {
   var protoOf = Object.getPrototypeOf;
 
   function nameOf(f) {
-    return '<' + (f.name || 'anonymous-function') + '#' + f.length + '>';
+    return '<' + (f.displayName || f.name || 'anonymous-function') + '#' + f.length + '>';
   }
 
   function checkArity(f, n) {
@@ -104,8 +104,8 @@ module.exports = function() {
     if (p == null)  return {};
 
     var methods = extend({}, this.get(p) || {});
-    if (this.parent)  extend(this.parent.list(p), methods);
-    extend(this.list(protoOf(p)), methods);
+    if (this.parent)  extend(methods, this.parent.list(p));
+    extend(methods, this.list(protoOf(p)));
     return methods;
   };
   MethodBox.prototype.clone = function() {
@@ -156,15 +156,16 @@ module.exports = function() {
     'as-string': function() {
       return '<Object>';
     },
-    'meta:': function(name) {
-      return $meta.get(this, name) || unit;
+    '===': function(v) {
+      return this === v;
     }
   });
 
 
   extendProto(Function.prototype, {
     'as-string': function() {
-      return '<function#' + this.length + '>';
+      console.log($meta.get(this));
+      return '<function ' + nameOf(this).slice(1, -1) + '>';
     },
     'value': function() {
       checkArity(this, 0);
@@ -468,16 +469,50 @@ module.exports = function() {
     this.value = value;
   }
 
+  var Primitives = {
+    'unit': unit,
+    'toDict': toDict
+  };
+  extendProto(Primitives, {
+    'failed?:': function(a){
+      return a == null;
+    },
+    'get-meta:for:': function(name, proto) {
+      var metas = $meta.get(proto) || {};
+      return metas[name];
+    },
+    'set-meta:to:for:': function(name, value, proto) {
+      $setMeta(proto, name, value);
+      return unit;
+    },
+    'prototype-of:': function(object) {
+      return Object.getPrototypeOf(object);
+    },
+    'lookup:in:for:': function(name, box, object) {
+      return box.lookup(object, name);
+    },
+    'list:for:': function(box, obj) {
+      return toDict(box.list(obj));
+    },
+    'get:for:': function(name, obj) {
+      return obj[name];
+    },
+    'methods': function() {
+      return methods;
+    }
+  });
+
   // -- Global stuff ---------------------------------------------------
   var moduleCache = {};
   function loadModule(name) {
     if (name in moduleCache) {
       return moduleCache[name];
     } else {
-      moduleCache[name] = require(name)(Mermaid);
+      moduleCache[name] = require(name)(Mermaid, Primitives);
       return moduleCache[name];
     }
   }
+
 
   var Mermaid = {
     '$module:': function(req, dir, mod) {
@@ -488,15 +523,10 @@ module.exports = function() {
       });
     },
     '$methods': methods,
-    '$meta': $meta,
     '$extend': extendObj,
     '$send': send,
     '$make': makeObj,
-    '$toDict': toDict,
     '$fn': fn,
-    '$proto': Object.getPrototypeOf,
-    '$setMeta': $setMeta,
-    '$at': $at,
     '$return': function(value){ throw new Return(value) },
     '$handleReturn': function(value) {
       if (value instanceof Return)
