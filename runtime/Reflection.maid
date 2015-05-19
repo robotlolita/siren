@@ -15,7 +15,7 @@ let meta = {
 let Meta-Mirror = {
   on: reflectee
     """Constructs a Meta-Mirror for the reflectee."""
-  = Meta-Mirror { reflectee = reflectee },
+  = this { reflectee = reflectee },
 
   name
     """Retrieves the name of the object."""
