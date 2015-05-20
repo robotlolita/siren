@@ -70,7 +70,7 @@ ometa MermaidParser {
                   -> [p[0], Expr.Apply({}, Expr.Id({}, 'call:'), a, [p[1]])],
 
   docComment  = space* comment:a ws -> a,
-  patternBody = docComment?:a ws stmtList:as -> [as, a || ''],
+  patternBody = docComment?:a ws ('=' ws)? stmtList:as -> [as, a || ''],
 
   keywordArgs = (ws keyword:k ws identifier:n -> [k, n])+,
 
