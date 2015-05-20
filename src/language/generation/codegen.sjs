@@ -25,9 +25,17 @@ function toStatement(x) {
 }
 
 function safeId(a) {
-  return a.replace(/(\W)/g, function(_, a){
+  return '_' + a.replace(/(\W)/g, function(_, a){
     return '$' + a.charCodeAt(0) + '_';
   });
+}
+
+function toSafeId {
+  Expr.Id(meta, name) => Expr.Id(meta, safeId(name));
+}
+
+function safeArgs(args) {
+  return args.map(toSafeId);
 }
 
 function returnLast(ys) {
@@ -176,13 +184,13 @@ function makeLambda(bind, meta, args, body) {
     compiledBody = nonLocalReturns.wrap(compiledBody);
   }
 
-  var fn = js.FnExpr(meta, null, generate(bind, args), [], null, compiledBody, false);
+  var fn = js.FnExpr(meta, null, generate(bind, safeArgs(args)), [], null, compiledBody, false);
 
   return fn
 }
 
 function makeBlock(bind, meta, args, body) {
-  var fn = js.FnExpr(meta, null, generate(bind, args),
+  var fn = js.FnExpr(meta, null, generate(bind, safeArgs(args)),
                      [], null,
                      js.Block({}, returnLast(generate(bind, body).map(toStatement))),
                      false);
@@ -194,7 +202,7 @@ function makeBlock(bind, meta, args, body) {
 
 function generateModule(bind, meta, args, exports, body) {
   return set(meta, mem({}, id('module'), id('exports')),
-             fn({}, null, generate(bind, args),
+             fn({}, null, generate(bind, safeArgs(args)),
                 [js.ExprStmt({}, str('use strict'))]
                 +++ cloneMethods({})
                 +++ generate(bind, body)
@@ -263,17 +271,17 @@ function generateDo(bind, meta, xs) {
             compileMulti([
               [i, generate(bind, e)]
             ] +++ es),
-            generate(bind, last(es).binding),
+            generate(bind, toSafeId(last(es).binding)),
             compile(ys)),
 
     [Do.Action(m, i, e), ...ys] =>
-      chain(m, generate(bind, e), generate(bind, i), compile(ys)),
+      chain(m, generate(bind, e), generate(bind, toSafeId(i)), compile(ys)),
 
 
     [Do.MultiReturn(xs), n @ Do.Action(m, i, e), ...ys] =>
       chain(last(xs).meta,
             compileMulti([[xs[0].binding, generate(bind, xs[0].expr)]] +++ xs.slice(1)),
-            generate(bind, last(xs).binding),
+            generate(bind, toSafeId(last(xs).binding)),
             compile([n] +++ ys)),
 
     n => raise(new Error("No match: " + show(n)))
@@ -281,7 +289,7 @@ function generateDo(bind, meta, xs) {
 
   function compileMulti {
     [[i, r], Do.Return(m, i2, e), ...ys] =>
-      compileMulti([[i2, map(m, r, generate(bind, i), generate(bind, e))]] +++ ys),
+      compileMulti([[i2, map(m, r, generate(bind, toSafeId(i)), generate(bind, e))]] +++ ys),
 
     [[i, r]] => r,
 
