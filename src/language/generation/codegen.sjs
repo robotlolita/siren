@@ -51,16 +51,16 @@ function returnLast(ys) {
   }
 }
 
-function fn(meta, id, args, body) {
-  return js.FnExpr(meta, id, args, [], null, js.Block({}, body.map(toStatement)), false)
+function fn(meta, ident, args, body) {
+  return js.FnExpr(meta, ident, args, [], null, js.Block({}, body.map(toStatement)), false)
 }
 
 function fexpr(meta, args, expr) {
   return fn(meta, null, args, [js.Return(expr.meta, expr)])
 }
 
-function boundFn(meta, id, args, body) {
-  return methCall(meta, fn({}, id, args, body), id('bind'), [js.This({})])
+function boundFn(meta, ident, args, body) {
+  return methCall(meta, fn({}, ident, args, body), id('bind'), [js.This({})])
 }
 
 function binding(meta, a, b) {
@@ -379,7 +379,8 @@ function generate(bind, x) {
       makeBlock(bind, meta, args, body),
 
     Expr.Num(meta, val) =>
-      js.Num(meta, val),
+      val < 0?           js.Unary(meta, "-", true, js.Num({}, -val))
+      : /* otherwise */  js.Num(meta, val),
 
     Expr.Str(meta, val) =>
       js.Str(meta, val),
