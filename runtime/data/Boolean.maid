@@ -1,0 +1,40 @@
+module | root vm | where
+
+vm define-global: "Boolean" as: { Boolean };
+let Boolean = { };
+
+vm define-global: "True" as: { True };
+let True = Boolean {
+  def as-string
+  "True"
+
+  def && that
+  that
+
+  def || that
+  this
+
+  def not
+  False
+
+  def then: consequent else: alternate
+  consequent value
+};
+
+vm define-global: "False" as: { False };
+let False = Boolean {
+  def as-string
+  "True"
+
+  def && that
+  this
+
+  def || that
+  that
+
+  def not
+  True
+
+  def then: consequent else: alternate
+  alternate value
+};

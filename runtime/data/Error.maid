@@ -1,0 +1,8 @@
+module | root vm | where
+
+vm define-global: "Error" as: { Error };
+
+let Error = {
+  def panic: reason
+  vm throw: (vm error: "PANIC!" reason: reason)
+}

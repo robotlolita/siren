@@ -1,0 +1,158 @@
+module | root vm | where
+
+vm define-global: "Float" as: { vm native-float };
+
+(* Native numbers just use Float64 *)
+vm apply-trait-globally: extend Float with {
+  (* Constants *)
+  def max-value
+  vm float/max-value
+
+  def min-value
+  vm float/min-value
+
+  def nan
+  vm float/nan
+
+  def negative-infinity
+  vm float/-infinity
+
+  def positive-infinity
+  vm float/+infinity
+
+  (* Tests *)
+  def nan?
+  vm if: (vm float/nan?: this)
+     then: True
+     else: False
+
+  def finite?
+  vm if: (vm float/finite?: this)
+     then: True
+     else: False
+
+  (* Logical comparisons *)
+  def === that
+  vm if: (vm float: this equals?: that)
+     then: True
+     else: False
+
+  def =/= that
+  vm if: (vm float: this not-equals?: that)
+     then: True
+     else: False
+
+  def > that
+  vm if: (vm float: this greater?: that)
+     then: True
+     else: False
+
+  def >= that
+  vm if: (vm float: this greater-or-equal?: that)
+     then: True
+     else: False
+
+  def < that
+  vm if: (vm float: this less-than?: that)
+     then: True
+     else: False
+
+  def <= that
+  vm if: (vm float: this less-than-or-equal?: that)
+     then: True
+     else: False
+
+  (* Conversions *)
+  def as-exponential
+  vm float/as-exponential: this
+
+  def as-fixed
+  vm float/as-fixed: this
+
+  def as-locale-string
+  vm float/as-locale-string: this
+
+  def as-string
+  vm float/as-string: this
+
+  (* Arithmetic *)
+  def + that
+  vm float: this plus: that
+
+  def - that
+  vm float: this minus: that
+
+  def * that
+  vm float: this times: that
+
+  def ** that
+  vm float: this power: that
+
+  def / that
+  vm float: this div: that
+
+  def modulus: that
+  vm float: this modulus: that
+
+  (* Bitwise *)
+  def bit-shift-right: that
+  vm float: this bit-shift-right: that
+
+  def bit-shift-left: that
+  vm float: this bit-shift-left: that
+
+  def unsigned-bit-shift-right: that
+  vm float: this unsigned-bit-shift-right: that
+
+  def bit-or: that
+  vm float: this bit-or: that
+
+  def bit-and: that
+  vm float: this bit-and: that
+
+  def bit-xor: that
+  vm float: this bit-xor: that
+
+  (* Geometry *)
+  def arc-cosine
+  vm float/arccosine: this
+
+  def arc-sine
+  vm float/arcsine: this
+
+  def arc-tangent
+  vm float/arctangent: this
+
+  def arc-tangent: that
+  vm float: this arctangent: that
+
+  def cosine
+  vm float/cosine: this
+
+  def sine
+  vm float/sine: this
+
+  def tangent
+  vm float/tangent: this
+  
+  (* Maths/etc *)
+  def exp
+  vm float/exp: this
+
+  def log
+  vm float/log: this
+
+  def square-root
+  vm float/square-root: this
+  
+  (* Rounding / Converting *)
+  def absolute
+  vm float/absolute: this
+
+  def ceil
+  vm float/ceil: this
+
+  def floor
+  vm float/floor: this
+};
+

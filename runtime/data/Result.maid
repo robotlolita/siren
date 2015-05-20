@@ -1,165 +1,148 @@
-module | root |
-  exposing Result
-where
+module | root vm | where
 
-@Meta documentation: """
-Result provides ways of representing results of functions that may fail.
-
-A `Result` represents results of computations, such that one can deal
-with the potential failures in a simpler way. An example of how one might
-use a `Result` value is in handling the result value of searching for
-a single item in an Array.
-
-@example::
-
-  let SearchTrait = extend Array with {
-    find: predicate
-    = this each: { value | (predicate call: value) then: { ^Result ok: value }};
-      Result failure: "No match."
-  }
-
-Results can be in one of two possible states:
-
- -  `Ok`: represents successful results;
- -  `Failure`: represents failed results.
-
-And can be constructed by the `ok:` and `failure:` constructors.
-""";
+vm define-global: Result as: { Result };
 let Result = {
   // -- Sub-objects ----------------------------------------------------
-  Ok = Ok,
-  Failure = Failure,
+  def Ok
+  Ok
+  
+  def Failure
+  Failure
 
   // -- Constructors ---------------------------------------------------
   @Meta category: "Constructing";
-  ok: value
-  = Ok { value = value },
+  def ok: value
+  Ok {
+    def value = value
+  }
 
   @Meta category: "Constructing";
-  failure: value
-  = Failure { value = value },
+  def failure: value
+  Failure {
+    def value = value
+  }
 
   // -- Accessing ------------------------------------------------------
   @Meta category: "Accessing";
-  merge
-  = this value
+  def merge
+  this value
 };
 
 let Ok = Result {
   // -- Monadic sequencing ---------------------------------------------
   @Meta category: "Transforming";
-  map: transformation
-  = let newValue = transformation call: this value;
-    this { value = newValue },
+  def map: transformation
+  let newValue = transformation call: this value;
+  this { def value newValue }
 
   @Meta category: "Transforming";
-  chain: transformation
-  = transformation call: this value,
+  def chain: transformation
+  transformation call: this value
 
   @Meta category: "Transforming";
-  match: pattern
-  = pattern Ok call: this value,
+  def match: pattern
+  pattern Ok call: this value
 
   // -- Error handling -------------------------------------------------
   @Meta category: "Error handling";
-  recover: handler
-  = this,
+  def recover: handler
+  this
 
   // -- Conversions ----------------------------------------------------
   @Meta category: "Converting";
-  as-string
-  = "<Result ok: " + this value as-string + ">",
+  def as-string
+  "<Result ok: " + this value as-string + ">"
 
   @Meta category: "Converting";
-  as-array
-  = [this value],
+  def as-array
+  [this value]
 
   // -- Logical comparisons --------------------------------------------
   @Meta category: "Comparing and testing";
-  === aResult
-  = let value = this value;
-    aResult match: {
-      Ok      = { v | v === value },
-      Failure = { v | false }
-    },
+  def === aResult
+  let value = this value;
+  aResult match: {
+    def Ok      { v | v === value }
+    def Failure { v | False }
+  }
 
   @Meta category: "Comparing and testing";
-  ok?
-  = true,
+  def ok?
+  True
 
   @Meta category: "Comparing and testing";
-  failure?
-  = false,
+  def failure?
+  False
 
   @Meta category: "Comparing and testing";
-  then: ok else: failure
-  = ok value,
+  def then: ok else: failure
+  ok value
 
   // -- Extracting -----------------------------------------------------
   @Meta category: "Accessing";
-  get!
-  = this value,
+  def get!
+  this value
 
   @Meta category: "Accessing";
-  get-or-default: defaultValue
-  = this value
+  def get-or-default: defaultValue
+  this value
 };
 
 let Failure = Result {
   // -- Monadic sequencing ---------------------------------------------
   @Meta category: "Transforming";
-  map: transformation
-  = this,
+  def map: transformation
+  this
 
   @Meta category: "Transforming";
-  chain: transformation
-  = this,
+  def chain: transformation
+  this
 
   @Meta category: "Transforming";
-  match: pattern
-  = pattern Failure call: this value,
+  def match: pattern
+  pattern Failure call: this value
 
   // -- Error handling -------------------------------------------------
   @Meta category: "Error handling";
-  recover: handler
-  = handler call: this value,
+  def recover: handler
+  handler call: this value
 
   // -- Conversions ----------------------------------------------------
   @Meta category: "Converting";
-  as-string
-  = "<Result failure: " + this value as-string + ">",
+  def as-string
+  "<Result failure: " + this value as-string + ">"
 
   @Meta category: "Converting";
-  as-array
-  = [],
+  def as-array
+  []
 
   // -- Logical comparisons --------------------------------------------
   @Meta category: "Comparing and testing";
-  === aResult
-  = let value = this value;
-    aResult match: {
-      Ok      = { v | false },
-      Failure = { v | v === value }
-    },
+  def === aResult
+  let value = this value;
+  aResult match: {
+    def Ok      { v | False }
+    def Failure { v | v === value }
+  }
 
   @Meta category: "Comparing and testing";
-  ok?
-  = false,
+  def ok?
+  False
 
   @Meta category: "Comparing and testing";
-  failure?
-  = true,
+  def failure?
+  True
 
   @Meta category: "Comparing and testing";
-  then: ok else: failure
-  = failure value,
+  def then: ok else: failure
+  failure value,
 
   // -- Extracting -----------------------------------------------------
   @Meta category: "Accessing";
-  get!
-  = Error panic!: "Can't extract a value from a failure. Use `merge`, `get-or-default:`, or `recover:`",
+  def get!
+  Error panic!: "Can't extract a value from a failure. Use `merge`, `get-or-default:`, or `recover:`",
 
   @Meta category: "Accessing";
-  get-or-default: defaultValue
-  = defaultValue
+  def get-or-default: defaultValue
+  defaultValue
 }
