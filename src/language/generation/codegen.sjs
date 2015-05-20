@@ -52,11 +52,11 @@ function fexpr(meta, args, expr) {
 }
 
 function boundFn(meta, id, args, body) {
-  return methCall(meta, fn({}, id, args, body), str('bind'), [js.This({})])
+  return methCall(meta, fn({}, id, args, body), id('bind'), [js.This({})])
 }
 
 function binding(meta, a, b) {
-  return methCall(meta, a, str('bind'), [b])
+  return methCall(meta, a, id('bind'), [b])
 }
 
 function set(meta, id, expr) {
@@ -64,10 +64,8 @@ function set(meta, id, expr) {
 }
 
 function send(meta, obj, sel, args) {
-  return methCall(meta,
-                  obj,
-                  id('$send'),
-                  [sel, id('$methods'), js.ArrayExpr({}, args)]);
+  return js.Call(meta, id('$send'),
+                 [obj, sel, id('$methods'), js.ArrayExpr({}, args)]);
 }
 
 function letb(meta, name, expr) {
@@ -104,15 +102,8 @@ function cloneMethods(meta, parent) {
   parent = parent || dot({}, ['Mermaid', '$methods']);
   return [
     letb(meta, id('$send'), dot({}, ['Mermaid', '$send'])),
-    letb(meta, id('$methods'), methCall({}, parent, str('clone'), []))
+    letb(meta, id('$methods'), methCall({}, parent, id('clone'), []))
   ]
-}
-
-function unpackGlobals(meta) {
-  return declVars(meta, {
-    'Module'   : methCall({}, id('Mermaid'), str('$module:'),
-                          [id('require'), id('__dirname'), id('module')])
-  })
 }
 
 function id(str) {
@@ -125,7 +116,7 @@ function str(a) {
 
 function methCall(meta, target, selector, args) {
   return js.Call(meta,
-                 js.Member(meta, target, selector, true),
+                 js.Member(meta, target, selector, false),
                  args)
 }
 
@@ -152,7 +143,7 @@ function generateProperty(bind, pair) {
     idToStr(generate(bind, _id)),
     methCall(_fn.meta,
              id('Mermaid'),
-             str('$fn'),
+             id('$fn'),
              [
                generate(bind, _fn),
                js.Obj({},
@@ -174,7 +165,7 @@ function generateBind(bind, meta, target, selector) {
                        [js.Id(meta, ref)],
                        methCall(meta,
                                 mem(meta, js.Id(meta, ref), generate(bind, selector)),
-                                str('bind'),
+                                id('bind'),
                                 [js.Id(meta, ref)])),
                  [generate(bind, target)])
 }
@@ -205,7 +196,7 @@ function generateModule(bind, meta, args, exports, body) {
   return set(meta, mem({}, id('module'), id('exports')),
              fn({}, null, generate(bind, args),
                 [js.ExprStmt({}, str('use strict'))]
-                +++ cloneMethods({}) +++ unpackGlobals({})
+                +++ cloneMethods({})
                 +++ generate(bind, body)
                 +++ (exports? [js.Return({}, generate(bind, exports))] : [])))
 }
@@ -394,7 +385,7 @@ function generate(bind, x) {
     Expr.Record(meta, xs) =>
       methCall(meta,
                id('Mermaid'),
-               str('$make'),
+               id('$make'),
                [generatePlainRecord(bind, Expr.Record(meta, xs))]),
 
     Expr.Let(meta, Expr.Id(_, name), value) =>
@@ -413,21 +404,21 @@ function generate(bind, x) {
            [generatePlainRecord(bind, bindings)]),
 
     Expr.Extend(meta, source, bindings) =>
-      methCall(meta, id('Mermaid'), str('$extend'),
+      methCall(meta, id('Mermaid'), id('$extend'),
                [generate(bind, source), generatePlainRecord(bind, bindings)]),
 
     Expr.Return(meta, expr) =>
-      methCall(meta, id('Mermaid'), str('$return'), [generate(bind, expr)]),
+      methCall(meta, id('Mermaid'), id('$return'), [generate(bind, expr)]),
 
     Expr.Use(meta, traits, xs) =>
       js.Call(meta,
               fn({}, null, [id('$methods')],
-                 [methCall(meta, id('$methods'), str('merge'), generate(bind, traits))]
+                 [methCall(meta, id('$methods'), id('merge'), generate(bind, traits))]
                  +++ generate(bind, xs)),
-              [methCall({}, id('$methods'), str('clone'), [])]),
+              [methCall({}, id('$methods'), id('clone'), [])]),
 
     Expr.Using(meta, traits) =>
-      methCall(meta, id('$methods'), str('merge'), generate(bind, traits)),
+      methCall(meta, id('$methods'), id('merge'), generate(bind, traits)),
 
     Expr.Var(meta, Expr.Id(_, sel)) =>
       js.Id(meta, safeId(sel)),
@@ -444,7 +435,6 @@ function generate(bind, x) {
                           fn({}, null, [],
                              [js.ExprStmt({}, str('use strict'))]
                              +++ cloneMethods({})
-                             +++ unpackGlobals({})
                              +++ returnLast(generate(bind, xs).map(toStatement))),
                           [])),
 
