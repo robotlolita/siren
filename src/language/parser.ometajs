@@ -9,9 +9,8 @@ var Expr = ast.Expr;
 var Do = ast.DoClause;
 
 var reserved = [
-  'extend', 'let', 'this', 'do', 'module', 'exposing',
+  'extend', 'let', 'this', 'do', 'module', 'exposing', 'def',
   '=', '>>', 'with', 'where', 'use', 'in', 'using', 'return',
-  'true', 'false', 'def'
 ]
 
 function isValid(a) {
@@ -45,7 +44,7 @@ ometa MermaidParser {
   comment = fromTo('(*', '*)'):a -> a.slice(2, -2).trim(),
   ws      = ignored*,
   symbol  = ~( letter | digit | space
-             | '_' | '$' | '^' | '@' | ';' | ',' | '|' | ':' | '{' | '}' | '(' | ')' | '[' | ']'
+             | '_' | '$' | '^' | '@' | ';' | ',' | ':' | '{' | '}' | '(' | ')' | '[' | ']'
              ) char,
   eof     = ~char,
   kw :xs  = seq(xs) ~(letter | digit | symbol | ':'),
