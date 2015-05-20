@@ -24,7 +24,7 @@ let True = Boolean {
 vm define-global: "False" as: { False };
 let False = Boolean {
   def as-string
-  "True"
+  "False"
 
   def && that
   this
