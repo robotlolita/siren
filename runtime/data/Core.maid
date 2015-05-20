@@ -1,0 +1,62 @@
+module | root vm | where
+
+(* Things inheriting from Object.prototype *)
+vm apply-trait-globally: extend vm native-object with {
+  def as-string
+  "<Object>"
+
+  def === that
+  vm if: (vm object: this equals?: that)
+     then: True
+     else: False
+
+  def =/= that
+  (this === that) not
+  
+  def does-not-understand: message with-arguments: args
+  Error panic!: (this as-string) + " does not understand " + message
+
+  def clone: value
+  vm make-object: value inheriting: this
+};
+
+(* Root object from which all Mermaid objects (besides blocks) descend *)
+vm apply-trait-globally: extend Root with {
+  def as-string
+  "<Root>"
+};
+
+(* No value *)
+vm define-global: "Unit" as: {
+  def as-string
+  "<Unit>"
+};
+
+(* Ordering *)
+let Ordering = {
+  def less-than
+  Less-Than
+
+  def greater-than
+  Greater-Than
+
+  def equal
+  Equal
+};
+
+let Ordering-Proto = {};
+
+let Less-Than = {
+  def match: pattern
+  pattern LESS value
+};
+
+let Greater-Than = {
+  def match: pattern
+  pattern GREATER value
+};
+
+let Equal = {
+  def match: pattern
+  pattern EQUAL value
+}

@@ -75,6 +75,10 @@ vm apply-trait-globally: extend Float with {
   def as-string
   vm float/as-string: this
 
+  (* Ranges *)
+  def .. end
+  Range from: this to: end
+  
   (* Arithmetic *)
   def + that
   vm float: this plus: that
@@ -154,5 +158,4 @@ vm apply-trait-globally: extend Float with {
 
   def floor
   vm float/floor: this
-};
-
+}

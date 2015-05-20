@@ -28,7 +28,7 @@ vm apply-trait-globally: extend Function with {
   vm function/invoke*: this with: args
 
   def while: predicate
-  vm while: { (predicate value) then: vm true else: vm false }
+  vm while: { (predicate value) then: { vm true } else: { vm false } }
      do: this
 
   def repeat-forever

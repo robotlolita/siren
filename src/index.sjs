@@ -27,21 +27,21 @@ function generateJs(ast) {
 
 exports.makeRuntime = makeRuntime;
 function makeRuntime() {
-  var prelude = path.join(__dirname, '../runtime/core.js');
+  installExtensions();
+  var prelude = path.join(__dirname, '../runtime');
   return require(prelude);
 }
 
 exports.run = run;
 function run(source, runtime, filename) {
   global.Mermaid = runtime;
-  installExtensions(runtime);
   return filename && filename !== '<stdin>'?
     require(filename).exports
   : vm.runInThisContext(source, { filename: filename });
 }
 
 exports.installExtensions = installExtensions;
-function installExtensions(runtime) {
+function installExtensions() {
   if (!require.extensions['.maid']) {
     require.extensions['.maid'] = function(module, filename) {
       var code = fs.readFileSync(filename, 'utf8');

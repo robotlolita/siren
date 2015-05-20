@@ -33,7 +33,7 @@ vm apply-trait-globally: extend String with {
   vm string/length: this
 
   def + that
-  vm string/concat: that
+  vm string: this concat: that
 
   def index-of: value
   let index = vm string: this index-of: value;

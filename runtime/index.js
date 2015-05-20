@@ -208,7 +208,7 @@ module.exports = function() {
         default: return object[selector].apply(object, args);
       }
     } else {
-      return $send(object, message, methods, [args]);
+      throw new TypeError("Failed to send " + message + " with arguments: " + args);
     }
   };
 
@@ -275,7 +275,8 @@ module.exports = function() {
   //
   // @type: ({ String -> Mermaid.Object}, Mermaid.Object | null) -> Mermaid.Object
   function $makeObject(record, prototype) {
-    var result = Object.create(prototype || Base);
+    if (prototype === undefined) prototype = Base;
+    var result = Object.create(prototype);
     $methods.merge($extendObject(result, record));
     return result;
   }
@@ -291,8 +292,25 @@ module.exports = function() {
     return fn;
   }
 
+  // --- Global instances ----------------------------------------------
+  // The cache of modules that have been lazily loaded
+  var moduleCache = Object.create(null);
+
+  // The global method scope
+  var $methods = new MethodBox();
+
+  // The global meta-data mapping
+  var $meta = new Meta();
+
+  // The base object from which all Mermaid objects descend
+  var Base = Object.create(Object.prototype);
+
   // --- Primitive operations ------------------------------------------
   var Primitives = $makeObject({
+    'as-string': function() {
+      return '<VM primitives>';
+    },
+
     'failed?:': function(a) {
       return a == null;
     },
@@ -645,9 +663,22 @@ module.exports = function() {
         f(a[i]);
     },
 
+    'array:map:': function(a, f) {
+      assert_array(a);
+      var result = [];
+      for (var i = 0; i < a.length; ++i)
+        result[i] = f(a[i]);
+      return result;
+    },
+
     'array:index-of:': function(a, b) {
       assert_array(a);
       return a.indexOf(b) + 1;
+    },
+
+    'array:last-index-of:': function(a, b) {
+      assert_array(a);
+      return a.lastIndexOf(b) + 1;
     },
 
     'array:join:': function(a, b) {
@@ -658,6 +689,11 @@ module.exports = function() {
     'array:push:': function(a, b) {
       assert_array(a);
       a.push(b);
+    },
+
+    'array/shallow-copy:': function(a) {
+      assert_array(a);
+      return a.slice();
     },
 
     'array/pop:': function(a) {
@@ -685,7 +721,7 @@ module.exports = function() {
       return a.sort(f);
     },
 
-    'array/remove-at:': function(a, b) {
+    'array:remove-at:': function(a, b) {
       assert_array(a); assert_number(b); assert_bounds(b, 1, a.length);
       a.splice(b, 1);
     },
@@ -723,8 +759,8 @@ module.exports = function() {
     },
 
     // Functions
-    'function:in-context:call-with-arguments:': function(a, b, c) {
-      assert_function(a); assert_array(c);
+    'function:in-context:call-with-argument:': function(a, b, c) {
+      assert_function(a);
       return a.call(b, c);
     },
 
@@ -824,7 +860,11 @@ module.exports = function() {
       return Function.prototype;
     },
 
-    'define-gloal:as:': function(name, value) {
+    'native-console': function() {
+      return console;
+    },
+
+    'define-global:as:': function(name, value) {
       var record = Object.create(null);
       record[name] = value;
       $methods.merge($extendObject(Mermaid, record));
@@ -832,8 +872,26 @@ module.exports = function() {
 
     'apply-trait-globally:': function(trait) {
       $methods.merge(trait);
+    },
+
+    'global-methods': function() {
+      return $methods;
+    },
+
+    'make-object:inheriting:': function(object, proto) {
+      return $makeObject(object, proto);
+    },
+
+    'meta/for:at:': function(object, name) {
+      assert_string(name);
+      return $meta.get(object, name);
+    },
+
+    'meta/for:at:put:': function(object, name, value) {
+      assert_string(name);
+      $meta.set(object, name, value);
     }
-  });
+  }, null);
 
   // -- Module loading -------------------------------------------------
   function loadModule(name) {
@@ -844,18 +902,6 @@ module.exports = function() {
   }
 
   // -- Global configuration -------------------------------------------
-  // The cache of modules that have been lazily loaded
-  var moduleCache = Object.create(null);
-
-  // The global method scope
-  var $methods = new MethodBox();
-
-  // The global meta-data mapping
-  var $meta = new Meta();
-
-  // The base object from which all Mermaid objects descend
-  var Base = Object.create(null);
-
   // Special internal functions available to all modules
   var Mermaid = Object.create(Base);
   extend(Mermaid, {
@@ -869,24 +915,29 @@ module.exports = function() {
   });
 
   $methods.merge($extendObject(Mermaid, {
-    'Root': Base
+    'Root': function(){ return Base }
   }));
+
+  global.Mermaid = Mermaid;
 
   // Define global objects that are reachable in the prelude
   // Modules are expected to update the globals as necessary
-  require('./data/Object')(Mermaid, Primitives);
+  require('./Meta')(Mermaid, Primitives);
+  require('./data/Core')(Mermaid, Primitives);
+  require('./data/Error')(Mermaid, Primitives);
   require('./data/Number')(Mermaid, Primitives);
   require('./data/Boolean')(Mermaid, Primitives);
-  require('./data/Error')(Mermaid, Primitives);
   require('./data/Function')(Mermaid, Primitives);
   require('./data/String')(Mermaid, Primitives);
-//  require('./data/Array')(Mermaid, Primitives);
+  require('./data/Array')(Mermaid, Primitives);
 //  require('./data/Dictionary')(Mermaid, Primitives);
   require('./data/Result')(Mermaid, Primitives);
-//  require('./data/Reference')(Mermaid, Primitives);
-//  require('./data/Range')(Mermaid, Primitives);
+  require('./data/Reference')(Mermaid, Primitives);
+  require('./data/Range')(Mermaid, Primitives);
 //  require('./data/Date')(Mermaid, Primitives);
 //  require('./data/Set')(Mermaid, Primitives);
 //  require('./data/Map')(Mermaid, Primitives);
+  require('./Console')(Mermaid, Primitives);
 
-};
+  return Mermaid;
+}();

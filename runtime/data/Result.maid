@@ -1,15 +1,13 @@
 module | root vm | where
 
-vm define-global: Result as: { Result };
+vm define-global: "Result" as: { Result };
 let Result = {
-  // -- Sub-objects ----------------------------------------------------
   def Ok
   Ok
   
   def Failure
   Failure
 
-  // -- Constructors ---------------------------------------------------
   @Meta category: "Constructing";
   def ok: value
   Ok {
@@ -22,14 +20,12 @@ let Result = {
     def value = value
   }
 
-  // -- Accessing ------------------------------------------------------
   @Meta category: "Accessing";
   def merge
   this value
 };
 
 let Ok = Result {
-  // -- Monadic sequencing ---------------------------------------------
   @Meta category: "Transforming";
   def map: transformation
   let newValue = transformation call: this value;
@@ -43,12 +39,10 @@ let Ok = Result {
   def match: pattern
   pattern Ok call: this value
 
-  // -- Error handling -------------------------------------------------
   @Meta category: "Error handling";
   def recover: handler
   this
 
-  // -- Conversions ----------------------------------------------------
   @Meta category: "Converting";
   def as-string
   "<Result ok: " + this value as-string + ">"
@@ -57,7 +51,6 @@ let Ok = Result {
   def as-array
   [this value]
 
-  // -- Logical comparisons --------------------------------------------
   @Meta category: "Comparing and testing";
   def === aResult
   let value = this value;
@@ -78,7 +71,6 @@ let Ok = Result {
   def then: ok else: failure
   ok value
 
-  // -- Extracting -----------------------------------------------------
   @Meta category: "Accessing";
   def get!
   this value
@@ -89,7 +81,6 @@ let Ok = Result {
 };
 
 let Failure = Result {
-  // -- Monadic sequencing ---------------------------------------------
   @Meta category: "Transforming";
   def map: transformation
   this
@@ -102,12 +93,10 @@ let Failure = Result {
   def match: pattern
   pattern Failure call: this value
 
-  // -- Error handling -------------------------------------------------
   @Meta category: "Error handling";
   def recover: handler
   handler call: this value
 
-  // -- Conversions ----------------------------------------------------
   @Meta category: "Converting";
   def as-string
   "<Result failure: " + this value as-string + ">"
@@ -116,7 +105,6 @@ let Failure = Result {
   def as-array
   []
 
-  // -- Logical comparisons --------------------------------------------
   @Meta category: "Comparing and testing";
   def === aResult
   let value = this value;
@@ -135,12 +123,11 @@ let Failure = Result {
 
   @Meta category: "Comparing and testing";
   def then: ok else: failure
-  failure value,
+  failure value
 
-  // -- Extracting -----------------------------------------------------
   @Meta category: "Accessing";
   def get!
-  Error panic!: "Can't extract a value from a failure. Use `merge`, `get-or-default:`, or `recover:`",
+  Error panic!: "Can't extract a value from a failure. Use `merge`, `get-or-default:`, or `recover:`"
 
   @Meta category: "Accessing";
   def get-or-default: defaultValue

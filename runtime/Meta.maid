@@ -1,0 +1,27 @@
+module | root vm | where
+
+vm define-global: "Meta" as: { Meta };
+let Meta = {
+  def for: object at: name put: value
+  vm meta/for: object at: name put: value;
+  object
+
+  def at: name put: value
+  { object | this for: object at: name put: value }
+
+  def category: name
+  (* Categorises an object. *)
+  this at: "category" put: name
+
+  def name: name
+  (* Names an object *)
+  this at: "name" put: name
+
+  def version: version
+  (* Versions an object. *)
+  this at: "version" put: version
+
+  def documentation: text
+  (* Provides documentation for a value. *)
+  this at: "documentation" put: text
+}

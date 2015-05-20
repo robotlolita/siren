@@ -37,4 +37,4 @@ let False = Boolean {
 
   def then: consequent else: alternate
   alternate value
-};
+}

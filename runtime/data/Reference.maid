@@ -1,0 +1,20 @@
+module | root vm | where
+
+vm define-global: "Reference" as: { Reference };
+let Reference = {
+  def as-string
+  "<Reference " + this value as-string + ">"
+
+  def new: value
+  (this {}) set!: value
+
+  def new
+  this new: Unit
+
+  def value
+  vm object: this at: "value"
+
+  def set!: value
+  vm object: this at: "value" put: value;
+  this
+}
