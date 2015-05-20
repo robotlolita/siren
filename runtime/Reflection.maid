@@ -1,0 +1,90 @@
+module | root vm |
+  exposing { Meta-Mirror = Meta-Mirror
+           , Object-Mirror = Object-Mirror
+           }
+where
+
+let meta = {
+  get: name for: obj
+  = let value = vm get-meta: name for: obj;
+    (vm failed?: value)
+      then: { Result failure: "No meta-data " + name + " for " + obj as-string }
+      else: { Result ok: value }
+};
+
+let Meta-Mirror = {
+  on: reflectee
+    """Constructs a Meta-Mirror for the reflectee."""
+  = this { reflectee = reflectee },
+
+  name
+    """Retrieves the name of the object."""
+  = meta get: "name" for: this reflectee,
+
+  arguments
+    """Retrieves the arguments that the object takes (for blocks)."""
+  = meta get: "arguments" for: this reflectee,
+
+  filename
+    """Retrieves the file name where the object was defined."""
+  = meta get: "filename" for: this reflectee,
+
+  source
+    """Retrieves the source code of the object."""
+  = meta get: "source" for: this reflectee,
+
+  category
+    """Retrieves the category of the object."""
+  = meta get: "category" for: this reflectee,
+
+  documentation
+    """Retrieves the documentation of the object."""
+  = meta get: "documentation" for: this reflectee
+};
+
+let Object-Mirror = {
+  on: reflectee
+    """Constructs a message mirror for the reflectee using the global method box."""
+  = this { reflectee = reflectee, method-box = vm methods },
+
+  on: reflectee using: methods
+    """Constructs a message mirror for the reflectee using the given method box."""
+  = this { reflectee = reflectee, method-box = methods },
+
+  methods
+    """Returns all methods the reflectee responds to in the method box."""
+  = vm list: this method-box for: this reflectee,
+
+  method-names
+    """Returns only the method names that the reflectee responds to."""
+  = this methods keys,
+
+  method-selectors
+    """Returns only the method selectors that the reflectee responds to."""
+  = this methods values,
+
+  responds-to?: name
+    """True if the reflectee can respond to the given message."""
+  = this methods has?: name,
+
+  method-selector: name
+    """Returns the selector for the given name."""
+  = let selector = vm lookup: name in: this method-box for: this reflectee;
+    (vm failed?: selector)
+      then: { Result failure: (this reflectee as-string + " does not understand " + name) }
+      else: { Result ok: selector },
+  
+  method: name
+    """Returns the method with the given name."""
+  = do { selector <- this method-selector: name
+       ; return vm get: selector for: this reflectee
+       },
+
+  prototype
+    """Returns the immediate prototype of the reflectee."""
+  = let proto = vm prototype-of: this reflectee;
+    (vm failed?: selector)
+      then: { Result failure: ("No prototype for " + this reflectee as-string) }
+      else: { Result ok: proto }
+
+}
