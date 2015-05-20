@@ -1,6 +1,8 @@
 The Mermaid Language
 ====================
 
+> **This is incredibly outdated.**
+
 The Mermaid language is a compile-to-JavaScript language crafted for teaching
 the concepts of programming and programming languages to newcomers using the
 WebPlatform. The language semantics are somewhat closer to JavaScript's, but
