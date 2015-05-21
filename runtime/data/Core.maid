@@ -14,7 +14,18 @@ vm apply-trait-globally: extend vm native-object with {
   (this === that) not
   
   def does-not-understand: message with-arguments: args
-  Error panic!: (this as-string) + " does not understand " + message
+    Error panic!:
+      (this as-string) + " does not understand " + message + "\n"
+    + "It was given the arguments: " + args as-string + ", "
+    + "but is unable to perform any computation.
+
+Possible causes for this are:
+
+ *  Mistyping the message name;
+ *  Sending the message to the wrong object;
+ *  Not importing the correct traits in the current scope."
+    
+       
 
   def clone: value
   vm make-object: value inheriting: this
@@ -27,24 +38,29 @@ vm apply-trait-globally: extend Root with {
 };
 
 (* No value *)
-vm define-global: "Unit" as: {
+vm define-global: "Unit" as: { Unit };
+
+let Unit = {
   def as-string
   "<Unit>"
 };
 
 (* Other special objects *)
-vm define-global: "Singleton" as: {
+vm define-global: "Singleton" as: { Singleton };
+
+let Singleton = {
   def clone: anything
     this
 };
 
 vm define-global: "lazy" as: {
   { fn | let data = vm false;
-         let update = { data = fn(); data }
+         let update = { data = fn value; data };
          { vm if: data then: data else: update value } }
 };
 
 (* Ordering *)
+vm define-global: "Ordering" as: { Ordering };
 let Ordering = Singleton {
   def less-than
   Less-Than
@@ -58,15 +74,15 @@ let Ordering = Singleton {
 
 let Less-Than = Singleton {
   def match: pattern
-  pattern LESS value
+    pattern less-than
 };
 
 let Greater-Than = Singleton {
   def match: pattern
-  pattern GREATER value
+    pattern greater-than
 };
 
 let Equal = Singleton {
   def match: pattern
-  pattern EQUAL value
+    pattern equal
 }

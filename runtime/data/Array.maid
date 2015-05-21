@@ -87,7 +87,7 @@ vm apply-trait-globally: extend Array with {
     this copy take-last!
 
   def take-last!
-    vm array/pop: this;
+    vm array/pop: this
 
   def prepend: value
   this copy prepend!: value
@@ -116,9 +116,9 @@ vm apply-trait-globally: extend Array with {
   def sort-by!: comparator
   vm array: this sort: { left right |
     comparator call: left with: right >> match: {
-      def LESS    { -1 }
-      def EQUAL   {  0 }
-      def GREATER {  1 }
+      def less-than    -1
+      def equal         0
+      def greater-than  1
     }
   };
   this
