@@ -157,4 +157,13 @@ let Future = {
                         def failure: v = resolver failure: v };
         this
     }
+
+  def recover: transformation
+    let self = this;
+    Future new: Task {
+      def fork: resolver
+        self listen!: { def failure: v = (transformation call: v) fork: resolver
+                        def success: v = resolver success: v };
+        this
+    }
 }
