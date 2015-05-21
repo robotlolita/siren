@@ -17,11 +17,17 @@ let Channel = {
   def close!
     this#state set!: Closed
 
+  def take
+    this#buffer take
+    
   def take!
-    this#buffer take!
+    this take run!
 
+  def put
+    this#buffer put
+    
   def put!: value
-    this#buffer put!: value
+    this put: value >> run!
 }
 
 let Blocking-Buffer = {
@@ -48,9 +54,6 @@ let Blocking-Buffer = {
                   def cleanup: state Unit }
    }
 
-  def put!: value
-    this put: value >> run!
-
   def take
     (this#buffer empty? not) then: {
       let value = this#buffer take-first!
@@ -62,7 +65,4 @@ let Blocking-Buffer = {
                     self#on-new-value listen-once!: { ev | self take fork: resolver }
                   def cleanup: state Unit }
     }
-
-  def take!
-    this take run!
 }
