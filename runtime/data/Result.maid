@@ -37,7 +37,7 @@ let Ok = Result {
 
   @Meta category: "Transforming";
   def match: pattern
-  pattern Ok call: this value
+  pattern ok: this value
 
   @Meta category: "Error handling";
   def recover: handler
@@ -55,8 +55,8 @@ let Ok = Result {
   def === aResult
   let value = this value;
   aResult match: {
-    def Ok      { v | v === value }
-    def Failure { v | False }
+    def ok: v = v === value
+    def failure: v = False
   }
 
   @Meta category: "Comparing and testing";
@@ -91,7 +91,7 @@ let Failure = Result {
 
   @Meta category: "Transforming";
   def match: pattern
-  pattern Failure call: this value
+  pattern failure: this value
 
   @Meta category: "Error handling";
   def recover: handler
@@ -109,8 +109,8 @@ let Failure = Result {
   def === aResult
   let value = this value;
   aResult match: {
-    def Ok      { v | False }
-    def Failure { v | v === value }
+    def ok: v = False
+    def failure: v = v === value
   }
 
   @Meta category: "Comparing and testing";

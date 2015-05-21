@@ -6,6 +6,10 @@ vm apply-trait-globally: extend Array with {
   def as-string
   "[" + (this join: ", ") + "]"
 
+  (* Testing *)
+  def empty?
+    this length === 0
+  
   (* Accessing *)
   def at: index
   vm array: this at: index
@@ -23,6 +27,16 @@ vm apply-trait-globally: extend Array with {
   def remove-at!: index
   vm array: this remove-at: index;
   this
+
+  def remove-all!
+    vm object: this at: "length" put: 0
+  
+  def remove: value
+    this copy remove!: value
+  
+  def remove!: value
+    this index-of: value >> map: (this remove-at!: _);
+    this
   
   (* Collection operations *)
   def length
@@ -36,6 +50,9 @@ vm apply-trait-globally: extend Array with {
   (index === 0) then: { Result failure: "Not found." }
                 else: { Result ok: index }
 
+  def find: value
+    this index-of: value >> map: (this at: _)
+                
   def last-index-of: value
   let index = vm array: this last-index-of: value;
   (index === 0) then: { Result failure: "Not found." }
@@ -66,19 +83,25 @@ vm apply-trait-globally: extend Array with {
   vm array: this push: value;
   this
 
-  def without-last
-  this copy without-last!
+  def take-last
+    this copy take-last!
 
-  def without-last!
-  vm array/pop: this;
-  this
+  def take-last!
+    vm array/pop: this;
 
   def prepend: value
   this copy prepend!: value
 
   def prepend!: value
-  vm array: this shift: value;
+  vm array: this unshift: value;
   this
+
+  def take-first
+    this copy take-first!
+
+  def take-first!
+    vm array/shift: this
+    
 
   def reverse
   this copy reverse!

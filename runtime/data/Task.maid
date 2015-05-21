@@ -1,0 +1,160 @@
+module | root vm | where
+
+vm define-global: "Task" as: { Task };
+
+let Task = {
+  def cleanup: state
+    this
+
+  def of: value
+    this {
+      def fork: resolver = resolver success: value; this
+      def cleanup: state = this
+    }
+
+  def success: value
+    this of: value
+
+  def success
+    this of: Unit
+
+  def failed: value
+    this {
+      def fork: resolver = resolver failure: value; this
+      def cleanup: state = this
+    }
+
+  def failed
+    this failed: Unit
+
+  def map: transform
+    let self = this;
+    this {
+      def fork: resolver
+        self fork: { def success: v = resolver success: (transform call: v)
+                     def failure: v = resolver failure: v };
+        self
+    }
+
+  def chain: transform
+    let self = this;
+    this {
+      def fork: resolver
+        self fork: { def success: v = (transform call: v) fork: resolver
+                     def failure: v = resolver failure: v };
+        self
+    }
+
+  def match: pattern
+    let self = this;
+    this {
+      def fork: resolver
+        self fork: { def success: v = resolver success: (pattern success: v)
+                     def failure: v = resolver failure: (pattern failure: v) };
+        self
+    }
+
+  def as-string
+    "<Task>"
+
+  def recover: handler
+    let self = this;
+    this {
+      def fork: resolver
+        self fork: { def success: v = resolver success: v
+                     def failure: v = (handler call: v) fork: resolver };
+        self
+    }
+
+  def run!
+    Future new: this
+};
+
+vm define-global: "Future" as: { Future };
+
+def PENDING = {
+  def match: pattern
+    pattern PENDING value
+};
+def RESOLVED = {
+  def match: pattern
+    pattern RESOLVED value
+};
+def REJECTED = {
+  def match: pattern
+    pattern REJECTED value
+};
+
+let Future = {
+  def new: task
+    let value = Unit;
+    let state = PENDING;
+    let pending = [];
+    
+    let result = this {
+      def #pending = []
+
+      def #value = value
+      def set-value!: new-value
+        value = new-value;
+        this
+        
+      def #state = state
+      def set-state!: new-state
+        state = new-state;
+        this
+    };
+    
+    state = task fork: {
+      def success: v
+        state = RESOLVED;
+        value = v;
+        pending each: { a | a success: v }
+      
+      def failure: error
+        state = REJECTED;
+        value = v;
+        pending each: { a | a failure: error }
+    };
+    vm defer: { task cleanup: state };
+    
+    result
+
+  def success: value
+    this new: (Task success: value)
+
+  def failure: value
+    this new: (Task failure: value)
+
+  def as-string
+    this#state match: {
+      def PENDING  "<Future(Pending)>"
+      def RESOLVED "<Future success: " + this#value as-string + ">"
+      def REJECTED "<Future failure: " + this#value as-string + ">"
+    }
+
+  def listen!: pattern
+    this#state match: {
+      def PENDING  = this#pending append!: pattern
+      def RESOLVED = pattern success: this#value
+      def REJECTED = pattern failure: this#value
+    }
+
+  def map: transformation
+    let self = this;
+    Future new: Task {
+      def fork: resolver
+        self listen!: { def success: v = resolver success: (transformation call: v)
+                        def failure: v = resolver failure: v };
+        this
+    }
+
+  def chain: transformation
+    let self = this;
+    Future new: Task {
+      def fork: resolver
+        self listen!: { def success: v = (transformation call: v) fork: resolver
+                        def failure: v = resolver failure: v };
+        this
+    }
+}

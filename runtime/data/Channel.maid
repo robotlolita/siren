@@ -1,0 +1,68 @@
+module | root vm | where
+
+vm define-global: "Channel" as: { Channel };
+
+let Channel-State = Singleton { };
+let Open   = Channel-State { };
+let Closed = Channel-State { };
+
+let Channel = {
+  def with-size: size
+    this with-buffer: (Blocking-Buffer with-size: size)
+
+  def with-buffer: buffer
+    this { def #buffer = buffer
+           def #state  = Reference new: Open }
+
+  def close!
+    this#state set!: Closed
+
+  def take!
+    this#buffer take!
+
+  def put!: value
+    this#buffer put!: value
+}
+
+let Blocking-Buffer = {
+  def with-size: size
+    let on-unblocked-event = Event new;
+    let on-new-value-event = Event new;
+    let buffer = [];
+    this { def #buffer = buffer
+           def #on-unblocked = on-unblocked-event
+           def #on-new-value = on-new-value-event
+           def #size = size }
+
+  def put: value
+    (this#buffer length < this#size) then: {
+      this#buffer append!: value;
+      this#on-new-value notify!: Unit;
+      Task success
+    } else: {
+      let self = this;
+      Task new: { def fork: resolver
+                    self#on-unblocked listen-once!: { ev |
+                      (self put: value) fork: resolver
+                    }
+                  def cleanup: state Unit }
+   }
+
+  def put!: value
+    this put: value >> run!
+
+  def take
+    (this#buffer empty? not) then: {
+      let value = this#buffer take-first!
+      this#on-unblocked notify!: Unit
+      Task of: value
+    } else: {
+      let self = this;
+      Task new: { def fork: resolver
+                    self#on-new-value listen-once!: { ev | self take fork: resolver }
+                  def cleanup: state Unit }
+    }
+
+  def take!
+    this take run!
+}

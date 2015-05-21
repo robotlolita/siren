@@ -912,6 +912,10 @@ module.exports = function() {
     'meta/for:at:put:': function(object, name, value) {
       assert_string(name);
       $meta.set(object, name, value);
+    },
+
+    'defer:': function(f) {
+      process.nextTick(f);
     }
   }, null);
 
@@ -956,6 +960,8 @@ module.exports = function() {
   require('./data/Result')(Mermaid, Primitives);
   require('./data/Reference')(Mermaid, Primitives);
   require('./data/Range')(Mermaid, Primitives);
+  require('./data/Task')(Mermaid, Primitives);
+  require('./data/Channel')(Mermaid, Primitives);
   require('./Console')(Mermaid, Primitives);
 
   return Mermaid;

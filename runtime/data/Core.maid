@@ -32,8 +32,20 @@ vm define-global: "Unit" as: {
   "<Unit>"
 };
 
+(* Other special objects *)
+vm define-global: "Singleton" as: {
+  def clone: anything
+    this
+};
+
+vm define-global: "lazy" as: {
+  { fn | let data = vm false;
+         let update = { data = fn(); data }
+         { vm if: data then: data else: update value } }
+};
+
 (* Ordering *)
-let Ordering = {
+let Ordering = Singleton {
   def less-than
   Less-Than
 
@@ -44,19 +56,17 @@ let Ordering = {
   Equal
 };
 
-let Ordering-Proto = {};
-
-let Less-Than = {
+let Less-Than = Singleton {
   def match: pattern
   pattern LESS value
 };
 
-let Greater-Than = {
+let Greater-Than = Singleton {
   def match: pattern
   pattern GREATER value
 };
 
-let Equal = {
+let Equal = Singleton {
   def match: pattern
   pattern EQUAL value
 }
