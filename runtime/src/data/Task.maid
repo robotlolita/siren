@@ -76,6 +76,15 @@ let Task = {
 
   (* Combining tasks *)
   def || that
+    this or: that
+
+  def && that
+    this and: that
+
+  def / that
+    this race-against-success-of: that
+  
+  def or: that
     (* Takes the result of whichever task resolves first *)
     let self = this;
 
@@ -108,7 +117,7 @@ let Task = {
     };
     result
 
-  def + that
+  def and: that
     (* Resolves both tasks in parallel *)
     let self = this;
 
@@ -147,7 +156,7 @@ let Task = {
     };
     result
 
-  def / that
+  def race-against-success-of: that
     (* Takes the value of the first task to successfully resolve *)
     (* Resolves both tasks in parallel *)
     let self = this;
@@ -187,8 +196,8 @@ let Task = {
     };
     result
 
-    
-    
+  
+
   def run!
     Future new: this
 };
