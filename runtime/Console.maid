@@ -15,17 +15,22 @@ let console = {
 
 let Console = {
   def log: message
-  console print: message level: log
+  console print: message level: log;
+  this
 
   def info: message
-  console print: message level: info
+  console print: message level: info;
+  this
   
   def warn: message
-  console print: message level: warn
+  console print: message level: warn;
+  this
 
   def error: message
-  console print: message level: error
+  console print: message level: error;
+  this
   
   def trace: message
-  console print: message level: trace
+  console print: message level: trace;
+  this
 }

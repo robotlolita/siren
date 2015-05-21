@@ -14,13 +14,15 @@ vm apply-trait-globally: extend Array with {
   this copy at: index put!: value
   
   def at: index put!: value
-  vm array: this at: index put: value
+  vm array: this at: index put: value;
+  this
 
   def remove-at: index
   this copy remove-at!: index
   
   def remove-at!: index
-  vm array: this remove-at: index
+  vm array: this remove-at: index;
+  this
   
   (* Collection operations *)
   def length
@@ -47,7 +49,8 @@ vm apply-trait-globally: extend Array with {
 
   (* Iteration *)
   def each: computation
-  vm array: this each: { a | computation call: a }
+  vm array: this each: { a | computation call: a };
+  this
 
   def map: computation
   vm array: this map: { a | computation call: a }
@@ -57,25 +60,29 @@ vm apply-trait-globally: extend Array with {
   this copy push!: value
 
   def append!: value
-  vm array: this push: value
+  vm array: this push: value;
+  this
 
   def without-last
   this copy without-last!
 
   def without-last!
-  vm array/pop: this
+  vm array/pop: this;
+  this
 
   def prepend: value
   this copy prepend!: value
 
   def prepend!: value
-  vm array: this shift: value
+  vm array: this shift: value;
+  this
 
   def reverse
   this copy reverse!
 
   def reverse!
-  vm array/reverse: this
+  vm array/reverse: this;
+  this
 
   def sort-by: comparator
   this copy sort-by!: coparator
@@ -87,7 +94,7 @@ vm apply-trait-globally: extend Array with {
       def EQUAL   {  0 }
       def GREATER {  1 }
     }
-  }
-
+  };
+  this
   
 }
