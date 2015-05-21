@@ -1,4 +1,4 @@
-#+STARTUP: content indent
+#+STARTUP: content
 #+TODO: TODO WORKING(w) | DONE(d) DROPPED(D)
 #+TYP_TODO: ENHANCEMENT(e) FEATURE(f) BUG(b) TODO(t) | DONE
 
@@ -14,7 +14,8 @@ with the server. The IDE would be a client, but the information from the VM
 could also be used by text editors (like Emacs), external debuggers, etc.
 
 ** Language
-*** BUG [#C] Don't inherit from ~Object.prototype~ by default
+*** DONE [#C] Don't inherit from ~Object.prototype~ by default
+CLOSED: [2015-05-21 Thu 17:13]
 Currently all objects inherit from Object.prototype, implicitly. With the
 current settings, this isn't a problem because there aren't many behaviours set
 in ~Object.prototype~. This might change in the future, so it's interesting to
@@ -46,7 +47,8 @@ interesting to support arbitrary expressions that resolve to objects in this
 construct, but we need to be able to gather all message names for the selector
 values the object supports.
 
-*** ENHANCEMENT Get rid of ~=~ in message definitions
+*** DONE Get rid of ~=~ in message definitions
+CLOSED: [2015-05-21 Thu 17:13]
 It's not strictly necessary in the grammar, and we could have a cleaner
 language overall, but it's mostly a cosmetic change, and I'm not sure it
 delivers that much value.
@@ -90,6 +92,19 @@ which is unnecessary when ~this~ doesn't happen inside that expression. We can
 avoid the overhead by having a simple pass where we revert the ~bound~ state of
 the lambda if it doesn't use a ~this~ expression inside of it.
 
+*** ENHANCEMENT Avoid using Function#bind for bound functions
+`.bind` handles a lot of cases we don't care about. We can instead have a
+separate pass on methods that checks if any function refers to `this`, in which
+case we add a `$this` binding and have those functions refer to that.
+
+In other cases, we might want to use our own `.bind` implementation.
+*** ENHANCEMENT Have separate `send` functions for different arities
+This way we pay less for invoking functions of smaller arities (the common case).
+*** ENHANCEMENT Soft typing
+*** ENHANCEMENT Specialise `send` for known types, IC dynamic sends
+This will require bigger file sizes, but will also give us more speed.
+
+*** BUG Disallow duplicated binding declaration
 ** Libraries
 *** WORKING Meta-data and Mirror-based reflection
 Should allow people to add meta-data to an object, and query meta-data about
