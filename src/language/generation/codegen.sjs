@@ -334,14 +334,8 @@ function replaceHoles(bind, x) {
         :      /* _ */    { n: r.n,     args: r.args +++ [x] }
       }, { n: 0, args: [] });
 
-      var [targs, texpr] = replaceHoles(bind, target);
-      var newArgs = apArgs.args.map(λ[replaceHoles(bind, #)]);
-      var newArgsHoles = flatten(newArgs.map(λ[#[0]]));
-      var newArgsExprs = newArgs.map(λ[#[1]]);
 
-
-      return [targs +++ repArgs +++ newArgsHoles,
-              Expr.Apply(meta, selector, texpr, newArgsExprs)];
+      return [repArgs, Expr.Apply(meta, selector, target, apArgs.args)]
 
     default:
       return [[], x]
