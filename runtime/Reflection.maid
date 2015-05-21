@@ -10,6 +10,12 @@ let meta = {
        >> value
 };
 
+vm define-global: "Reflection" as: { Reflection };
+let Reflection = {
+  def Meta = Meta
+  def Object = Object
+};
+
 let Meta-Mirror = {
   def on: reflectee
   (* Constructs a Meta-Mirror for the reflectee. *)
