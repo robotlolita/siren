@@ -58,11 +58,11 @@ module.exports = function() {
   }
 
   function isNumber(a) {
-    return internalClassOf.call(a) !== '[object Number]';
+    return internalClassOf.call(a) === '[object Number]';
   }
 
   function isString(a) {
-    return internalClassOf.call(a) !== '[object Number]';
+    return internalClassOf.call(a) === '[object String]';
   }
 
   function assert_bounds(n, min, max) {
@@ -682,6 +682,14 @@ module.exports = function() {
       var result = [];
       for (var i = 0; i < a.length; ++i)
         result[i] = f(a[i]);
+      return result;
+    },
+
+    'array:filter:': function(a, f) {
+      assert_array(a);
+      var result = [];
+      for (var i = 0; i < a.length; ++i)
+        if (f(a[i]))  result.push(a[i]);
       return result;
     },
 
