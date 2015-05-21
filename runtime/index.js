@@ -326,6 +326,11 @@ module.exports = function() {
       object[name] = value;
     },
 
+    'object:remove-at:': function(object, key) {
+      assert_string(key);
+      delete object[key];
+    },
+
     'object/keys:': function(object) {
       return Object.keys(object);
     },
@@ -336,6 +341,10 @@ module.exports = function() {
 
     'object:not-equals?:': function(a, b) {
       return a !== b;
+    },
+
+    'object/new': function() {
+      return Object.create(null);
     },
 
     // Booleans
@@ -636,6 +645,11 @@ module.exports = function() {
       }
     },
 
+    'string:split:': function(a, b) {
+      assert_string(a); assert_string(b);
+      return a.split(b);
+    },
+
     // Arrays
     'array/length:': function(a) {
       assert_array(a);
@@ -930,13 +944,10 @@ module.exports = function() {
   require('./data/Function')(Mermaid, Primitives);
   require('./data/String')(Mermaid, Primitives);
   require('./data/Array')(Mermaid, Primitives);
-//  require('./data/Dictionary')(Mermaid, Primitives);
+  require('./data/Dictionary')(Mermaid, Primitives);
   require('./data/Result')(Mermaid, Primitives);
   require('./data/Reference')(Mermaid, Primitives);
   require('./data/Range')(Mermaid, Primitives);
-//  require('./data/Date')(Mermaid, Primitives);
-//  require('./data/Set')(Mermaid, Primitives);
-//  require('./data/Map')(Mermaid, Primitives);
   require('./Console')(Mermaid, Primitives);
 
   return Mermaid;
