@@ -208,7 +208,7 @@ module.exports = function() {
         default: return object[selector].apply(object, args);
       }
     } else {
-      throw new TypeError("Failed to send " + message + " with arguments: " + args);
+      return $send(object, 'does-not-understand:with-arguments:', $methods, [message, args]);
     }
   };
 
@@ -962,6 +962,7 @@ module.exports = function() {
   require('./data/Range')(Mermaid, Primitives);
   require('./data/Task')(Mermaid, Primitives);
   require('./data/Channel')(Mermaid, Primitives);
+  require('./data/Event')(Mermaid, Primitives);
   require('./Console')(Mermaid, Primitives);
 
   return Mermaid;

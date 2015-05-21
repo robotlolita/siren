@@ -7,6 +7,9 @@ let Open   = Channel-State { };
 let Closed = Channel-State { };
 
 let Channel = {
+  def as-string
+    "<Channel with " + this#buffer as-string + ">"
+
   def with-size: size
     this with-buffer: (Blocking-Buffer with-size: size)
 
@@ -18,19 +21,25 @@ let Channel = {
     this#state set!: Closed
 
   def take
-    this#buffer take
+    (this#state === Open) then: { Result ok: this#buffer take }
+                          else: { Result failure: "Channel is closed." }
     
   def take!
-    this take run!
+    this take get! run!
 
-  def put
-    this#buffer put
+  def put: value
+    (this#state === Open) then: { Result ok: (this#buffer put: value) }
+                          else: { Result failure: "Channel is closed." }
     
   def put!: value
-    this put: value >> run!
-}
+    this put: value >> get! >> run!
+};
 
 let Blocking-Buffer = {
+  def as-string
+    "<Blocking-Buffer with-size: " + this#size as-string
+                                   + " contents: " + this#buffer as-string + ">"
+
   def with-size: size
     let on-unblocked-event = Event new;
     let on-new-value-event = Event new;
@@ -47,22 +56,22 @@ let Blocking-Buffer = {
       Task success
     } else: {
       let self = this;
-      Task new: { def fork: resolver
-                    self#on-unblocked listen-once!: { ev |
-                      (self put: value) fork: resolver
-                    }
-                  def cleanup: state Unit }
+      Task { def fork: resolver
+               self#on-unblocked listen-once!: { ev | (self put: value) fork: resolver };
+               this
+             def cleanup: state = this }
    }
 
   def take
     (this#buffer empty? not) then: {
-      let value = this#buffer take-first!
-      this#on-unblocked notify!: Unit
+      let value = this#buffer take-first!;
+      this#on-unblocked notify!: Unit;
       Task of: value
     } else: {
       let self = this;
-      Task new: { def fork: resolver
-                    self#on-new-value listen-once!: { ev | self take fork: resolver }
-                  def cleanup: state Unit }
+      Task { def fork: resolver
+               self#on-new-value listen-once!: { ev | self take fork: resolver };
+               this
+             def cleanup: state = this }
     }
 }

@@ -72,17 +72,23 @@ let Task = {
 
 vm define-global: "Future" as: { Future };
 
-def PENDING = {
+let PENDING = {
+  def as-string "PENDING"
+
   def match: pattern
-    pattern PENDING value
+    pattern PENDING
 };
-def RESOLVED = {
+let RESOLVED = {
+  def as-string "RESOLVED"
+  
   def match: pattern
-    pattern RESOLVED value
+    pattern RESOLVED
 };
-def REJECTED = {
+let REJECTED = {
+  def as-string "REJECTED"
+  
   def match: pattern
-    pattern REJECTED value
+    pattern REJECTED
 };
 
 let Future = {
@@ -93,19 +99,11 @@ let Future = {
     
     let result = this {
       def #pending = []
-
       def #value = value
-      def set-value!: new-value
-        value = new-value;
-        this
-        
       def #state = state
-      def set-state!: new-state
-        state = new-state;
-        this
     };
     
-    state = task fork: {
+    let resources = task fork: {
       def success: v
         state = RESOLVED;
         value = v;
@@ -116,7 +114,7 @@ let Future = {
         value = v;
         pending each: { a | a failure: error }
     };
-    vm defer: { task cleanup: state };
+    vm defer: { task cleanup: resources };
     
     result
 
@@ -127,17 +125,19 @@ let Future = {
     this new: (Task failure: value)
 
   def as-string
+    let self = this;
     this#state match: {
       def PENDING  "<Future(Pending)>"
-      def RESOLVED "<Future success: " + this#value as-string + ">"
-      def REJECTED "<Future failure: " + this#value as-string + ">"
+      def RESOLVED "<Future success: " + self#value as-string + ">"
+      def REJECTED "<Future failure: " + self#value as-string + ">"
     }
 
   def listen!: pattern
+    let self = this;
     this#state match: {
-      def PENDING  = this#pending append!: pattern
-      def RESOLVED = pattern success: this#value
-      def REJECTED = pattern failure: this#value
+      def PENDING  = self#pending append!: pattern
+      def RESOLVED = pattern success: self#value
+      def REJECTED = pattern failure: self#value
     }
 
   def map: transformation

@@ -4,17 +4,18 @@ vm define-global: "Event" as: { Event };
 
 let Event = {
   def new
-    this { def #handlers = [] }
+    let handlers = [];
+    this { def #handlers = handlers }
 
   def notify!: value
     this#handlers each: { h | h call: value }
     
   def listen!: handler
-    this#handlers recover: { a | this#handlers append!: handler };
+    this#handlers find: handler >> recover: { a | this#handlers append!: handler };
     this
 
   def listen-once!: handler
-    let wrapper = { ev | handler call: ev; this remove!: wrapper }
+    let wrapper = { ev | handler call: ev; this remove!: wrapper };
     this listen!: wrapper
 
   def remove!: handler
