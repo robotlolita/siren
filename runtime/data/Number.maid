@@ -78,6 +78,9 @@ vm apply-trait-globally: extend Float with {
   (* Ranges *)
   def .. end
   Range from: this to: end
+
+  def ... end
+  Range from: this to: end + 1
   
   (* Arithmetic *)
   def + that
@@ -152,6 +155,9 @@ vm apply-trait-globally: extend Float with {
   (* Rounding / Converting *)
   def absolute
   vm float/absolute: this
+
+  def round
+  vm float/round: this
 
   def ceil
   vm float/ceil: this

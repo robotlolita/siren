@@ -4,7 +4,7 @@ vm define-global: "Array" as: { vm native-array };
 
 vm apply-trait-globally: extend Array with {
   def as-string
-  "[" + (this map: { a | a as-string } >> join: ", ") + "]"
+  "[" + (this join: ", ") + "]"
 
   (* Accessing *)
   def at: index
@@ -42,7 +42,7 @@ vm apply-trait-globally: extend Array with {
                 else: { Result ok: index }
 
   def join: separator
-  vm array: this join: separator
+  vm array: (this map: _ as-string) join: separator
 
   def copy
   vm array/shallow-copy: this
@@ -54,6 +54,9 @@ vm apply-trait-globally: extend Array with {
 
   def map: computation
   vm array: this map: { a | computation call: a }
+
+  def filter: predicate
+  vm array: this filter: { a | (predicate call: a) then: { vm true } else: { vm false } }
   
   (* Mutation *)
   def append: value
