@@ -15,6 +15,11 @@ VM_SRC_DIR := vm
 VM_SRC := $(shell find $(VM_SRC_DIR)/ -name '*.sjs')
 VM_TGT := ${VM_SRC:$(VM_SRC_DIR)/%.sjs=$(VM_TGT_DIR)/%.js}
 
+RT_TGT_DIR := runtime
+RT_SRC_DIR := runtime/src
+RT_SRC := $(shell find $(RT_SRC_DIR)/ -name '*.maid')
+RT_TGT := ${RT_SRC:$(RT_SRC_DIR)/%.maid=$(RT_TGT_DIR)/%.js}
+
 
 # -- COMPILATION -------------------------------------------------------
 $(LANG_TGT_DIR)/%.js: $(LANG_SRC_DIR)/%.ometajs
@@ -42,6 +47,8 @@ $(VM_TGT_DIR)/%.js: $(VM_SRC_DIR)/%.sjs
 	       --output $@ \
 	       $<
 
+$(RT_TGT_DIR)/%.js: $(RT_SRC_DIR)/%.maid
+	bin/mermaid -c $< > $@
 
 # -- TASKS -------------------------------------------------------------
 node_modules: package.json
@@ -51,7 +58,9 @@ language: $(LANG_TGT)
 
 vm: $(VM_TGT)
 
-all: node_modules vm language
+runtime: $(RT_TGT)
+
+all: node_modules vm language runtime
 
 clean:
 	rm -rf node_modules
