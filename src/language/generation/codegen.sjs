@@ -423,6 +423,12 @@ function generate(bind, x) {
     Expr.Using(meta, traits) =>
       methCall(meta, id('$methods'), id('merge'), generate(bind, traits)),
 
+    Expr.Assign(meta, i @ Expr.Var, v) =>
+      js.Assignment(meta, '=', generate(bind, i), generate(bind, v)),
+
+    Expr.Assign(meta, Expr.Global(_, Expr.Id(_, i)), v) =>
+      raise(new ReferenceError(i + ' is not defined.')),
+
     Expr.Var(meta, Expr.Id(_, sel)) =>
       js.Id(meta, safeId(sel)),
 

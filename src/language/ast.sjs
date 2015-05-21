@@ -40,6 +40,7 @@ union Expr {
   Return { meta: Object, value: Expr },
   Use    { meta: Object, traits: Array, exprs: Array },
   Using  { meta: Object, traits: Array },
+  Assign { meta: Object, selector: Expr, value: Expr },
   Var    { meta: Object, selector: Id },
   Global { meta: Object, selector: Id },
   Do     { meta: Object, actions: Array }

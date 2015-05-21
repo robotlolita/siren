@@ -99,6 +99,7 @@ ometa MermaidParser {
   // Expressions
   stmt = letStmt
        | usingStmt
+       | identifier:a ~':' ws '=' ws expr:b -> Expr.Assign({}, Expr.Free({}, a), b)
        | ';'        -> Expr.Empty
        | expr,
 
