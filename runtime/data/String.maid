@@ -7,6 +7,9 @@ vm apply-trait-globally: extend String with {
   def as-string
   this
 
+  def as-array
+  this split: ""
+
   (* Character transformations / chopping *)
   def lower-case
   vm string/lower-case: this
@@ -50,6 +53,9 @@ vm apply-trait-globally: extend String with {
 
   def slice-from: start to: end
   vm string: this slice-from: start to: end
+
+  def split: separator
+  vm string: this split: separator
 
   (* Logical comparisons *)
   def === that
