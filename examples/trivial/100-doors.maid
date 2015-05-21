@@ -41,6 +41,10 @@ let Open-Door = Door {
   (* A textual representation of this door. *)
   "Door " + this index as-string + " is open."
 
+  def as-emoji
+  (* An emoji representation of this door. *)
+  "_"
+  
   def open?
   (* Open doors are, of course, open. *)
   True
@@ -54,6 +58,10 @@ let Closed-Door = Door {
   (* A textual representation of this door. *)
   "Door " + this index as-string + " is closed."
 
+  def as-emoji
+  (* An emoji representation of this door. *)
+  "🚪"
+  
   def closed?
   (* Closed doors are, of course, closed. *)
   True
@@ -91,7 +99,7 @@ let Doors = {
 (* Finally, we can start answering the questions posed to us: *)
 Console log: "\n";
 Console log: "What state are the doors in after the last pass?";
-Console log: (Doors state join: "\n");
+Console log: (Doors state map: _ as-emoji >> join: "");
 
 
 Console log: "\n";
