@@ -77,6 +77,7 @@ let Closed-Door = Door {
    So we're going to define behaviours that respond to those questions
    accordingly. *)
 let Doors = {
+  @lazy;        (* This is a pure function so we can memoise its result *)
   def state
   (* Returns an array of Doors with the correct states. *)
   (1 ... 100)  (* A range that goes from 1 to 100, inclusive *)
