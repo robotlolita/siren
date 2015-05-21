@@ -15,4 +15,7 @@ npm-debug.log
 node_modules
 lib/
 vm/*.js
+runtime/*.js
+runtime/**/*.js
+!runtime/index.js
 .tern-port

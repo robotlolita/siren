@@ -10,16 +10,18 @@ let meta = {
        >> value
 };
 
-vm define-global: "Reflection" as: { Reflection };
-let Reflection = {
-  def Meta = Meta
-  def Object = Object
+vm define-global: "Mirror" as: { Mirror };
+let Mirror = {
+  def Meta = Meta-Mirror
+  def Object = Object-Mirror
+  def object: reflectee
+    Object-Mirror on: reflectee
 };
 
 let Meta-Mirror = {
   def on: reflectee
   (* Constructs a Meta-Mirror for the reflectee. *)
-  this { reflectee = reflectee }
+  this { def reflectee = reflectee }
 
   def name
   (* Retrieves the name of the object. *)

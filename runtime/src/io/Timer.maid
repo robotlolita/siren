@@ -1,0 +1,23 @@
+module | root vm | where
+
+vm define-global: "Timer" as: { Timer };
+
+let Timer = {
+  def as-string
+    "<Timer>"
+
+  def delay: millis
+    Task {
+      def fork: resolver
+        vm timer/delay: { resolver success: Unit }
+           by: millis
+           
+      def cleanup: state
+        vm timer/cancel: state
+    }
+
+  def timeout: millis
+    this delay: millis >> chain: { # |
+      Task failed: "Timeouted after " + millis + " milliseconds."
+    }
+}

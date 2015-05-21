@@ -651,6 +651,13 @@ module.exports = function() {
     },
 
     // Arrays
+    'array/new:with:': function(a, b) {
+      assert_number(a);
+      var xs = [];
+      for (var i = 0; i < a; ++i) xs[i] = b;
+      return xs;
+    },
+
     'array/length:': function(a) {
       assert_array(a);
       return a.length;
@@ -916,6 +923,18 @@ module.exports = function() {
 
     'defer:': function(f) {
       process.nextTick(f);
+    },
+
+    'timer/delay:by:': function(f, s) {
+      return setTimeout(f, s);
+    },
+
+    'timer/cancel:': function(x) {
+      clearTimeout(x);
+    },
+
+    'debugger': function(){
+      debugger;
     }
   }, null);
 
@@ -949,6 +968,7 @@ module.exports = function() {
   // Define global objects that are reachable in the prelude
   // Modules are expected to update the globals as necessary
   require('./Meta')(Mermaid, Primitives);
+  require('./Reflection')(Mermaid, Primitives);
   require('./data/Core')(Mermaid, Primitives);
   require('./data/Error')(Mermaid, Primitives);
   require('./data/Number')(Mermaid, Primitives);
@@ -963,7 +983,8 @@ module.exports = function() {
   require('./data/Task')(Mermaid, Primitives);
   require('./data/Channel')(Mermaid, Primitives);
   require('./data/Event')(Mermaid, Primitives);
-  require('./Console')(Mermaid, Primitives);
+  require('./io/Timer')(Mermaid, Primitives);
+  require('./io/Console')(Mermaid, Primitives);
 
   return Mermaid;
 }();

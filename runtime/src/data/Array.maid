@@ -6,6 +6,12 @@ vm apply-trait-globally: extend Array with {
   def as-string
   "[" + (this join: ", ") + "]"
 
+  def new: size with: value
+    vm array/new: size with: value
+
+  def new: size
+    this new: size with: Unit
+  
   (* Testing *)
   def empty?
     this length === 0

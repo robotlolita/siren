@@ -1,0 +1,305 @@
+module | root vm | where
+
+vm define-global: "Task" as: { Task };
+
+let Task = {
+  def cleanup: state
+    this
+
+  def of: value
+    this {
+      def fork: resolver = resolver success: value
+      def cleanup: state = this
+    }
+
+  def success: value
+    this of: value
+
+  def success
+    this of: Unit
+
+  def failed: value
+    this {
+      def fork: resolver = resolver failure: value
+      def cleanup: state = this
+    }
+
+  def failed
+    this failed: Unit
+
+  def map: transform
+    let self = this;
+    this {
+      def fork: resolver
+        self fork: { def success: v = resolver success: (transform call: v)
+                     def failure: v = resolver failure: v }
+    }
+
+  def chain: transform
+    let self = this;
+    this {
+      def fork: resolver
+        self fork: { def success: v = (transform call: v) fork: resolver
+                     def failure: v = resolver failure: v }
+    }
+
+  def swap
+    let self = this;
+    this {
+      def fork: resolver
+        self fork: { def success: v = resolver failure: v
+                     def failure: v = resolver success: v }
+                 
+    }
+
+    
+
+  def match: pattern
+    let self = this;
+    this {
+      def fork: resolver
+        self fork: { def success: v = resolver success: (pattern success: v)
+                     def failure: v = resolver failure: (pattern failure: v) }
+    }
+
+  def as-string
+    "<Task>"
+
+  def recover: handler
+    let self = this;
+    this {
+      def fork: resolver
+        self fork: { def success: v = resolver success: v
+                     def failure: v = (handler call: v) fork: resolver };
+        self
+    }
+
+  (* Combining tasks *)
+  def || that
+    (* Takes the result of whichever task resolves first *)
+    let self = this;
+
+    let result = this {
+      def fork: resolver
+        let on-completion = Event new;
+        on-completion listen-once!: { f | f value };
+        let resolution-pattern = {
+          def success: v
+            on-completion notify!: {
+              resolver success: v;
+              vm defer: { this#target#cleanup!; this#cancelled cancel! }
+            }
+          def failure: v
+            on-completion notify!: {
+              resolver failure: v;
+              vm defer: { this#target#cleanup!; this#cancelled cancel! }
+            }
+        };
+
+        let left  = self run! listen!: resolution-pattern { def #target = left
+                                                            def #cancelled = right };
+        let right = that run! listen!: resolution-pattern { def #target = right
+                                                            def #cancelled = left };
+        { def left = left  def right = right }
+
+      def cleanup: state
+        state left#cleanup!;
+        state right#cleanup!
+    };
+    result
+
+  def + that
+    (* Resolves both tasks in parallel *)
+    let self = this;
+
+    let result = this {
+      def fork: resolver
+        let resolved = False; let pending = 2; let results = Array new: 2;
+        let on-success = { data |
+          resolved then: { Unit } else: {
+            pending = pending - 1;
+            results at: data index put!: data value;
+            (pending === 0) then: { resolved = True; resolver success: results }
+                            else: { Unit }
+          }
+        };
+        let on-failure = { data |
+          resolved then: { Unit } else: {
+            resolved = True;
+            vm defer: { data#cancelled cancel! };
+            resolver failure: data value
+          }
+        };
+
+        let left  = self run! listen!: {
+          def success: v = on-success call: { def index = 1  def value = v }
+          def failure: v = on-failure call: { def value = v  def #cancelled = right }
+        };
+        let right = that run! listen!: {
+          def success: v = on-success call: { def index = 2  def value = v }
+          def failure: v = on-failure call: { def value = v  def #cancelled = left }
+        };
+        { def left = left  def right = right }
+
+      def cleanup: state
+        state left#cleanup!;
+        state right#cleanup!
+    };
+    result
+
+  def / that
+    (* Takes the value of the first task to successfully resolve *)
+    (* Resolves both tasks in parallel *)
+    let self = this;
+
+    let result = this {
+      def fork: resolver
+        let resolved = False; let pending = 2; let results = Array new: 2;
+        let on-failure = { data |
+          resolved then: { Unit } else: {
+            pending = pending - 1;
+            results at: data index put!: data value;
+            (pending === 0) then: { resolved = True; resolver failure: results }
+                            else: { Unit }
+          }
+        };
+        let on-success = { data |
+          resolved then: { Unit } else: {
+            resolved = True;
+            vm defer: { data#cancelled cancel! };
+            resolver success: data value
+          }
+        };
+
+        let left  = self run! listen!: {
+          def success: v = on-success call: { def value = v  def #cancelled = right }
+          def failure: v = on-failure call: { def index = 1  def value = v }
+        };
+        let right = that run! listen!: {
+          def success: v = on-success call: { def value = v  def #cancelled = left }
+          def failure: v = on-failure call: { def index = 2  def value = v }
+        };
+        { def left = left  def right = right }
+
+      def cleanup: state
+        state left#cleanup!;
+        state right#cleanup!
+    };
+    result
+
+    
+    
+  def run!
+    Future new: this
+};
+
+vm define-global: "Future" as: { Future };
+
+let PENDING = {
+  def as-string "PENDING"
+
+  def match: pattern
+    pattern PENDING
+};
+let RESOLVED = {
+  def as-string "RESOLVED"
+  
+  def match: pattern
+    pattern RESOLVED
+};
+let REJECTED = {
+  def as-string "REJECTED"
+  
+  def match: pattern
+    pattern REJECTED
+};
+let CANCELLED = {
+  def as-string "CANCELLED"
+
+  def match: pattern
+    pattern CANCELLED
+};
+
+let Future = {
+  def new: task
+    let value = Unit;
+    let state = PENDING;
+    let pending = [];
+    
+    let result = this {
+      def #pending = pending
+      def #value = value
+      def #state = state
+      def #cleanup! = vm defer: { task cleanup: resources }
+      def cancel!
+        (state === PENDING) then: { result#cleanup!; state = CANCELLED }
+                            else: { this }
+    };
+
+    let resources = task fork: {
+      def success: v
+        (state === PENDING) then: {
+          state = RESOLVED;
+          value = v;
+          pending each: { a | a success: v };
+          result#cleanup!
+        } else: { Unit }
+      
+      def failure: error
+        (state === PENDING) then: {
+          state = REJECTED;
+          value = error;
+          pending each: { a | a failure: error };
+          result#cleanup!
+        } else: { Unit }
+    };
+    
+    result
+
+  def success: value
+    this new: (Task success: value)
+
+  def failure: value
+    this new: (Task failure: value)
+
+  def as-string
+    let self = this;
+    this#state match: {
+      def PENDING  "<Future(Pending)>"
+      def RESOLVED "<Future success: " + self#value as-string + ">"
+      def REJECTED "<Future failure: " + self#value as-string + ">"
+    }
+
+  def listen!: pattern
+    let self = this;
+    this#state match: {
+      def PENDING  = self#pending append!: pattern
+      def RESOLVED = pattern success: self#value
+      def REJECTED = pattern failure: self#value
+    };
+    this
+
+  def map: transformation
+    let self = this;
+    this new: Task {
+      def fork: resolver
+        self listen!: { def success: v = resolver success: (transformation call: v)
+                        def failure: v = resolver failure: v }
+    }
+
+  def chain: transformation
+    let self = this;
+    this new: Task {
+      def fork: resolver
+        self listen!: { def success: v = (transformation call: v) fork: resolver
+                        def failure: v = resolver failure: v }
+    }
+
+  def recover: transformation
+    let self = this;
+    this new: Task {
+      def fork: resolver
+        self listen!: { def failure: v = (transformation call: v) fork: resolver
+                        def success: v = resolver success: v }
+    }
+}
