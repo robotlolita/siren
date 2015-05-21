@@ -15,7 +15,7 @@ etc, until you only visit the 100th door.
    associated index. *)
 let Door = {
   def new: index
-  (* Constructs a new Door. New objects are constructing just by cloning
+  (* Constructs a new Door. New objects are constructed just by cloning
      existing objects, and giving them new behaviours. In this case we're
      cloning the target of this message and giving it an `index` behaviour,
      which will answer where that door is located at. *)
