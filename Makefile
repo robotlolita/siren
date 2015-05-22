@@ -48,6 +48,7 @@ $(VM_TGT_DIR)/%.js: $(VM_SRC_DIR)/%.sjs
 	       $<
 
 $(RT_TGT_DIR)/%.js: $(RT_SRC_DIR)/%.maid
+	mkdir -p $(dir $@)
 	bin/mermaid -c $< > $@
 
 # -- TASKS -------------------------------------------------------------
@@ -64,6 +65,6 @@ all: node_modules vm language runtime
 
 clean:
 	rm -rf node_modules
-	rm -f $(VM_TGT) $(LANG_TGT)
+	rm -f $(VM_TGT) $(LANG_TGT) $(RT_TGT)
 
 .PHONY: clean
