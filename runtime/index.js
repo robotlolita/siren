@@ -1047,6 +1047,23 @@ module.exports = function() {
     },
     'fs/exists?:notify:': function(p, c) {
       fs.exists(p, c);
+    },
+    'fs/rename:to:on-success:on-failure:': function(a, b, f, g) {
+      fs.rename(a, b, function(err, res) {
+        if (err) g(err); else f(res);
+      });
+    },
+    'fs/change:owner:group:on-success:on-failure:': function(a, b, c, f, g) {
+      assert_number(b); assert_number(c);
+      fs.chown(a, b, c, function(err, res) {
+        if (err) g(err); else f(res);
+      });
+    },
+    'fs/change:mode:on-success:on-failure:': function(a, b, f, g) {
+      assert_number(b);
+      fs.chmod(a, b, function(err, res) {
+        if (err) g(err); else f(res);
+      });
     }
   }, null);
 
