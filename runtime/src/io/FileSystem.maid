@@ -44,7 +44,7 @@ let INode = {
            on-success: { a | resolver success: Unit }
            on-failure: { a | resolver failure: (FFI import: a) }
     }
-}
+};
 
 let Path = {
   def as-string
