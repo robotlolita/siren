@@ -53,6 +53,10 @@ let Singleton = {
     this
 };
 
+vm define-global: "unimplemented" as: {
+  Error panic!: "Unimplemented."
+};
+
 vm define-global: "lazy" as: {
   { fn | let data = vm false;
          let update = { data = fn value; data };

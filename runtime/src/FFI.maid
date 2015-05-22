@@ -1,0 +1,18 @@
+module | root vm | where
+
+let FFI = {
+  def import: object
+    vm match: object with: {
+      def unit      = Unit
+      def boolean   = vm if: object then: True else: False
+      def primitive = object
+      def array     = object map: (FFI import: _)
+      def object    = Dictionary new: object
+    }
+  
+  def export: object
+    vm foreign/export: object
+
+  def invoke: function in-context: object with-arguments: arguments
+    vm foreign/invoke*: function in: object with: arguments
+}

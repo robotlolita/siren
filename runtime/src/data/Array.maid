@@ -27,6 +27,9 @@ vm apply-trait-globally: extend Array with {
   vm array: this at: index put: value;
   this
 
+  def last
+    this at: this length
+
   def remove-at: index
   this copy remove-at!: index
   
@@ -80,6 +83,12 @@ vm apply-trait-globally: extend Array with {
 
   def filter: predicate
   vm array: this filter: { a | (predicate call: a) then: { vm true } else: { vm false } }
+
+  def fold: f from: initial
+    vm array: this reduce: { a b | f call: a with: b } from: initial
+
+  def fold-right: f from: initial
+    vm array: this reduce-right: { a b | f call: a with: b } from: initial
   
   (* Mutation *)
   def append: value
@@ -129,4 +138,6 @@ vm apply-trait-globally: extend Array with {
   };
   this
   
-}
+};
+
+vm convert: Array as: { a | a map: (FFI export: _) }

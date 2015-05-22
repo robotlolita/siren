@@ -6,35 +6,52 @@ let Boolean = { };
 vm define-global: "True" as: { True };
 let True = Boolean {
   def as-string
-  "True"
+    "True"
 
   def && that
-  that
+    that
 
   def || that
-  this
+    this
 
   def not
-  False
+    False
 
   def then: consequent else: alternate
-  consequent value
+    consequent value
+
+  def unless: alternate
+    Unit
+    
+  def then: consequent
+    consequent value;
+    Unit
 };
 
 vm define-global: "False" as: { False };
 let False = Boolean {
   def as-string
-  "False"
+    "False"
 
   def && that
-  this
+    this
 
   def || that
-  that
+    that
 
   def not
-  True
+    True
 
   def then: consequent else: alternate
-  alternate value
-}
+    alternate value
+
+  def then: consequent
+    Unit
+
+  def unless: alternate
+    alternate value;
+    Unit
+};
+
+vm convert: True as: { # | vm true };
+vm convert: False as: { # | vm false }

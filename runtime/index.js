@@ -1,6 +1,13 @@
 module.exports = function() {
   'use strict';
 
+  // -- Dependencies ---------------------------------------------------
+  var path = require('path');
+  var fs = require('fs');
+  var isNumberP = require('is-number-object');
+  var isStringP = require('is-string-object');
+  var isBooleanP = require('is-boolean-object');
+
   // -- Aliases --------------------------------------------------------
   var prototypeOf = Object.getPrototypeOf;
   var keys = Object.keys;
@@ -63,6 +70,16 @@ module.exports = function() {
 
   function isString(a) {
     return internalClassOf.call(a) === '[object String]';
+  }
+
+  function isFunction(a) {
+    return typeof a === 'function';
+  }
+
+  function isPrimitiveP(a) {
+    return isNumberP(a)
+        || isStringP(a)
+        || isFunction(a);
   }
 
   function assert_bounds(n, min, max) {
@@ -292,6 +309,27 @@ module.exports = function() {
     return fn;
   }
 
+  // --- Importing / Exporting objects ---------------------------------
+  // A symbol attached to objects that describes how they convert to JS
+  var $export = Symbol('mermaid->js');
+  var $import = Symbol('js->mermaid');
+
+  // #### function: wrap(instance, namespace)
+  // Wraps an object giving it a `send` method for interacting in the JS side.
+  //
+  // @type: (Mermaid.Object, MethodBox) -> Object
+  function wrap(instance, namespace) {
+    var wrapper = {
+      send: function(message, args) {
+        return wrap($send(instance, message, namespace, args), namespace);
+      }
+    };
+    wrapper[$import] = function(){
+      return instance;
+    };
+    return wrapper;
+  }
+
   // --- Global instances ----------------------------------------------
   // The cache of modules that have been lazily loaded
   var moduleCache = Object.create(null);
@@ -316,6 +354,9 @@ module.exports = function() {
     },
 
     // Objects
+    'object:has?:': function(object, name) {
+      return name in Object(object);
+    },
     'object:at:': function(object, name) {
       assert_string(name); assert_exists(object, name);
       return object[name];
@@ -678,6 +719,20 @@ module.exports = function() {
       a[b - 1] = c;
     },
 
+    'array:reduce:from:': function(a, f, i) {
+      assert_array(a);
+      var r = i;
+      for (var j = 0; j < a.length; ++j) r = f(r, a[j]);
+      return r;
+    },
+
+    'array:reduce-right:from:': function(a, f, i) {
+      assert_array(a);
+      var r = i;
+      for (var j = a.length; --j;) r = f(r, a[j]);
+      return r;
+    },
+
     'array:each:': function(a, f) {
       assert_array(a);
       for (var i = 0; i < a.length; ++i)
@@ -859,6 +914,40 @@ module.exports = function() {
       for(a(); b(); c()) d();
     },
 
+    // foreign
+    'symbol:': function(name) {
+      return Symbol(name);
+    },
+
+    'foreign/invoke*:in:with:': function(f, c, xs) {
+      return f.apply(c, xs);
+    },
+
+    'foreign/convert:as:': function(f, c) {
+      f[$export] = c;
+    },
+
+    'foreign/export:': function(o) {
+      if (o[$export]) {
+        return o[$export](o);
+      } else {
+        return wrap(o, $methods);
+      }
+    },
+
+    'foreign/match:with:': function(o, p) {
+      if (o[$import]) {
+        return o[$import]();
+      } else {
+        var type = o == null?         'unit'
+                 : isBooleanP(o)?     'boolean'
+                 : isPrimitiveP(o)?   'primitive'
+                 : Array.isArray(o)?  'array'
+                 : /* otherwise */    'object';
+        return $send(p, type, $methods, []);
+      }
+    },
+
     // Assertions
     'assert/function:has-arity:': assert_arity,
     'assert/number?:': assert_number,
@@ -935,6 +1024,29 @@ module.exports = function() {
 
     'debugger': function(){
       debugger;
+    },
+
+    'require:': function(path) {
+      return require(path);
+    },
+
+    // File System
+    'path/join:to:': function(a, b) {
+      return path.join(a, b);
+    },
+    'path/extension:': function(a) {
+      return path.extname(a);
+    },
+    'path/normalise:': function(a) {
+      assert_string(a);
+      return path.normalize(a);
+    },
+    'path/absolute?:': function(a) {
+      assert_string(a);
+      return path.isAbsolute(a);
+    },
+    'fs/exists?:notify:': function(p, c) {
+      fs.exists(p, c);
     }
   }, null);
 
@@ -985,6 +1097,7 @@ module.exports = function() {
   require('./data/Event')(Mermaid, Primitives);
   require('./io/Timer')(Mermaid, Primitives);
   require('./io/Console')(Mermaid, Primitives);
+  require('./io/FileSystem')(Mermaid, Primitives);
 
   return Mermaid;
 }();
