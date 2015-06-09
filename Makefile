@@ -63,6 +63,15 @@ runtime: $(RT_TGT)
 
 all: node_modules vm language runtime
 
+clean-vm:
+	rm -f $(VM_TGT)
+
+clean-language:
+	rm -f $(LANG_TGT)
+
+clean-runtime:
+	rm -f $(RT_TGT)
+
 clean:
 	rm -rf node_modules
 	rm -f $(VM_TGT) $(LANG_TGT) $(RT_TGT)
