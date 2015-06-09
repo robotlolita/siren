@@ -43,16 +43,17 @@ ometa MermaidParser {
   ignored = space | comment,
   comment = fromTo('(*', '*)'):a -> a.slice(2, -2).trim(),
   ws      = ignored*,
+  sep     = ',' | '.',
   symbol  = ~( letter | digit | space | '#'
-             | '_' | '$' | '^' | '@' | ';' | ',' | ':' | '{' | '}' | '(' | ')' | '[' | ']'
+             | '_' | '$' | '^' | '@' | ';' | ':' | '{' | '}' | '(' | ')' | '[' | ']'
              ) char,
   eof     = ~char,
-  kw :xs  = seq(xs) ~(letter | digit | symbol | ':'),
+  kw :xs  = seq(xs) ~(letter | digit | symbol | sep | ':'),
 
 
   // Identifiers
   idStart    = letter | '#',
-  idRest     = letter | digit | symbol,
+  idRest     = ~sep (letter | digit | symbol),
   identifier = <idStart idRest*>:a     ?(isValid(a)) -> Expr.Id({}, a),
   keyword    = <idStart idRest*>:a ':'               -> Expr.Id({}, a + ':'),
   symbols    = <symbol+>:a             ?(isValid(a)) -> Expr.Id({}, a),
@@ -91,10 +92,10 @@ ometa MermaidParser {
   moduleArgs = '|' ws identifier:a (ws identifier)*:as ws '|' -> [a].concat(as),
   exportStmt = kw('exposing') ws expr:a -> a,
 
-  useExpr = kw('use') ws listOf(#expr, ','):xs ws kw('in') ws '{' ws stmtList:ys ws '}'
+  useExpr = kw('use') ws listOf(#expr, ';'):xs ws kw('in') ws '{' ws stmtList:ys ws '}'
           -> Expr.Use({}, xs, ys),
 
-  usingStmt = kw('using') ws listOf(#expr, ','):xs -> Expr.Using({}, xs),
+  usingStmt = kw('using') ws listOf(#expr, ';'):xs -> Expr.Using({}, xs),
 
   // Expressions
   stmt = letStmt
@@ -185,7 +186,7 @@ ometa MermaidParser {
   string           = seq('"""') <unescapableChars*>:as seq('"""') -> Expr.Str({}, as)
                    | '"' (stringChar)*:as '"'                     -> Expr.Str({}, as.join('')),
 
-  vector = '[' ws expr:hd (ws ',' ws expr)*:tl ws ']' -> Expr.Vector({}, [hd].concat(tl))
+  vector = '[' ws expr:hd (ws ';' ws expr)*:tl ws ']' -> Expr.Vector({}, [hd].concat(tl))
          | '[' ws ']'                                 -> Expr.Vector({}, []),
 
   record = '{' ws pattern:hd (ws pattern)*:tl ws '}' -> Expr.Record({}, [hd].concat(tl))

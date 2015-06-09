@@ -27,6 +27,6 @@ let Dictionary = {
   this
 
   def each: computation
-  this keys each: { key | computation call: [key, this at: key] };
+  this keys each: { key | computation call: [key; this at: key] };
   this
 }
