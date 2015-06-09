@@ -154,10 +154,7 @@ ometa MermaidParser {
   doTailCase   = doTailPure | doTailAction,
 
   // Values
-  value = bool | number | string | vector | lambda | record,
-
-  bool = kw('true') -> Expr.Bool({}, true)
-       | kw('false') -> Expr.Bool({}, false),
+  value = number | string | vector | lambda | record,
 
   octDigit = /[0-7_]/,
   hexDigit = /[0-9a-fA-F_]/,

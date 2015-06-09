@@ -379,9 +379,6 @@ function generate(bind, x) {
     Expr.Str(meta, val) =>
       js.Str(meta, val),
 
-    Expr.Bool(meta, val) =>
-      js.Bool(meta, val),
-
     Expr.Vector(meta, xs) =>
       js.ArrayExpr(meta, generate(bind, xs)),
 

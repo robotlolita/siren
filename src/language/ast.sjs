@@ -28,7 +28,6 @@ union Expr {
   Block   { meta: Object, args: Array, body: Array },
   Num     { meta: Object, value: Number },
   Str     { meta: Object, value: String },
-  Bool    { meta: Object, value: Boolean },
   Vector  { meta: Object, value: Array },
   Record  { meta: Object, value: Array },
 
