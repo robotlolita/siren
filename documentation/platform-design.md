@@ -94,9 +94,9 @@ Kinds of concepts can be divided in:
    and your *processes* would be And, Or, Invert, and Implies.
 
 In Mermaid, *processes* tend to map to messages or blocks, *algebras* map to
-objects, and *universes* map to modules or packages[¹](#fn1). There are cases
-where that might differ, and, for example, an *object* might end up representing
-a *process* (state machines and actors are good examples of this).
+objects, and *universes* map to objects, modules or packages[¹](#fn1). There are
+cases where that might differ, and, for example, an *object* might end up
+representing a *process* (state machines and actors are good examples of this).
 
 
 ## Designing algebras
@@ -235,11 +235,131 @@ clone `Linked-List` and define different behaviours for `Empty` and `Node` if
 necessary.
 
 
+## Interlude: A Review of Mermaid's Object Model
+
+Mermaid is a pure object oriented language, which largely means that the
+entities available to model the world in Mermaid are objects. In Mermaid,
+everything is an object, and all of the operations work on objects. This gives
+Mermaid a sufficiently expressive computational and compositional power —
+the result of composing an object is another object, which can be further
+composed with existing operations into further objects.
+
+An object is an entity together with the set of operations it supports. In
+Mermaid all objects carry all of the operations that they support. The only
+way of "using" (or rather, interacting with) an object is to send that object a
+message. The object might then choose whether to perform the operation (if it
+can understand it) or not.
+
+This is fairly similar to the way people interact with a computer using the
+keyboard, for example. Pressing one key means sending a message to the computer,
+which then might get interpreted as a character and displayed on the screen, or
+might cause a menu choice to be made (in case there is a shortcut defined for
+that key). The message is how the user specifies which operation they want to
+carry out, and the operation is how the target decides to interpret that
+message.
+
+In mermaid operations are a collection of Mermaid statements, which are executed
+in order if the operation is to be carried out. Messages are unique identifiers
+given to these operations. A message name is a way for someone to refer to these
+operations. Unlike most existing Object Oriented languages, messages and message
+names are separate concepts. A message is guaranteed to be globally unique,
+which means there can never be a collision between two messages in Mermaid. A
+name, on the other hand, is a way of resolving these messages. Names in Mermaid
+are lexical and defined by the call-site.
+
+For example, in:
+
+```ruby
+let unit = {
+  def as-string
+    "<unit>"
+
+  def + that
+    that
+
+  def foo: x bar: y
+    this
+}
+```
+
+`as-string`, `+` and `foo:bar:` are message names. A unique identifier for those
+messages is created behind the scenes, and the names are added to the global
+mapping of `Name → Message`, so people can send messages to the `unit` object.
+
+Sending a message to this object might look like this:
+
+```ruby
+unit as-string;
+unit + 1;
+unit foo: 1 bar: 2
+```
+
+When Mermaid executes these operations, it figures out which message `as-string`
+means for the `unit` object in the current scope, then sends that message to the
+`unit` object. The `unit` object then takes over the process and figures out
+which operation that message means, finally it returns `"<unit>"` as the result
+of carrying out the operation defined by that message.
+
+A user might override the mapping of names to messages by using the `use`
+expression in the language:
+
+```ruby
+let my-unit-as-string = extend unit with {
+  def as-string "<my-unit>"
+};
+
+use my-unit-as-string in {
+  unit as-string;   // => "<my-unit>"
+};
+
+unit as-string  // => "<unit>"
+```
+
+
 ## Translating Algebras into Mermaid
 
 At this point you should have a set of `(Entity × Processes) ∈ Universe` that
-feels consistent. What's left is representing this using Mermaid's concepts.
+feels consistent. What's left is representing this using Mermaid's concepts. As
+a pure object-oriented language, most of these concepts will map to
+objects. This might sound unnatural, but having a single concept means we have a
+much greater compositional power.
 
+While we've got many concepts mapping to a single concept, objects can be broken
+down into several different categories depending on what they're used for. The
+major categories in Mermaid are **Traits**, **Examples** and **Refinements**.
+
+
+-  A **Trait** is an object that provides a (possibly incomplete) set of
+   features to some entity. Traits are not usable on their own, they must be
+   added to an object that provides the operations it expects.
+
+-  An **Example** is a fully working object. While Examples can be used on their
+   own, they are not meant to, rather they're provided so people can experiment
+   with them and build on top of them. These are called "prototypes" in OO
+   literature.
+
+-  A **Refinement** is an example that has been further refined into doing
+   whatever the user needs it to do (e.g.: by providing the object with their
+   data, such that it computes things that are useful to the user). OO
+   literature does not distinguish between "example" and "refinement".
+
+There are a few courses of action when translating algebras to objects,
+depending on the algebra. But in the common case:
+
+-  Common operations are stored in a **trait** object.
+
+-  One or more **examples** of the algebra are provided as starting points to
+   the user, by refining the **trait** object. Examples are expected to be fully
+   working, even if they don't do anything useful.
+
+-  An entry point object might be exposed to the user which controls how the
+   examples / traits are initially refined. This helps with avoiding the
+   possibility of illegal states.
+
+-  If it doesn't make sense for an object to be refined, and it provides all of
+   the parts it needs to work, then it's not necessary to separate it into a
+   *traits* object and an *example* object. Self calls these objects "Oddballs,"
+   Mermaid calls them "Singletons".
 
 
 
