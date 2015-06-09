@@ -35,7 +35,7 @@ You can run individual files with the same binary. There are examples in the
 `examples/` folder:
 
 ```sh
-$ bin/mermaid examples/hello-world.maid
+$ bin/mermaid examples/trivial/hello-world.maid
 ```
 
 You can compile things to plain JavaScript using the `--compile` flag, but
@@ -43,7 +43,7 @@ you'll need to include the proper runtime files and have the global `Mermaid`
 name point to the runtime root object in order to run those files:
 
 ```sh
-$ bin/mermaid --compile examples/hello-world.maid > hw.js
+$ bin/mermaid --compile examples/trivial/hello-world.maid > hw.js
 $ iojs -e "global.Mermaid = require('./runtime/core'); require('./hw.js')"
 Hello, world
 ```
