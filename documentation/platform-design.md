@@ -16,12 +16,12 @@ core of Mermaid's platform.
 ## Overview
 
 Mermaid is a pure object oriented language using prototypes but being limited to
-single delegation. Objects can be extended arbitrarily and restricted to a
-lexical (message) region. Messages are stored in objects as unique values,
-rather than Strings, which means that collisions are not possible when extending
-an object. Names that refer to a message are resolved lexically, so different
-lexical regions may have a particular message name (e.g.: `as-string`)
-resolve to two different message objects in the same object.
+single delegation. Objects can be extended arbitrarily and extensions are
+restricted to a lexical (message) region. Messages are stored in objects as
+unique values, rather than Strings, which means that collisions are not possible
+when extending an object. Names that refer to a message are resolved lexically,
+so different lexical regions may have a particular message name (e.g.:
+`as-string`) resolve to two different message objects in the same object.
 
 Since one of its goals is to provide an interactive platform, Mermaid is a fully
 reflective system, and meta-data can be attached to any object, as well as
@@ -62,7 +62,7 @@ are explicitly marked (with a ! suffix in the message name).
 ## Computations and objects
 
 Mermaid is a pure Object-Oriented language. Users design programs by describing
-how objects interact between each other. All actions in the system must be
+how objects interact with each other. All actions in the system must be
 carried by sending messages to objects (there are no control flow structures
 such as `if` statements or `for` loops). While this model of programming can be
 fairly powerful, it's not immediately obvious how one should go about designing
