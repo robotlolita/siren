@@ -68,18 +68,18 @@ such as `if` statements or `for` loops). While this model of programming can be
 fairly powerful, it's not immediately obvious how one should go about designing
 these interactions.
 
-In Mermaid, there are guidelines for effectively designing these interactions. A
-design process starts by determining the problem, figuring out which components
-this problem has, and then determining which kind of concept each component
-should be represented as in the Mermaid world.
+In Mermaid, there are guidelines for effectively designing them. A design
+process starts by determining the problem, figuring out which components this
+problem has, and then determining which kind of concept each component should be
+represented as in the Mermaid world.
 
 Kinds of concepts can be divided in:
 
 -  **A Process** is something that, given some data, manipulates it in some
-   way. Not that *manipulating* data is not the same as *mutating* data. Whether
-   a process mutates things or not is a separate concern from what said process
-   does. For example, `sorting` is a process. `Writing a file` is another
-   process.
+   way. Note that *manipulating* data is not the same as *mutating*
+   data. Whether a process mutates things or not is a separate concern from what
+   said process does. For example, `sorting` is a process. `Writing a file` is
+   another process.
 
 -  **An Algebra** is some kind of entity and a set of processes that manipulate
    this entity in some way. Data structures are naturally algebras, but any
