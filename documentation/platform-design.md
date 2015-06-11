@@ -156,7 +156,7 @@ let Node = {
 let a = Node { def empty? = True };
 let b = Node { def value = 1;; def next = b };
 b as-string
-// => 1, (Nil)
+(* => 1, (Nil) *)
 ```
 
 This object expects two pieces of state: `value` and `empty?`. If `empty?`
@@ -185,14 +185,14 @@ into distinct objects with the relevant messages in them.
 
 ```ruby
 let Linked-List = {
-  // Ways of constructing values of this universe
+  (* Ways of constructing values of this universe *)
   def empty
     this traits Empty
 
   def of: value
     this empty, value
 
-  // Shared behaviour in this universe
+  (* Shared behaviour in this universe *)
   def traits {
     def Empty = Empty
     def Node = Node
@@ -309,10 +309,10 @@ let my-unit-as-string = extend unit with {
 };
 
 use my-unit-as-string in {
-  unit as-string;   // => "<my-unit>"
+  unit as-string;   (* => "<my-unit>" *)
 };
 
-unit as-string  // => "<unit>"
+unit as-string  (* => "<unit>" *)
 ```
 
 
