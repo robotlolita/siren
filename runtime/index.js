@@ -5,7 +5,7 @@ module.exports = function() {
   var path = require('path');
   var fs = require('fs');
   var isNumberP = require('is-number-object');
-  var isStringP = require('is-string-object');
+  var isStringP = require('is-string');
   var isBooleanP = require('is-boolean-object');
 
   // -- Aliases --------------------------------------------------------
