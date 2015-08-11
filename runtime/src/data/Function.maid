@@ -37,4 +37,4 @@ vm apply-trait-globally: extend Function with {
   this
 };
 
-vm convert: Function as: { a | a }
+vm foreign/convert: Function as: { a | a }

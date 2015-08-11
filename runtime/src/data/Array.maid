@@ -140,4 +140,4 @@ vm apply-trait-globally: extend Array with {
   
 };
 
-vm convert: Array as: { a | a map: (FFI export: _) }
+vm foreign/convert: Array as: { a | a map: (FFI export: _) }

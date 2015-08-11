@@ -53,5 +53,5 @@ let False = Boolean {
     Unit
 };
 
-vm convert: True as: { # | vm true };
-vm convert: False as: { # | vm false }
+vm foreign/convert: True as: { # | vm true };
+vm foreign/convert: False as: { # | vm false }

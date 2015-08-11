@@ -71,4 +71,4 @@ vm apply-trait-globally: extend String with {
   vm string: this each: { a | computation call: a }
 };
 
-vm convert: String as: { a | a }
+vm foreign/convert: String as: { a | a }

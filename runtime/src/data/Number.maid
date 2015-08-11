@@ -166,4 +166,4 @@ vm apply-trait-globally: extend Float with {
   vm float/floor: this
 };
 
-vm convert: Number as: { a | a }
+vm foreign/convert: Float as: { a | a }
