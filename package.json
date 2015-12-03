@@ -1,6 +1,7 @@
 {
   "name": "@robotlolita/siren",
-  "version": "0.4.0",
+  "description": "An experimental prototype-based object-oriented language.",
+  "version": "0.4.1",
   "bin": {
     "siren": "bin/siren"
   },
