@@ -8,21 +8,27 @@ let True = Boolean {
   def as-string
     "True"
 
+  @Meta example: { True && False === False };
+  @Meta example: { True && True === True };
   def && that
     that
 
+  @Meta example: { True || False === True };
+  @Meta example: { True || True === True };
   def || that
     this
 
+  @Meta example: { True not === False };
   def not
     False
 
+  @Meta example: { (True then: { "ok" } else: { "nay" }) === "ok" };
   def then: consequent else: alternate
     consequent value
 
   def unless: alternate
     Unit
-    
+
   def then: consequent
     consequent value;
     Unit
