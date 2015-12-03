@@ -17,8 +17,8 @@ VM_TGT := ${VM_SRC:$(VM_SRC_DIR)/%.sjs=$(VM_TGT_DIR)/%.js}
 
 RT_TGT_DIR := runtime
 RT_SRC_DIR := runtime/src
-RT_SRC := $(shell find $(RT_SRC_DIR)/ -name '*.maid')
-RT_TGT := ${RT_SRC:$(RT_SRC_DIR)/%.maid=$(RT_TGT_DIR)/%.js}
+RT_SRC := $(shell find $(RT_SRC_DIR)/ -name '*.siren')
+RT_TGT := ${RT_SRC:$(RT_SRC_DIR)/%.siren=$(RT_TGT_DIR)/%.js}
 
 
 # -- COMPILATION -------------------------------------------------------

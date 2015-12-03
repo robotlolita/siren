@@ -42,8 +42,8 @@ function run(source, runtime, filename) {
 
 exports.installExtensions = installExtensions;
 function installExtensions() {
-  if (!require.extensions['.maid']) {
-    require.extensions['.maid'] = function(module, filename) {
+  if (!require.extensions['.siren']) {
+    require.extensions['.siren'] = function(module, filename) {
       var code = fs.readFileSync(filename, 'utf8');
       module._compile(compile(code), filename);
     };
