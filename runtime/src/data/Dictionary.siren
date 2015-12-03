@@ -4,29 +4,29 @@ vm define-global: "Dictionary" as: { Dictionary };
 
 let Dictionary = {
   def new
-  let result = this {};
-  vm object: result at: "data" put: vm object/new;
-  result
+    let result = this {};
+    vm object: result at: "data" put: vm object/new;
+    result
 
   def keys
-  vm object/keys: (vm object: this at: "data")
+    vm object/keys: (vm object: this at: "data")
 
   def values
-  let dict = vm object: this at: "data";
-  this keys map: { key | vm object: dict at: key }
+    let dict = vm object: this at: "data";
+    this keys map: { key | vm object: dict at: key }
 
   def at: key
-  vm object: (vm object: this at: "data") at: key
+    vm object: (vm object: this at: "data") at: key
 
   def at: key put!: value
-  vm oject: (vm object: this at: "data") at: key put: value;
-  this
+    vm oject: (vm object: this at: "data") at: key put: value;
+    this
 
   def remove-at!: key
-  vm object: (vm object: this at: "data") remove-at: key;
-  this
+    vm object: (vm object: this at: "data") remove-at: key;
+    this
 
   def each: computation
-  this keys each: { key | computation call: [key; this at: key] };
-  this
+    this keys each: { key | computation call: [key; this at: key] };
+    this
 }

@@ -4,22 +4,23 @@ vm define-global: "Range" as: { Range };
 
 let Range = {
   def as-string
-  "<Range " + this start as-string + " .. " + this end as-string + ">"
+    "<Range " + this start as-string + " .. " + this end as-string + ">"
 
   def as-array
-  let result = [];
-  this each: { index | result append!: index };
-  result
+    let result = [];
+    this each: { index | result append!: index };
+    result
   
   def from: start to: end
-  this {
-    def start = start
-    def end   = end
-  }
+    this {
+      def start = start
+      def end   = end
+    }
 
   def each: computation
-  let index = Reference new: this start;
-  { computation call: index value;
-    index set!: index value + 1
-  } while: { index value < this end }
+    let index = Reference new: this start;
+    {
+      computation call: index value;
+      index set!: index value + 1
+    } while: { index value < this end }
 }

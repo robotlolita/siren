@@ -10,27 +10,27 @@ let trace = vm object: vm native-console at: "trace";
 
 let console = {
   def print: message level: level
-  vm function: level in-context: vm native-console call-with-argument: message as-string
+    vm function: level in-context: vm native-console call-with-argument: message as-string
 };
 
 let Console = {
   def log: message
-  console print: message level: log;
-  this
+    console print: message level: log;
+    this
 
   def info: message
-  console print: message level: info;
-  this
+    console print: message level: info;
+    this
   
   def warn: message
-  console print: message level: warn;
-  this
+    console print: message level: warn;
+    this
 
   def error: message
-  console print: message level: error;
-  this
+    console print: message level: error;
+    this
   
   def trace: message
-  console print: message level: trace;
-  this
+    console print: message level: trace;
+    this
 }

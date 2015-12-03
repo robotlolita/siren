@@ -11,6 +11,7 @@ var Do = ast.DoClause;
 var reserved = [
   'extend', 'let', 'this', 'do', 'module', 'exposing', 'def',
   '|', '<-', '=', '>>', 'with', 'where', 'use', 'in', 'using', 'return',
+  'trait', 'lazy'
 ]
 
 function isValid(a) {

@@ -3,133 +3,133 @@ module | root vm | where
 vm define-global: "Result" as: { Result };
 let Result = {
   def Ok
-  Ok
+    Ok
   
   def Failure
-  Failure
+    Failure
 
   @Meta category: "Constructing";
   def ok: value
-  Ok {
-    def value = value
-  }
+    Ok {
+      def value = value
+    }
 
   @Meta category: "Constructing";
   def failure: value
-  Failure {
-    def value = value
-  }
+    Failure {
+      def value = value
+    }
 
   @Meta category: "Accessing";
   def merge
-  this value
+    this value
 };
 
 let Ok = Result {
   @Meta category: "Transforming";
   def map: transformation
-  let newValue = transformation call: this value;
-  this { def value newValue }
+    let newValue = transformation call: this value;
+    this { def value newValue }
 
   @Meta category: "Transforming";
   def chain: transformation
-  transformation call: this value
+    transformation call: this value
 
   @Meta category: "Transforming";
   def match: pattern
-  pattern ok: this value
+    pattern ok: this value
 
   @Meta category: "Error handling";
   def recover: handler
-  this
+    this
 
   @Meta category: "Converting";
   def as-string
-  "<Result ok: " + this value as-string + ">"
+    "<Result ok: " + this value as-string + ">"
 
   @Meta category: "Converting";
   def as-array
-  [this value]
+    [this value]
 
   @Meta category: "Comparing and testing";
   def === aResult
-  let value = this value;
-  aResult match: {
-    def ok: v = v === value
-    def failure: v = False
-  }
+    let value = this value;
+    aResult match: {
+      def ok: v      = v === value
+      def failure: v = False
+    }
 
   @Meta category: "Comparing and testing";
   def ok?
-  True
+    True
 
   @Meta category: "Comparing and testing";
   def failure?
-  False
+    False
 
   @Meta category: "Comparing and testing";
   def then: ok else: failure
-  ok value
+    ok value
 
   @Meta category: "Accessing";
   def get!
-  this value
+    this value
 
   @Meta category: "Accessing";
   def get-or-default: defaultValue
-  this value
+    this value
 };
 
 let Failure = Result {
   @Meta category: "Transforming";
   def map: transformation
-  this
+    this
 
   @Meta category: "Transforming";
   def chain: transformation
-  this
+    this
 
   @Meta category: "Transforming";
   def match: pattern
-  pattern failure: this value
+    pattern failure: this value
 
   @Meta category: "Error handling";
   def recover: handler
-  handler call: this value
+    handler call: this value
 
   @Meta category: "Converting";
   def as-string
-  "<Result failure: " + this value as-string + ">"
+    "<Result failure: " + this value as-string + ">"
 
   @Meta category: "Converting";
   def as-array
-  []
+    []
 
   @Meta category: "Comparing and testing";
   def === aResult
-  let value = this value;
-  aResult match: {
-    def ok: v = False
-    def failure: v = v === value
-  }
+    let value = this value;
+    aResult match: {
+      def ok: v      = False
+      def failure: v = v === value
+    }
 
   @Meta category: "Comparing and testing";
   def ok?
-  False
+    False
 
   @Meta category: "Comparing and testing";
   def failure?
-  True
+    True
 
   @Meta category: "Comparing and testing";
   def then: ok else: failure
-  failure value
+    failure value
 
   @Meta category: "Accessing";
   def get!
-  Error panic!: "Can't extract a value from a failure. Use `merge`, `get-or-default:`, or `recover:`"
+    Error panic!: "Can't extract a value from a failure. Use `merge`, `get-or-default:`, or `recover:`"
 
   @Meta category: "Accessing";
   def get-or-default: defaultValue
-  defaultValue
+    defaultValue
 }

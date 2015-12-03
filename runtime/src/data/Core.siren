@@ -3,15 +3,15 @@ module | root vm | where
 (* Things inheriting from Object.prototype *)
 vm apply-trait-globally: extend vm native-object with {
   def as-string
-  "<Object>"
+    "<Object>"
 
   def === that
-  vm if: (vm object: this equals?: that)
-     then: True
-     else: False
+    vm if: (vm object: this equals?: that)
+       then: True
+       else: False
 
   def =/= that
-  (this === that) not
+    (this === that) not
   
   def does-not-understand: message with-arguments: args
     Error panic!:
@@ -28,13 +28,13 @@ Possible causes for this are:
        
 
   def clone: value
-  vm make-object: value inheriting: this
+    vm make-object: value inheriting: this
 };
 
 (* Root object from which all Siren objects (besides blocks) descend *)
 vm apply-trait-globally: extend Root with {
   def as-string
-  "<Root>"
+    "<Root>"
 };
 
 (* No value *)
@@ -42,7 +42,7 @@ vm define-global: "Unit" as: { Unit };
 
 let Unit = {
   def as-string
-  "<Unit>"
+    "<Unit>"
 };
 
 (* Other special objects *)
@@ -67,13 +67,13 @@ vm define-global: "lazy" as: {
 vm define-global: "Ordering" as: { Ordering };
 let Ordering = Singleton {
   def less-than
-  Less-Than
+    Less-Than
 
   def greater-than
-  Greater-Than
+    Greater-Than
 
   def equal
-  Equal
+    Equal
 };
 
 let Less-Than = Singleton {

@@ -4,37 +4,37 @@ vm define-global: "Function" as: { vm native-function };
 
 vm apply-trait-globally: extend Function with {
   def as-string
-  vm function/name: this
+    vm function/name: this
 
   def value
-  vm function/invoke0: this
+    vm function/invoke0: this
 
   def call: a
-  vm function/invoke1: this a: a
+    vm function/invoke1: this a: a
 
   def call: a with: b
-  vm function/invoke2: this a: a b: b
+    vm function/invoke2: this a: a b: b
 
   def call: a with: b with: c
-  vm function/invoke3: this a: a b: b c: c
+    vm function/invoke3: this a: a b: b c: c
 
   def call: a with: b with: c with: d
-  vm function/invoke4: this a: a b: b c: c d: d
+    vm function/invoke4: this a: a b: b c: c d: d
 
   def call: a with: b with: c with: d with: e
-  vm function/invoke5: this a: a b: b c: c d: d e: e
+    vm function/invoke5: this a: a b: b c: c d: d e: e
 
   def apply: args
-  vm function/invoke*: this with: args
+    vm function/invoke*: this with: args
 
   def while: predicate
-  vm while: { (predicate value) then: { vm true } else: { vm false } }
-     do: this;
-  this
+    vm while: { (predicate value) then: { vm true } else: { vm false } }
+       do: this;
+    this
 
   def repeat-forever
-  vm forever: this;
-  this
+    vm forever: this;
+    this
 };
 
 vm foreign/convert: Function as: { a | a }

@@ -6,164 +6,164 @@ vm define-global: "Float" as: { vm native-float };
 vm apply-trait-globally: extend Float with {
   (* Constants *)
   def max-value
-  vm float/max-value
+    vm float/max-value
 
   def min-value
-  vm float/min-value
+    vm float/min-value
 
   def nan
-  vm float/nan
+    vm float/nan
 
   def negative-infinity
-  vm float/-infinity
+    vm float/-infinity
 
   def positive-infinity
-  vm float/+infinity
+    vm float/+infinity
 
   (* Tests *)
   def nan?
-  vm if: (vm float/nan?: this)
-     then: True
-     else: False
+    vm if: (vm float/nan?: this)
+       then: True
+       else: False
 
   def finite?
-  vm if: (vm float/finite?: this)
-     then: True
-     else: False
+    vm if: (vm float/finite?: this)
+       then: True
+       else: False
 
   (* Logical comparisons *)
   def === that
-  vm if: (vm float: this equals?: that)
-     then: True
-     else: False
+    vm if: (vm float: this equals?: that)
+       then: True
+       else: False
 
   def =/= that
-  vm if: (vm float: this not-equals?: that)
-     then: True
-     else: False
+    vm if: (vm float: this not-equals?: that)
+       then: True
+       else: False
 
   def > that
-  vm if: (vm float: this greater?: that)
-     then: True
-     else: False
+    vm if: (vm float: this greater?: that)
+       then: True
+       else: False
 
   def >= that
-  vm if: (vm float: this greater-or-equal?: that)
-     then: True
-     else: False
+    vm if: (vm float: this greater-or-equal?: that)
+       then: True
+       else: False
 
   def < that
-  vm if: (vm float: this less-than?: that)
-     then: True
-     else: False
+    vm if: (vm float: this less-than?: that)
+       then: True
+       else: False
 
   def <= that
-  vm if: (vm float: this less-than-or-equal?: that)
-     then: True
-     else: False
+    vm if: (vm float: this less-than-or-equal?: that)
+       then: True
+       else: False
 
   (* Conversions *)
   def as-exponential
-  vm float/as-exponential: this
+    vm float/as-exponential: this
 
   def as-fixed
-  vm float/as-fixed: this
+    vm float/as-fixed: this
 
   def as-locale-string
-  vm float/as-locale-string: this
+    vm float/as-locale-string: this
 
   def as-string
-  vm float/as-string: this
+    vm float/as-string: this
 
   (* Ranges *)
   def .. end
-  Range from: this to: end
+    Range from: this to: end
 
   def ... end
-  Range from: this to: end + 1
+    Range from: this to: end + 1
   
   (* Arithmetic *)
   def + that
-  vm float: this plus: that
+    vm float: this plus: that
 
   def - that
-  vm float: this minus: that
+    vm float: this minus: that
 
   def * that
-  vm float: this times: that
+    vm float: this times: that
 
   def ** that
-  vm float: this power: that
+    vm float: this power: that
 
   def / that
-  vm float: this div: that
+    vm float: this div: that
 
   def modulus: that
-  vm float: this modulus: that
+    vm float: this modulus: that
 
   (* Bitwise *)
   def bit-shift-right: that
-  vm float: this bit-shift-right: that
+    vm float: this bit-shift-right: that
 
   def bit-shift-left: that
-  vm float: this bit-shift-left: that
+    vm float: this bit-shift-left: that
 
   def unsigned-bit-shift-right: that
-  vm float: this unsigned-bit-shift-right: that
+    vm float: this unsigned-bit-shift-right: that
 
   def bit-or: that
-  vm float: this bit-or: that
+    vm float: this bit-or: that
 
   def bit-and: that
-  vm float: this bit-and: that
+    vm float: this bit-and: that
 
   def bit-xor: that
-  vm float: this bit-xor: that
+    vm float: this bit-xor: that
 
   (* Geometry *)
   def arc-cosine
-  vm float/arccosine: this
+    vm float/arccosine: this
 
   def arc-sine
-  vm float/arcsine: this
+    vm float/arcsine: this
 
   def arc-tangent
-  vm float/arctangent: this
+    vm float/arctangent: this
 
   def arc-tangent: that
-  vm float: this arctangent: that
+    vm float: this arctangent: that
 
   def cosine
-  vm float/cosine: this
+    vm float/cosine: this
 
   def sine
-  vm float/sine: this
+    vm float/sine: this
 
   def tangent
-  vm float/tangent: this
+    vm float/tangent: this
   
   (* Maths/etc *)
   def exp
-  vm float/exp: this
+    vm float/exp: this
 
   def log
-  vm float/log: this
+    vm float/log: this
 
   def square-root
-  vm float/square-root: this
+    vm float/square-root: this
   
   (* Rounding / Converting *)
   def absolute
-  vm float/absolute: this
+    vm float/absolute: this
 
   def round
-  vm float/round: this
+    vm float/round: this
 
   def ceil
-  vm float/ceil: this
+    vm float/ceil: this
 
   def floor
-  vm float/floor: this
+    vm float/floor: this
 };
 
 vm foreign/convert: Float as: { a | a }

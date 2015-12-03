@@ -4,7 +4,7 @@ vm define-global: "Array" as: { vm native-array };
 
 vm apply-trait-globally: extend Array with {
   def as-string
-  "[" + (this join: ", ") + "]"
+    "[" + (this join: ", ") + "]"
 
   def new: size with: value
     vm array/new: size with: value
@@ -18,24 +18,24 @@ vm apply-trait-globally: extend Array with {
   
   (* Accessing *)
   def at: index
-  vm array: this at: index
+    vm array: this at: index
 
   def at: index put: value
-  this copy at: index put!: value
+    this copy at: index put!: value
   
   def at: index put!: value
   vm array: this at: index put: value;
-  this
+    this
 
   def last
     this at: this length
 
   def remove-at: index
-  this copy remove-at!: index
+    this copy remove-at!: index
   
   def remove-at!: index
-  vm array: this remove-at: index;
-  this
+    vm array: this remove-at: index;
+    this
 
   def remove-all!
     vm object: this at: "length" put: 0
@@ -49,40 +49,40 @@ vm apply-trait-globally: extend Array with {
   
   (* Collection operations *)
   def length
-  vm array/length: this
+    vm array/length: this
 
   def + that
-  vm array: this concat: that
+    vm array: this concat: that
 
   def index-of: value
-  let index = vm array: this index-of: value;
-  (index === 0) then: { Result failure: "Not found." }
-                else: { Result ok: index }
+    let index = vm array: this index-of: value;
+    (index === 0) then: { Result failure: "Not found." }
+                  else: { Result ok: index }
 
   def find: value
     this index-of: value >> map: (this at: _)
                 
   def last-index-of: value
-  let index = vm array: this last-index-of: value;
-  (index === 0) then: { Result failure: "Not found." }
-                else: { Result ok: index }
+    let index = vm array: this last-index-of: value;
+    (index === 0) then: { Result failure: "Not found." }
+                  else: { Result ok: index }
 
   def join: separator
-  vm array: (this map: _ as-string) join: separator
+    vm array: (this map: _ as-string) join: separator
 
   def copy
-  vm array/shallow-copy: this
+    vm array/shallow-copy: this
 
   (* Iteration *)
   def each: computation
-  vm array: this each: { a | computation call: a };
-  this
+    vm array: this each: { a | computation call: a };
+    this
 
   def map: computation
-  vm array: this map: { a | computation call: a }
+    vm array: this map: { a | computation call: a }
 
   def filter: predicate
-  vm array: this filter: { a | (predicate call: a) then: { vm true } else: { vm false } }
+    vm array: this filter: { a | (predicate call: a) then: { vm true } else: { vm false } }
 
   def fold: f from: initial
     vm array: this reduce: { a b | f call: a with: b } from: initial
@@ -92,11 +92,11 @@ vm apply-trait-globally: extend Array with {
   
   (* Mutation *)
   def append: value
-  this copy push!: value
+    this copy push!: value
 
   def append!: value
-  vm array: this push: value;
-  this
+    vm array: this push: value;
+    this
 
   def take-last
     this copy take-last!
@@ -105,11 +105,11 @@ vm apply-trait-globally: extend Array with {
     vm array/pop: this
 
   def prepend: value
-  this copy prepend!: value
+    this copy prepend!: value
 
   def prepend!: value
-  vm array: this unshift: value;
-  this
+    vm array: this unshift: value;
+    this
 
   def take-first
     this copy take-first!
@@ -119,24 +119,24 @@ vm apply-trait-globally: extend Array with {
     
 
   def reverse
-  this copy reverse!
+    this copy reverse!
 
   def reverse!
-  vm array/reverse: this;
-  this
+    vm array/reverse: this;
+    this
 
   def sort-by: comparator
-  this copy sort-by!: coparator
+    this copy sort-by!: coparator
 
   def sort-by!: comparator
-  vm array: this sort: { left right |
-    comparator call: left with: right >> match: {
-      def less-than    -1
-      def equal         0
-      def greater-than  1
-    }
-  };
-  this
+    vm array: this sort: { left right |
+      comparator call: left with: right >> match: {
+        def less-than    = -1
+        def equal        =  0
+        def greater-than =  1
+      }
+    };
+    this
   
 };
 

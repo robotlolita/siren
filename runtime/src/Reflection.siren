@@ -3,11 +3,11 @@ module | root vm | where
 
 let meta = {
   def get: name for: obj
-  let value = vm meta/for: obj at: name;
-    vm if: (vm failed?: value)
-       then: { Result failure: "No meta-data " + name + " for " + obj as-string }
-       else: { Result ok: value }
-       >> value
+    let value = vm meta/for: obj at: name;
+      vm if: (vm failed?: value)
+         then: { Result failure: "No meta-data " + name + " for " + obj as-string }
+         else: { Result ok: value }
+         >> value
 };
 
 vm define-global: "Mirror" as: { Mirror };
@@ -20,81 +20,81 @@ let Mirror = {
 
 let Meta-Mirror = {
   def on: reflectee
-  (* Constructs a Meta-Mirror for the reflectee. *)
-  this { def reflectee = reflectee }
+    (* Constructs a Meta-Mirror for the reflectee. *)
+    this { def reflectee = reflectee }
 
   def name
-  (* Retrieves the name of the object. *)
-  meta get: "name" for: this reflectee
+    (* Retrieves the name of the object. *)
+    meta get: "name" for: this reflectee
 
   def arguments
-  (* Retrieves the arguments that the object takes (for blocks). *)
-  meta get: "arguments" for: this reflectee
+    (* Retrieves the arguments that the object takes (for blocks). *)
+    meta get: "arguments" for: this reflectee
 
   def filename
-  (* Retrieves the file name where the object was defined. *)
-  meta get: "filename" for: this reflectee
+    (* Retrieves the file name where the object was defined. *)
+    meta get: "filename" for: this reflectee
 
   def source
-  (* Retrieves the source code of the object. *)
-  meta get: "source" for: this reflectee
+    (* Retrieves the source code of the object. *)
+    meta get: "source" for: this reflectee
 
   def category
-  (* Retrieves the category of the object. *)
-  meta get: "category" for: this reflectee
+    (* Retrieves the category of the object. *)
+    meta get: "category" for: this reflectee
 
   def documentation
-  (* Retrieves the documentation of the object. *)
-  meta get: "documentation" for: this reflectee
+    (* Retrieves the documentation of the object. *)
+    meta get: "documentation" for: this reflectee
 };
 
 let Object-Mirror = {
   def on: reflectee
-  (* Constructs a message mirror for the reflectee using the global method box. *)
-  this on: reflectee using: vm global-methods
+    (* Constructs a message mirror for the reflectee using the global method box. *)
+    this on: reflectee using: vm global-methods
 
   def on: reflectee using: methods
-  (* Constructs a message mirror for the reflectee using the given method box. *)
-  this {
-    def reflectee = reflectee
-    def method-box = methods
-  }
+    (* Constructs a message mirror for the reflectee using the given method box. *)
+    this {
+      def reflectee = reflectee
+      def method-box = methods
+    }
 
   def methods
-  (* Returns all methods the reflectee responds to in the method box. *)
-  vm list: this method-box for: this reflectee
+    (* Returns all methods the reflectee responds to in the method box. *)
+    vm list: this method-box for: this reflectee
 
   def method-names
-  (* Returns only the method names that the reflectee responds to. *)
-  this methods keys
+    (* Returns only the method names that the reflectee responds to. *)
+    this methods keys
 
   def method-selectors
-  (* Returns only the method selectors that the reflectee responds to. *)
-  this methods values
+    (* Returns only the method selectors that the reflectee responds to. *)
+    this methods values
 
   def responds-to?: name
-  (* True if the reflectee can respond to the given message. *)
-  this methods has?: name
+    (* True if the reflectee can respond to the given message. *)
+    this methods has?: name
 
   def method-selector: name
-  (* Returns the selector for the given name. *)
-  let selector = vm lookup: name in: this method-box for: this reflectee;
-  vm if: (vm failed?: selector)
-     then: { Result failure: (this reflectee as-string + " does not understand " + name) }
-     else: { Result ok: selector }
-     >> value
+    (* Returns the selector for the given name. *)
+    let selector = vm lookup: name in: this method-box for: this reflectee;
+    vm if: (vm failed?: selector)
+       then: { Result failure: (this reflectee as-string + " does not understand " + name) }
+       else: { Result ok: selector }
+       >> value
   
   def method: name
-  (* Returns the method with the given name. *)
-  do { selector <- this method-selector: name
-     ; return vm object: this reflectee at: selector
-     }
+    (* Returns the method with the given name. *)
+    do { selector <- this method-selector: name
+       ; return vm object: this reflectee at: selector
+       }
 
   def prototype
-  (* Returns the immediate prototype of the reflectee. *)
-  let proto = vm prototype-of: this reflectee;
-  vm if: (vm failed?: selector)
-     then: { Result failure: ("No prototype for " + this reflectee as-string) }
-     else: { Result ok: proto }
-     >> value
+    (* Returns the immediate prototype of the reflectee. *)
+    let proto = vm prototype-of: this reflectee;
+    vm if: (vm failed?: selector)
+       then: { Result failure: ("No prototype for " + this reflectee as-string) }
+       else: { Result ok: proto }
+       >> value
 }
