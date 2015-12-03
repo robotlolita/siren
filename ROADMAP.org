@@ -24,12 +24,6 @@ require people to explicitly inherit from ~Object.prototype~ instead.
 If objects inherit from ~null~, they won't have a ~send-to:in:with:~ message
 defined, however, so we'd need to define that for these objects as well.
 
-*** FEATURE Add interfaces for structural contracts
-Contracts would help with feedback in using objects in the system, and avoid
-errors from sending incorrect messages to objects. I'm not quite sure how the
-system could use this information to provide better feedback for the user yet
-though, so it's something to think about.
-
 *** DONE [#A] Have global bindings resolve as messages sent to the Global object
 CLOSED: [2015-05-17 Sun 00:15]
 We should have Self's equivalent of ~Lobby~, a global namespace that's the
@@ -40,29 +34,11 @@ We can move several things that are currently ad-hoc (e.g.: ~String~, ~Object~,
 etc.) to this global namespace. It makes sense to have messages go
 ~Local Bindings -> Module -> Global~ as well.
 
-*** FEATURE [#B] Allow expressions in ~extend~
-The ~extend~ construct supports only literal objects for now, because it must
-construct a mapping of message names to selector values. It would be
-interesting to support arbitrary expressions that resolve to objects in this
-construct, but we need to be able to gather all message names for the selector
-values the object supports.
-
 *** DONE Get rid of ~=~ in message definitions
 CLOSED: [2015-05-21 Thu 17:13]
 It's not strictly necessary in the grammar, and we could have a cleaner
 language overall, but it's mostly a cosmetic change, and I'm not sure it
 delivers that much value.
-
-*** FEATURE [#A] Allow rebinding names in ~using/use~
-Currently there's no way of resolving namespacing conflicts when introducing
-new message resolutions with ~using/use~. Allowing one to remap message names
-when unpacking a particular trait in the namespace would solve this.
-
-*** FEATURE [#B] Define module & language version in modules
-Modules should provide their version and the version of the language they
-use. This could allow migration from older versions of the language, or better
-error reporting on older/newer compilers.
-*** FEATURE [#B] Have ~let a = b~ propagate ~a~ as the name metadata for ~b~
 *** DONE [#A] Implement non-local returns for blocks
 CLOSED: [2015-05-18 Mon 20:02]
 For now, this can probably be handled by using try/catch:
@@ -84,6 +60,30 @@ Array.prototype['empty?'] = function() {
     return result;
   }
 }
+
+*** FEATURE Add interfaces for structural contracts
+Contracts would help with feedback in using objects in the system, and avoid
+errors from sending incorrect messages to objects. I'm not quite sure how the
+system could use this information to provide better feedback for the user yet
+though, so it's something to think about.
+
+*** FEATURE [#B] Allow expressions in ~extend~
+The ~extend~ construct supports only literal objects for now, because it must
+construct a mapping of message names to selector values. It would be
+interesting to support arbitrary expressions that resolve to objects in this
+construct, but we need to be able to gather all message names for the selector
+values the object supports.
+
+*** FEATURE [#A] Allow rebinding names in ~using/use~
+Currently there's no way of resolving namespacing conflicts when introducing
+new message resolutions with ~using/use~. Allowing one to remap message names
+when unpacking a particular trait in the namespace would solve this.
+
+*** FEATURE [#B] Define module & language version in modules
+Modules should provide their version and the version of the language they
+use. This could allow migration from older versions of the language, or better
+error reporting on older/newer compilers.
+*** FEATURE [#B] Have ~let a = b~ propagate ~a~ as the name metadata for ~b~
 
 ** Compiler
 *** ENHANCEMENT Functions only need to be bound if they contain ~this~ expressions
