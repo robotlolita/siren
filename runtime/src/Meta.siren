@@ -24,4 +24,12 @@ let Meta = {
   def documentation: text
     (* Provides documentation for a value. *)
     this at: "documentation" put: text
+
+  def example: code
+    (* Provides example usage for the function. *)
+    { object | let examples = vm meta/for: object at: "examples";
+               vm if: (vm failed?: examples)
+                  then: { this for: object at: "examples" put: [code] }
+                  else: { this for: object at: "examples" put: (vm array: examples concat: [code]) }
+                  >> value }
 }

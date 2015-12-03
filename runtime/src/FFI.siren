@@ -1,13 +1,26 @@
 module | root vm | where
 
+vm define-global: "FFI" as: { FFI };
+
 let FFI = {
   def import: object
-    vm match: object with: {
-      def unit      = Unit
-      def boolean   = vm if: object then: True else: False
-      def primitive = object
-      def array     = object map: (FFI import: _)
-      def object    = Dictionary new: object
+    vm foreign/match: object with: {
+      def unit
+        Unit
+
+      def boolean
+        vm if: object then: True else: False
+
+      def primitive
+        object
+
+      def array
+        object map: (FFI import: _)
+
+      def object
+        let dict = Dictionary new;
+        vm object: dict at: "data" put: object;
+        dict
     }
   
   def export: object

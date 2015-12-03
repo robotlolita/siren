@@ -118,7 +118,7 @@ module.exports = function() {
   //
   // @type: Object -> { String -> Symbol }
   MethodBox.prototype.get = function(object) {
-    return this.methods.get(object) || {};
+    return this.methods.get(object);
   };
 
   // #### method: lookup(object, name)
@@ -172,7 +172,7 @@ module.exports = function() {
     [].forEach.call(arguments, function(pair) {
       var proto = pair[0];
       var mappings = pair[1];
-      var box = this.get(proto);
+      var box = this.get(proto) || {};
       extend(box, mappings);
       this.set(proto, box);
     }.bind(this));
@@ -353,12 +353,27 @@ module.exports = function() {
       return a == null;
     },
 
+    // Method Boxes
+    'method/list:for:': function(box, object) {
+      return box.list(object);
+    },
+
+    'method/lookup:in:for:': function(name, box, object) {
+      return box.lookup(object, name);
+    },
+
     // Objects
     'object:has?:': function(object, name) {
       return name in Object(object);
     },
+
     'object:at:': function(object, name) {
       assert_string(name); assert_exists(object, name);
+      return object[name];
+    },
+
+    'object:at-key:': function(object, name) {
+      assert_exists(object, name);
       return object[name];
     },
 
@@ -1098,11 +1113,12 @@ module.exports = function() {
   // Modules are expected to update the globals as necessary
   require('./Meta')(Siren, Primitives);
   require('./Reflection')(Siren, Primitives);
+  require('./FFI')(Siren, Primitives);
   require('./data/Core')(Siren, Primitives);
+  require('./data/Function')(Siren, Primitives);
   require('./data/Error')(Siren, Primitives);
   require('./data/Number')(Siren, Primitives);
   require('./data/Boolean')(Siren, Primitives);
-  require('./data/Function')(Siren, Primitives);
   require('./data/String')(Siren, Primitives);
   require('./data/Array')(Siren, Primitives);
   require('./data/Dictionary')(Siren, Primitives);
@@ -1115,6 +1131,7 @@ module.exports = function() {
   require('./io/Timer')(Siren, Primitives);
   require('./io/Console')(Siren, Primitives);
   require('./io/FileSystem')(Siren, Primitives);
+  require('./test/Test-Runner')(Siren, Primitives);
 
   return Siren;
 }();
