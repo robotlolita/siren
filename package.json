@@ -2,7 +2,7 @@
   "name": "@robotlolita/siren",
   "version": "0.4.0",
   "bin": {
-    "mermaid": "bin/siren"
+    "siren": "bin/siren"
   },
   "main": "./lib/index.js",
   "dependencies": {
