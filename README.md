@@ -34,7 +34,7 @@ name point to the runtime root object in order to run those files:
 
 ```sh
 $ bin/siren --compile examples/trivial/hello-world.siren > hw.js
-$ iojs -e "global.Siren = require('./runtime/core'); require('./hw.js')"
+$ node -e "global.Siren = require('./runtime/core'); require('./hw.js')"
 Hello, world
 ```
 
