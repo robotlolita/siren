@@ -1,6 +1,6 @@
-// # module: mermaid.parser
+// # module: siren.parser
 //
-// Parser for the Mermaid language.
+// Parser for the Siren language.
 
 // -- Dependencies -----------------------------------------------------
 var ast = require('./ast');
@@ -37,8 +37,8 @@ function decorateLet(letNode, expr) {
                   Expr.Apply(letNode.meta, Expr.Id({}, 'call:'), expr, [letNode.value]))
 }
 
-// ## object: MermaidParser
-ometa MermaidParser {
+// ## object: SirenParser
+ometa SirenParser {
   space   = /\s/,
   ignored = space | comment,
   comment = fromTo('(*', '*)'):a -> a.slice(2, -2).trim(),

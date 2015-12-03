@@ -1,6 +1,6 @@
-// # module: mermaid.ast
+// # module: siren.ast
 //
-// The nodes that constitute the Abstract Syntax Tree in Mermaid are
+// The nodes that constitute the Abstract Syntax Tree in Siren are
 // defined in this file. All nodes contain a `meta` field, where we
 // store meta-data about that node, such as argument names,
 // documentation, line/column, filename, etc.

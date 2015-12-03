@@ -94,7 +94,7 @@ module.exports = function() {
   //
   // Provides scoped resolution of message names to message selectors.
   //
-  // Messages in Mermaid are stored in each object as unique selector
+  // Messages in Siren are stored in each object as unique selector
   // values. To translate a name such as `+` or `add:to:` it uses a
   // `MethodBox` object available in that scope, which provides the
   // mapping of names to selector values.
@@ -182,7 +182,7 @@ module.exports = function() {
 
   // ### class: Meta()
   //
-  // Every object in Mermaid can contain meta-data about itself,
+  // Every object in Siren can contain meta-data about itself,
   // this meta-data lives in a separate object. The `Meta` object
   // holds mappings of Object to a dictionary of meta-data.
   function Meta() {
@@ -192,7 +192,7 @@ module.exports = function() {
   // #### method: get(object, name)
   // Retrieves a meta-data property from the object.
   //
-  // @type: (Object, String) -> Mermaid.Object | null
+  // @type: (Object, String) -> Siren.Object | null
   Meta.prototype.get = function(object, name) {
     return (this.data.get(object) || {})[name];
   };
@@ -200,7 +200,7 @@ module.exports = function() {
   // #### method: set(object, name, value)
   // Defines a new meta-data for the object.
   //
-  // @type: (Object, String, Mermaid.Object) -> Unit
+  // @type: (Object, String, Siren.Object) -> Unit
   Meta.prototype.set = function(object, name, value) {
     var metas = this.data.get(object) || {};
     metas[name] = value;
@@ -213,7 +213,7 @@ module.exports = function() {
   // #### function: $send(object, message, method, args)
   // Sends a message to an object.
   //
-  // @type: (Mermaid.Object, String, MethodBox, [Mermaid.Object]) -> Mermaid.Object
+  // @type: (Siren.Object, String, MethodBox, [Siren.Object]) -> Siren.Object
   function $send(object, message, methods, args) {
     var selector = methods.lookup(Object(object), message);
     if (selector) {
@@ -234,7 +234,7 @@ module.exports = function() {
   // #### class: Return()
   // Represents non-local returns.
   //
-  // @type: new (Mermaid.Object)
+  // @type: new (Siren.Object)
   function Return(value) {
     this.value = value;
   }
@@ -242,7 +242,7 @@ module.exports = function() {
   // #### function: $return(value)
   // Does a non-local return (can only be used inside blocks).
   //
-  // @type: (Mermaid.Object) -> Unit :: throws Mermaid.Object
+  // @type: (Siren.Object) -> Unit :: throws Siren.Object
   function $return(value) {
     throw new Return(value);
   }
@@ -250,9 +250,9 @@ module.exports = function() {
   // #### function: $handleReturn(value)
   // Handles non-local returns after the stack has been unwinded.
   // This accounts for the possibility of non-Return objects being
-  // thrown by Mermaid code.
+  // thrown by Siren code.
   //
-  // @type: (Any) -> Mermaid.Object | Unit :: throws Object
+  // @type: (Any) -> Siren.Object | Unit :: throws Object
   function $handleReturn(value) {
     if (value instanceof Return)
       return value.value;
@@ -265,7 +265,7 @@ module.exports = function() {
   // #### function: pairsToObject(pairs)
   // Reifies a series of [selector, value] pairs into an Object.
   //
-  // @type: [(Symbol, Mermaid.Object)] -> { Symbol -> Mermaid.Object }
+  // @type: [(Symbol, Siren.Object)] -> { Symbol -> Siren.Object }
   function pairsToObject(pairs) {
     return pairs.reduce(function(r, p) {
       r[p[0]] = p[1];
@@ -274,9 +274,9 @@ module.exports = function() {
   }
 
   // #### function: $extendObject(object, record)
-  // Extends a Mermaid object with properties coming from a plain JS object.
+  // Extends a Siren object with properties coming from a plain JS object.
   //
-  // @type: (Mermaid.Object, { String -> Mermaid.Object }) -> Mermaid.Object
+  // @type: (Siren.Object, { String -> Siren.Object }) -> Siren.Object
   function $extendObject(object, record) {
     var pairs = keys(record).map(function(k) {
       var selector = Symbol(k);
@@ -288,9 +288,9 @@ module.exports = function() {
   }
 
   // #### function: $makeObject(record, prototype)
-  // Constructs a new Mermaid object, optionally with the given prototype.
+  // Constructs a new Siren object, optionally with the given prototype.
   //
-  // @type: ({ String -> Mermaid.Object}, Mermaid.Object | null) -> Mermaid.Object
+  // @type: ({ String -> Siren.Object}, Siren.Object | null) -> Siren.Object
   function $makeObject(record, prototype) {
     if (prototype === undefined) prototype = Base;
     var result = Object.create(prototype);
@@ -301,7 +301,7 @@ module.exports = function() {
   // #### function: $makeFunction(fn, meta)
   // Constructs a function and assigns meta-data to it.
   //
-  // @type: (Function, { String -> Mermaid.Object }) -> Function
+  // @type: (Function, { String -> Siren.Object }) -> Function
   function $makeFunction(fn, meta) {
     meta = meta || {};
     if (meta.name) fn.displayName = meta.name;
@@ -311,13 +311,13 @@ module.exports = function() {
 
   // --- Importing / Exporting objects ---------------------------------
   // A symbol attached to objects that describes how they convert to JS
-  var $export = Symbol('mermaid->js');
-  var $import = Symbol('js->mermaid');
+  var $export = Symbol('siren->js');
+  var $import = Symbol('js->siren');
 
   // #### function: wrap(instance, namespace)
   // Wraps an object giving it a `send` method for interacting in the JS side.
   //
-  // @type: (Mermaid.Object, MethodBox) -> Object
+  // @type: (Siren.Object, MethodBox) -> Object
   function wrap(instance, namespace) {
     var wrapper = {
       send: function(message, args) {
@@ -340,7 +340,7 @@ module.exports = function() {
   // The global meta-data mapping
   var $meta = new Meta();
 
-  // The base object from which all Mermaid objects descend
+  // The base object from which all Siren objects descend
   var Base = Object.create(Object.prototype);
 
   // --- Primitive operations ------------------------------------------
@@ -985,7 +985,7 @@ module.exports = function() {
     'define-global:as:': function(name, value) {
       var record = Object.create(null);
       record[name] = value;
-      $methods.merge($extendObject(Mermaid, record));
+      $methods.merge($extendObject(Siren, record));
     },
 
     'apply-trait-globally:': function(trait) {
@@ -1070,15 +1070,15 @@ module.exports = function() {
   // -- Module loading -------------------------------------------------
   function loadModule(name) {
     if (moduleCache[name]) {
-      moduleCache[name] = require(name)(Mermaid, Primitives);
+      moduleCache[name] = require(name)(Siren, Primitives);
     }
     return moduleCache[name];
   }
 
   // -- Global configuration -------------------------------------------
   // Special internal functions available to all modules
-  var Mermaid = Object.create(Base);
-  extend(Mermaid, {
+  var Siren = Object.create(Base);
+  extend(Siren, {
     '$methods'      : $methods,
     '$send'         : $send,
     '$extend'       : $extendObject,
@@ -1088,33 +1088,33 @@ module.exports = function() {
     '$handleReturn' : $handleReturn
   });
 
-  $methods.merge($extendObject(Mermaid, {
+  $methods.merge($extendObject(Siren, {
     'Root': function(){ return Base }
   }));
 
-  global.Mermaid = Mermaid;
+  global.Siren = Siren;
 
   // Define global objects that are reachable in the prelude
   // Modules are expected to update the globals as necessary
-  require('./Meta')(Mermaid, Primitives);
-  require('./Reflection')(Mermaid, Primitives);
-  require('./data/Core')(Mermaid, Primitives);
-  require('./data/Error')(Mermaid, Primitives);
-  require('./data/Number')(Mermaid, Primitives);
-  require('./data/Boolean')(Mermaid, Primitives);
-  require('./data/Function')(Mermaid, Primitives);
-  require('./data/String')(Mermaid, Primitives);
-  require('./data/Array')(Mermaid, Primitives);
-  require('./data/Dictionary')(Mermaid, Primitives);
-  require('./data/Result')(Mermaid, Primitives);
-  require('./data/Reference')(Mermaid, Primitives);
-  require('./data/Range')(Mermaid, Primitives);
-  require('./data/Task')(Mermaid, Primitives);
-  require('./data/Channel')(Mermaid, Primitives);
-  require('./data/Event')(Mermaid, Primitives);
-  require('./io/Timer')(Mermaid, Primitives);
-  require('./io/Console')(Mermaid, Primitives);
-  require('./io/FileSystem')(Mermaid, Primitives);
+  require('./Meta')(Siren, Primitives);
+  require('./Reflection')(Siren, Primitives);
+  require('./data/Core')(Siren, Primitives);
+  require('./data/Error')(Siren, Primitives);
+  require('./data/Number')(Siren, Primitives);
+  require('./data/Boolean')(Siren, Primitives);
+  require('./data/Function')(Siren, Primitives);
+  require('./data/String')(Siren, Primitives);
+  require('./data/Array')(Siren, Primitives);
+  require('./data/Dictionary')(Siren, Primitives);
+  require('./data/Result')(Siren, Primitives);
+  require('./data/Reference')(Siren, Primitives);
+  require('./data/Range')(Siren, Primitives);
+  require('./data/Task')(Siren, Primitives);
+  require('./data/Channel')(Siren, Primitives);
+  require('./data/Event')(Siren, Primitives);
+  require('./io/Timer')(Siren, Primitives);
+  require('./io/Console')(Siren, Primitives);
+  require('./io/FileSystem')(Siren, Primitives);
 
-  return Mermaid;
+  return Siren;
 }();

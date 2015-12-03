@@ -1,4 +1,4 @@
-// # module: mermaid.generation.resolve-bindings
+// # module: siren.generation.resolve-bindings
 //
 // Correctly resolves bindings into `Var` and `Global` nodes.
 

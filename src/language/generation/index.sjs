@@ -1,6 +1,6 @@
-// # module: mermaid.language.generation
+// # module: siren.language.generation
 //
-// Exposes a way of generating JS from Mermaid ASTs.
+// Exposes a way of generating JS from Siren ASTs.
 
 // -- Dependencies -----------------------------------------------------
 var { BindingBox, generate } = require('./codegen');

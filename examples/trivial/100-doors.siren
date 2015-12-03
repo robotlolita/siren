@@ -22,7 +22,7 @@ let Door = {
   this { def index = index }
 
 
-  (* Conventionally, Mermaid uses a suffix `?` for predicates *)
+  (* Conventionally, Siren uses a suffix `?` for predicates *)
   def open?
   (* Whether the door is open. *)
   False

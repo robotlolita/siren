@@ -1,4 +1,4 @@
-// # module: mermaid.generation.returns
+// # module: siren.generation.returns
 //
 // Handles non-local returns.
 
@@ -70,7 +70,7 @@ function wrapBody(body) {
                 {},
                 js.Call(
                   {},
-                  js.Member({}, js.Id({}, 'Mermaid'), js.Str({}, '$handleReturn'), true),
+                  js.Member({}, js.Id({}, 'Siren'), js.Str({}, '$handleReturn'), true),
                   [js.Id({}, '$result')]
                 )
               )

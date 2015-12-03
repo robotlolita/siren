@@ -1,4 +1,4 @@
-// # module: mermaid.jsast
+// # module: siren.jsast
 //
 // Mozilla's Parser format as a sum type.
 

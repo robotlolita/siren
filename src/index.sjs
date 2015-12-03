@@ -1,9 +1,9 @@
-// # module: mermaid
+// # module: siren
 //
 // A small object oriented language for teaching.
 
 // -- Dependencies -----------------------------------------------------
-var Parser = require('./language/parser').MermaidParser;
+var Parser = require('./language/parser').SirenParser;
 var generate = require('./language/generation');
 var escodegen = require('escodegen');
 var path = require('path');
@@ -34,7 +34,7 @@ function makeRuntime() {
 
 exports.run = run;
 function run(source, runtime, filename) {
-  global.Mermaid = runtime;
+  global.Siren = runtime;
   return filename && filename !== '<stdin>'?
     require(filename).exports
   : vm.runInThisContext(source, { filename: filename });

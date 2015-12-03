@@ -1,15 +1,15 @@
-// # module: mermaid.cli
+// # module: siren.cli
 //
-// Command line interface for the Mermaid compiler.
+// Command line interface for the Siren compiler.
 
 var doc = [
-  'Mermaid — A simple prototypical OO language for teaching.',
+  'Siren — A simple prototypical OO language for teaching.',
   '',
   'Usage:',
-  '  mermaid [options] <file>',
-  '  mermaid [options]',
-  '  mermaid --version',
-  '  mermaid --help',
+  '  siren [options] <file>',
+  '  siren [options]',
+  '  siren --version',
+  '  siren --help',
   '',
   'Options:',
   '  -c, --compile              Outputs the generated JS code on the stdout',
@@ -56,7 +56,7 @@ module.exports = function Main() {
   var args = docopt(doc, { help: false });
 
   ; args['--help']?                     log(doc)
-  : args['--version']?                  log('Mermaid version ' + pkg.version)
+  : args['--version']?                  log('Siren version ' + pkg.version)
   : args['--ast']?                      show(branch(args, parse, ast))
   : args['--compile']?                  show(branch(args, compile, js))
   : /* otherwise */                     branch(args, runStdin, run)

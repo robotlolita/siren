@@ -1,8 +1,8 @@
 {
-  "name": "mermaid-language",
-  "version": "0.3.0",
+  "name": "@robotlolita/siren",
+  "version": "0.4.0",
   "bin": {
-    "mermaid": "bin/mermaid"
+    "mermaid": "bin/siren"
   },
   "main": "./lib/index.js",
   "dependencies": {

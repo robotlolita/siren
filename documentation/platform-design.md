@@ -3,19 +3,19 @@ Platform Design
 
 > **Note**: This document is a work in progress.
 
-Mermaid is a programming platform around the idea of live objects, just like
+Siren is a programming platform around the idea of live objects, just like
 other Smalltalk dialects (Smalltalk, Self, etc.). In this kind of system,
 programs are written in terms of interactions between objects, a style of
-programming called Object Oriented. But while most of the influence in Mermaid
+programming called Object Oriented. But while most of the influence in Siren
 comes from its close cousin Self, there's also a lot of design decisions that
 are informed by functional programming (in languages like ML and Haskell) and by
 Lisp dialects. This document describes the approach to design that's used in the
-core of Mermaid's platform.
+core of Siren's platform.
 
 
 ## Overview
 
-Mermaid is a pure object oriented language using prototypes but being limited to
+Siren is a pure object oriented language using prototypes but being limited to
 single delegation. Objects can be extended arbitrarily and extensions are
 restricted to a lexical (message) region. Messages are stored in objects as
 unique values, rather than Strings, which means that collisions are not possible
@@ -23,12 +23,12 @@ when extending an object. Names that refer to a message are resolved lexically,
 so different lexical regions may have a particular message name (e.g.:
 `as-string`) resolve to two different message objects in the same object.
 
-Since one of its goals is to provide an interactive platform, Mermaid is a fully
+Since one of its goals is to provide an interactive platform, Siren is a fully
 reflective system, and meta-data can be attached to any object, as well as
 queried at any time during the execution of the program. Users need to acquire
 the proper Mirror to reflect on the parts of the object they're interested in.
 
-Another major goal in Mermaid is to be used as a programming language for
+Another major goal in Siren is to be used as a programming language for
 teaching. Within this goal, the ability of understanding programs through
 examples, exploring them and extrapolating from them is essential. This fits
 nicely with the prototypical OO model, since the core idea in the model is to
@@ -36,7 +36,7 @@ create objects that exemplify a concept (so they're fully usable on their own)
 and extrapolate from them.
 
 Furthermore, to make reasoning about programs simpler, and live programming
-feasible, most of Mermaid's functions have no side-effects, and the ones that do
+feasible, most of Siren's functions have no side-effects, and the ones that do
 are explicitly marked (with a ! suffix in the message name).
 
 
@@ -61,17 +61,17 @@ are explicitly marked (with a ! suffix in the message name).
 
 ## Computations and objects
 
-Mermaid is a pure Object-Oriented language. Users design programs by describing
+Siren is a pure Object-Oriented language. Users design programs by describing
 how objects interact with each other. All actions in the system must be
 carried by sending messages to objects (there are no control flow structures
 such as `if` statements or `for` loops). While this model of programming can be
 fairly powerful, it's not immediately obvious how one should go about designing
 these interactions.
 
-In Mermaid, there are guidelines for effectively designing them. A design
+In Siren, there are guidelines for effectively designing them. A design
 process starts by determining the problem, figuring out which components this
 problem has, and then determining which kind of concept each component should be
-represented as in the Mermaid world.
+represented as in the Siren world.
 
 Kinds of concepts can be divided in:
 
@@ -89,11 +89,11 @@ Kinds of concepts can be divided in:
    this modelling).
 
 -  **An Universe** is the domain in which these concepts are presented. So, for
-   example, if you're modelling Trilean logic in Mermaid, then your *universe*
+   example, if you're modelling Trilean logic in Siren, then your *universe*
    would be Trilean logic, your *algebras* would be True, False, and Unknown,
    and your *processes* would be And, Or, Invert, and Implies.
 
-In Mermaid, *processes* tend to map to messages or blocks, *algebras* map to
+In Siren, *processes* tend to map to messages or blocks, *algebras* map to
 objects, and *universes* map to objects, modules or packages[¹](#fn1). There are
 cases where that might differ, and, for example, an *object* might end up
 representing a *process* (state machines and actors are good examples of this).
@@ -107,7 +107,7 @@ thing (scalar), one thing in many (sum), or many things (product).
 
 Integers are an example of a *scalar* concept. They're a single entity which
 makes sense on its own, and can not be broken into further entities[²](#fn2) in
-Mermaid. Even if an Integer was made up of different objects, those objects are
+Siren. Even if an Integer was made up of different objects, those objects are
 not visible to the user, and the user can not extract those components, or
 construct an Integer from those components.
 
@@ -128,7 +128,7 @@ person's age and their name) are another example of a *product*.
 ## Making illegal states un-representable
 
 If you're not familiar with the concept of *sum types* (which is not surprising,
-given that most programming languages, including Mermaid, only offer product
+given that most programming languages, including Siren, only offer product
 types), you might be asking yourself why one would need them.
 
 Sum types help with modelling **possibilities** (Which possible states this
@@ -177,9 +177,9 @@ this object to support additional states would only complicate matters
 further. The recommended approach is to, instead, factor these possibilities
 into distinct objects with the relevant messages in them.
 
-> **Note**: Mermaid does not support sum types for now, one must encode them by
+> **Note**: Siren does not support sum types for now, one must encode them by
 > using dynamic dispatch with product types. It's not clear if there's a way of
-> Mermaid to naturally support sum types without introspecting objects and
+> Siren to naturally support sum types without introspecting objects and
 > complecting messages, or if it would be an advantage to do so. This remains an
 > open problem.
 
@@ -235,17 +235,17 @@ clone `Linked-List` and define different behaviours for `Empty` and `Node` if
 necessary.
 
 
-## Interlude: A Review of Mermaid's Object Model
+## Interlude: A Review of Siren's Object Model
 
-Mermaid is a pure object oriented language, which largely means that the
-entities available to model the world in Mermaid are objects. In Mermaid,
+Siren is a pure object oriented language, which largely means that the
+entities available to model the world in Siren are objects. In Siren,
 everything is an object, and all of the operations work on objects. This gives
-Mermaid a sufficiently expressive computational and compositional power —
+Siren a sufficiently expressive computational and compositional power —
 the result of composing an object is another object, which can be further
 composed with existing operations into further objects.
 
 An object is an entity together with the set of operations it supports. In
-Mermaid all objects carry all of the operations that they support. The only
+Siren all objects carry all of the operations that they support. The only
 way of "using" (or rather, interacting with) an object is to send that object a
 message. The object might then choose whether to perform the operation (if it
 can understand it) or not.
@@ -258,13 +258,13 @@ that key). The message is how the user specifies which operation they want to
 carry out, and the operation is how the target decides to interpret that
 message.
 
-In mermaid operations are a collection of Mermaid statements, which are executed
+In siren operations are a collection of Siren statements, which are executed
 in order if the operation is to be carried out. Messages are unique identifiers
 given to these operations. A message name is a way for someone to refer to these
 operations. Unlike most existing Object Oriented languages, messages and message
 names are separate concepts. A message is guaranteed to be globally unique,
-which means there can never be a collision between two messages in Mermaid. A
-name, on the other hand, is a way of resolving these messages. Names in Mermaid
+which means there can never be a collision between two messages in Siren. A
+name, on the other hand, is a way of resolving these messages. Names in Siren
 are lexical and defined by the call-site.
 
 For example, in:
@@ -294,7 +294,7 @@ unit + 1;
 unit foo: 1 bar: 2
 ```
 
-When Mermaid executes these operations, it figures out which message `as-string`
+When Siren executes these operations, it figures out which message `as-string`
 means for the `unit` object in the current scope, then sends that message to the
 `unit` object. The `unit` object then takes over the process and figures out
 which operation that message means, finally it returns `"<unit>"` as the result
@@ -316,17 +316,17 @@ unit as-string  (* => "<unit>" *)
 ```
 
 
-## Translating Algebras into Mermaid
+## Translating Algebras into Siren
 
 At this point you should have a set of `(Entity × Processes) ∈ Universe` that
-feels consistent. What's left is representing this using Mermaid's concepts. As
+feels consistent. What's left is representing this using Siren's concepts. As
 a pure object-oriented language, most of these concepts will map to
 objects. This might sound unnatural, but having a single concept means we have a
 much greater compositional power.
 
 While we've got many concepts mapping to a single concept, objects can be broken
 down into several different categories depending on what they're used for. The
-major categories in Mermaid are **Traits**, **Examples** and **Refinements**.
+major categories in Siren are **Traits**, **Examples** and **Refinements**.
 
 
 -  A **Trait** is an object that provides a (possibly incomplete) set of
@@ -359,18 +359,18 @@ depending on the algebra. But in the common case:
 -  If it doesn't make sense for an object to be refined, and it provides all of
    the parts it needs to work, then it's not necessary to separate it into a
    *traits* object and an *example* object. Self calls these objects "Oddballs,"
-   Mermaid calls them "Singletons".
+   Siren calls them "Singletons".
 
 
 
 ## Footnotes
 
-- <a name="fn1">¹</a>: So far there are no concepts of packages in Mermaid, I do
+- <a name="fn1">¹</a>: So far there are no concepts of packages in Siren, I do
   not know if we'll ever have them either.
 
 - <a name="fn2">²</a>: This is not entirely true, as you can break integers into
   bytes, and further into bits. But this underlying representation is opaque in
-  Mermaid so the user can't see it.
+  Siren so the user can't see it.
 
 
 ## References

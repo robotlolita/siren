@@ -1,4 +1,4 @@
-// # module: mermaid.codegen
+// # module: siren.codegen
 //
 // Generates code from the AST (in the future we might do some IR
 // optimisations, but for now the semantics almost map 1:1 to JS, so it doesn't
@@ -107,9 +107,9 @@ function selector(meta, name) {
 }
 
 function cloneMethods(meta, parent) {
-  parent = parent || dot({}, ['Mermaid', '$methods']);
+  parent = parent || dot({}, ['Siren', '$methods']);
   return [
-    letb(meta, id('$send'), dot({}, ['Mermaid', '$send'])),
+    letb(meta, id('$send'), dot({}, ['Siren', '$send'])),
     letb(meta, id('$methods'), methCall({}, parent, id('clone'), []))
   ]
 }
@@ -150,7 +150,7 @@ function generateProperty(bind, pair) {
     pair[0].meta,
     idToStr(generate(bind, _id)),
     methCall(_fn.meta,
-             id('Mermaid'),
+             id('Siren'),
              id('$fn'),
              [
                generate(bind, _fn),
@@ -384,7 +384,7 @@ function generate(bind, x) {
 
     Expr.Record(meta, xs) =>
       methCall(meta,
-               id('Mermaid'),
+               id('Siren'),
                id('$make'),
                [generatePlainRecord(bind, Expr.Record(meta, xs))]),
 
@@ -404,11 +404,11 @@ function generate(bind, x) {
            [generatePlainRecord(bind, bindings)]),
 
     Expr.Extend(meta, source, bindings) =>
-      methCall(meta, id('Mermaid'), id('$extend'),
+      methCall(meta, id('Siren'), id('$extend'),
                [generate(bind, source), generatePlainRecord(bind, bindings)]),
 
     Expr.Return(meta, expr) =>
-      methCall(meta, id('Mermaid'), id('$return'), [generate(bind, expr)]),
+      methCall(meta, id('Siren'), id('$return'), [generate(bind, expr)]),
 
     Expr.Use(meta, traits, xs) =>
       js.Call(meta,
@@ -430,7 +430,7 @@ function generate(bind, x) {
       js.Id(meta, safeId(sel)),
 
     Expr.Global(meta, Expr.Id(_, sel)) =>
-      send(meta, id('Mermaid'), selector({}, str(sel)), []),
+      send(meta, id('Siren'), selector({}, str(sel)), []),
 
     Expr.Do(meta, xs) =>
       generateDo(bind, meta, xs),

@@ -47,9 +47,9 @@ $(VM_TGT_DIR)/%.js: $(VM_SRC_DIR)/%.sjs
 	       --output $@ \
 	       $<
 
-$(RT_TGT_DIR)/%.js: $(RT_SRC_DIR)/%.maid
+$(RT_TGT_DIR)/%.js: $(RT_SRC_DIR)/%.siren
 	mkdir -p $(dir $@)
-	bin/mermaid -c $< > $@
+	bin/siren -c $< > $@
 
 # -- TASKS -------------------------------------------------------------
 node_modules: package.json

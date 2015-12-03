@@ -2,7 +2,7 @@
 #+TODO: TODO WORKING(w) | DONE(d) DROPPED(D)
 #+TYP_TODO: ENHANCEMENT(e) FEATURE(f) BUG(b) TODO(t) | DONE
 
-* Mermaid 1.0 - Seashore
+* Siren 1.0 - Seashore
 
 The roadmap for the first release of Mermaid. It should include all of the
 language's semantics, plus a working VM based on live objects (like
@@ -144,13 +144,3 @@ Should wrap the Node libraries for:
 - [ ] Validation values
 - [ ] Better date handling (maybe wrap Moment.js)
 - [ ] Wrapping all core JS objects
-** Tooling
-*** FEATURE VM-as-a-service
-The VM should be a background server that can be queried by clients.
-** VM
-*** FEATURE VM snapshots and versioning
-We need to be able to serialise the living objects and restore them. Versioning
-in this would be essential for a robust solution, which basically means we'd
-end up creating our own VCS :x
-** IDE
-*** FEATURE A ~nw.js~ based visual REPL

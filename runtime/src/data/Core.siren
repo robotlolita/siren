@@ -31,7 +31,7 @@ Possible causes for this are:
   vm make-object: value inheriting: this
 };
 
-(* Root object from which all Mermaid objects (besides blocks) descend *)
+(* Root object from which all Siren objects (besides blocks) descend *)
 vm apply-trait-globally: extend Root with {
   def as-string
   "<Root>"

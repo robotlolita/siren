@@ -1,50 +1,40 @@
-Mermaid
-=======
+Siren
+=====
 
-> **NOTE:**
-> 
-> THIS IS IN **SUPER EARLY PRE-ALPHA STAGE-KINDA THING** OF DEVELOPMENT. Some
-> things work, some do not, most of the things are still in-flux/constantly
-> changing, the feedback is horrible, and there are absolutely **no
-> optimisations whatsoever**. But feel free to play around with it :3
-
-Mermaid is an experiment on interactive programming platform. The idea is to
-take a familiar tool for most programmers (the command line shell), and improve
-both the ways people can interact with it, and the feedback provided by this
-environment.
-
-The idea isn't entirely new, inspiration comes from all kinds of things (Emacs,
-TermKit, Lamdu, Lisp REPLs, Smalltalk interactive development platforms, etc).
+Siren is an experimental prototype-based object-oriented language. It
+differs from existing languages in that it uses a single delegation slot
+for sharing (and cheap instantiation), but allows controlled lexical
+extensibility.
 
 
 ## Getting started
 
-Install io.js (**NOT** Node, Mermaid requires things like WeakMaps and Symbols,
-which aren't in Node stable yet), Make, Git, clone this repository, then run
-`make compile`, and run things with `bin/mermaid`.
+Install the Node.js 4.0.0+ (you'll need WeakMaps and Symbols), Make, and
+Git. After that clone this repository, and run `make compile`. This will
+generate a `bin/siren` compiler/interpreter.
 
 ```sh
-$ git clone https://github.com/mermaid-language/mermaid.git
-$ cd mermaid
+$ git clone https://github.com/robotlolita/siren.git
+$ cd siren
 $ npm install
 $ make all
-$ bin/mermaid
+$ bin/siren
 ```
 
 You can run individual files with the same binary. There are examples in the
 `examples/` folder:
 
 ```sh
-$ bin/mermaid examples/trivial/hello-world.maid
+$ bin/siren examples/trivial/hello-world.siren
 ```
 
 You can compile things to plain JavaScript using the `--compile` flag, but
-you'll need to include the proper runtime files and have the global `Mermaid`
+you'll need to include the proper runtime files and have the global `Siren`
 name point to the runtime root object in order to run those files:
 
 ```sh
-$ bin/mermaid --compile examples/trivial/hello-world.maid > hw.js
-$ iojs -e "global.Mermaid = require('./runtime/core'); require('./hw.js')"
+$ bin/siren --compile examples/trivial/hello-world.siren > hw.js
+$ iojs -e "global.Siren = require('./runtime/core'); require('./hw.js')"
 Hello, world
 ```
 
@@ -55,6 +45,3 @@ Hello, world
 
  -  Things will eventually be added to the Wiki, but also blogged about on
     http://robotlolita.me/
-
-
-
