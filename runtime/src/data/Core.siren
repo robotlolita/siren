@@ -14,18 +14,17 @@ vm apply-trait-globally: extend vm native-object with {
     (this === that) not
   
   def does-not-understand: message with-arguments: args
-    Error panic!:
-      (this as-string) + " does not understand " + message + "\n"
-    + "It was given the arguments: " + args as-string + ", "
-    + "but is unable to perform any computation.
-
+    let m1 = vm string: this as-string concat: " does not understand ";
+    let m2 = vm string: m1 concat: message;
+    let m3 = vm string: m2 concat: "\nIt was given the arguments:";
+    let m4 = vm string: m3 concat: args as-string;
+    let m5 = vm string: m4 concat: ", but is unable to perform any computation.
 Possible causes for this are:
 
  *  Mistyping the message name;
  *  Sending the message to the wrong object;
- *  Not importing the correct traits in the current scope."
-    
-       
+ *  Not importing the correct traits in the current scope.";
+    Error panic!: m5
 
   def clone: value
     vm make-object: value inheriting: this
