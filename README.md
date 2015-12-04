@@ -29,12 +29,11 @@ $ bin/siren examples/trivial/hello-world.siren
 ```
 
 You can compile things to plain JavaScript using the `--compile` flag, but
-you'll need to include the proper runtime files and have the global `Siren`
-name point to the runtime root object in order to run those files:
+you'll need to pass the proper runtime to the module in order to run it:
 
 ```sh
 $ bin/siren --compile examples/trivial/hello-world.siren > hw.js
-$ node -e "global.Siren = require('./runtime/core'); require('./hw.js')"
+$ node -e "require('./hw.js')(require('./runtime))"
 Hello, world
 ```
 
