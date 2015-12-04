@@ -11,7 +11,7 @@ var Do = ast.DoClause;
 var reserved = [
   'extend', 'let', 'this', 'do', 'module', 'exposing', 'def',
   '|', '<-', '=', '>>', 'with', 'where', 'use', 'in', 'using', 'return',
-  'trait', 'lazy'
+  'trait'
 ]
 
 function isValid(a) {
@@ -67,7 +67,7 @@ ometa SirenParser {
   pattern = decoratedPattern
           | kw('def') ws (keywordPattern | binaryPattern | unaryPattern),
 
-  decoratedPattern = '@' expr:a ws ';' ws pattern:p
+  decoratedPattern = '@' expr:a ws pattern:p
                   -> [p[0], Expr.Apply({}, Expr.Id({}, 'call:'), a, [p[1]])],
 
   docComment  = space* comment:a ws -> a,
@@ -85,7 +85,7 @@ ometa SirenParser {
 
 
   // Statements
-  letStmt = '@' expr:a ws ';' ws letStmt:b             -> decorateLet(b, a)
+  letStmt = '@' expr:a ws letStmt:b             -> decorateLet(b, a)
           | kw('let') ws identifier:a ws '=' ws expr:b -> Expr.Let({}, a, b),
 
   module     = kw('module') ws moduleArgs?:a ws exportStmt?:b ws kw('where') ws stmtList:cs

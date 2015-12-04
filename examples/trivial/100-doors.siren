@@ -15,39 +15,41 @@ etc, until you only visit the 100th door.
    associated index. *)
 let Door = {
   def new: index
-  (* Constructs a new Door. New objects are constructed just by cloning
-     existing objects, and giving them new behaviours. In this case we're
-     cloning the target of this message and giving it an `index` behaviour,
-     which will answer where that door is located at. *)
-  this { def index = index }
+    (* Constructs a new Door. New objects are constructed just by cloning
+       existing objects, and giving them new behaviours. In this case we're
+       cloning the target of this message and giving it an `index` behaviour,
+       which will answer where that door is located at. 
+     *)
+    this { def index = index }
 
 
   (* Conventionally, Siren uses a suffix `?` for predicates *)
   def open?
-  (* Whether the door is open. *)
-  False
+    (* Whether the door is open. *)
+    False
 
   def closed?
-  (* Whether the door is closed. *)
-  False
+    (* Whether the door is closed. *)
+    False
 };
 
 (* Now that we have our base door, we can define the states it can be in.
    Our door can be either in the Open or Closed state, and each of these
    states have different representations. They also respond differently to
-   the `open?` and `closed?` messages. *)
+   the `open?` and `closed?` messages. 
+ *)
 let Open-Door = Door {
   def as-string
-  (* A textual representation of this door. *)
-  "Door " + this index as-string + " is open."
+    (* A textual representation of this door. *)
+    "Door " + this index as-string + " is open."
 
   def as-emoji
-  (* An emoji representation of this door. *)
-  "_"
+    (* An emoji representation of this door. *)
+    "_"
   
   def open?
-  (* Open doors are, of course, open. *)
-  True
+    (* Open doors are, of course, open. *)
+    True
 
   (* We don't need to re-define `new:` and `closed?`, since they're inherited
      from the base `Door` object. *)
@@ -55,16 +57,16 @@ let Open-Door = Door {
 
 let Closed-Door = Door {
   def as-string
-  (* A textual representation of this door. *)
-  "Door " + this index as-string + " is closed."
+    (* A textual representation of this door. *)
+    "Door " + this index as-string + " is closed."
 
   def as-emoji
-  (* An emoji representation of this door. *)
-  "🚪"
+    (* An emoji representation of this door. *)
+    "🚪"
   
   def closed?
-  (* Closed doors are, of course, closed. *)
-  True
+    (* Closed doors are, of course, closed. *)
+    True
 };
 
 
@@ -77,24 +79,24 @@ let Closed-Door = Door {
    So we're going to define behaviours that respond to those questions
    accordingly. *)
 let Doors = {
-  @lazy;        (* This is a pure function so we can memoise its result *)
+  @lazy        (* This is a pure function so we can memoise its result *)
   def state
-  (* Returns an array of Doors with the correct states. *)
-  (1 ... 100)  (* A range that goes from 1 to 100, inclusive *)
-    as-array   (* Converted to an array *)
-    map: { i | (i square-root === i square-root round) then: { Open-Door new: i }
-                                                       else: { Closed-Door new: i } }
-               (* Then transformed such that each index holds a door's state *)
+    (* Returns an array of Doors with the correct states. *)
+    (1 ... 100)  (* A range that goes from 1 to 100, inclusive *)
+      as-array   (* Converted to an array *)
+      map: { i | (i square-root === i square-root round) then: { Open-Door new: i }
+                                                         else: { Closed-Door new: i } }
+                 (* Then transformed such that each index holds a door's state *)
 
   def open
-  (* Returns an array of the indexes where doors are open. *)
-  this state filter: _ open?    (* We only want the doors that are Open *)
-          >> map: _ index       (* And while we're at it, only their indexes *)
+    (* Returns an array of the indexes where doors are open. *)
+    this state filter: _ open?    (* We only want the doors that are Open *)
+            >> map: _ index       (* And while we're at it, only their indexes *)
 
   def closed
-  (* Returns an array of the indexes where the doors are closed. *)
-  this state filter: _ closed? (* We only want the doors that are Closed *)
-          >> map: _ index      (* And while we're at it, only their indexes *)
+    (* Returns an array of the indexes where the doors are closed. *)
+    this state filter: _ closed? (* We only want the doors that are Closed *)
+            >> map: _ index      (* And while we're at it, only their indexes *)
 };
 
 (* Finally, we can start answering the questions posed to us: *)

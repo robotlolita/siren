@@ -8,50 +8,50 @@ let Result = {
   def Failure
     Failure
 
-  @Meta category: "Constructing";
+  @Meta category: "Constructing"
   def ok: value
     Ok {
       def value = value
     }
 
-  @Meta category: "Constructing";
+  @Meta category: "Constructing"
   def failure: value
     Failure {
       def value = value
     }
 
-  @Meta category: "Accessing";
+  @Meta category: "Accessing"
   def merge
     this value
 };
 
 let Ok = Result {
-  @Meta category: "Transforming";
+  @Meta category: "Transforming"
   def map: transformation
     let newValue = transformation call: this value;
     this { def value newValue }
 
-  @Meta category: "Transforming";
+  @Meta category: "Transforming"
   def chain: transformation
     transformation call: this value
 
-  @Meta category: "Transforming";
+  @Meta category: "Transforming"
   def match: pattern
     pattern ok: this value
 
-  @Meta category: "Error handling";
+  @Meta category: "Error handling"
   def recover: handler
     this
 
-  @Meta category: "Converting";
+  @Meta category: "Converting"
   def as-string
     "<Result ok: " + this value as-string + ">"
 
-  @Meta category: "Converting";
+  @Meta category: "Converting"
   def as-array
     [this value]
 
-  @Meta category: "Comparing and testing";
+  @Meta category: "Comparing and testing"
   def === aResult
     let value = this value;
     aResult match: {
@@ -59,53 +59,53 @@ let Ok = Result {
       def failure: v = False
     }
 
-  @Meta category: "Comparing and testing";
+  @Meta category: "Comparing and testing"
   def ok?
     True
 
-  @Meta category: "Comparing and testing";
+  @Meta category: "Comparing and testing"
   def failure?
     False
 
-  @Meta category: "Comparing and testing";
+  @Meta category: "Comparing and testing"
   def then: ok else: failure
     ok value
 
-  @Meta category: "Accessing";
+  @Meta category: "Accessing"
   def get!
     this value
 
-  @Meta category: "Accessing";
+  @Meta category: "Accessing"
   def get-or-default: defaultValue
     this value
 };
 
 let Failure = Result {
-  @Meta category: "Transforming";
+  @Meta category: "Transforming"
   def map: transformation
     this
 
-  @Meta category: "Transforming";
+  @Meta category: "Transforming"
   def chain: transformation
     this
 
-  @Meta category: "Transforming";
+  @Meta category: "Transforming"
   def match: pattern
     pattern failure: this value
 
-  @Meta category: "Error handling";
+  @Meta category: "Error handling"
   def recover: handler
     handler call: this value
 
-  @Meta category: "Converting";
+  @Meta category: "Converting"
   def as-string
     "<Result failure: " + this value as-string + ">"
 
-  @Meta category: "Converting";
+  @Meta category: "Converting"
   def as-array
     []
 
-  @Meta category: "Comparing and testing";
+  @Meta category: "Comparing and testing"
   def === aResult
     let value = this value;
     aResult match: {
@@ -113,23 +113,23 @@ let Failure = Result {
       def failure: v = v === value
     }
 
-  @Meta category: "Comparing and testing";
+  @Meta category: "Comparing and testing"
   def ok?
     False
 
-  @Meta category: "Comparing and testing";
+  @Meta category: "Comparing and testing"
   def failure?
     True
 
-  @Meta category: "Comparing and testing";
+  @Meta category: "Comparing and testing"
   def then: ok else: failure
     failure value
 
-  @Meta category: "Accessing";
+  @Meta category: "Accessing"
   def get!
     Error panic!: "Can't extract a value from a failure. Use `merge`, `get-or-default:`, or `recover:`"
 
-  @Meta category: "Accessing";
+  @Meta category: "Accessing"
   def get-or-default: defaultValue
     defaultValue
 }
