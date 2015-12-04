@@ -48,9 +48,6 @@ function resolve(scope, node) {
       contains(scope, name)?  Expr.Var(m1, Expr.Id(m2, name))
       : /* otherwise */       Expr.Global(m1, Expr.Id(m2, name)),
 
-    Expr.Program(xs) =>
-      Expr.Program(resolve(scope +++ collect(xs), xs)),
-
     Expr.Module(m, args, expt, xs) =>
       (scope +++ unpack(args) +++ collect(xs))
       |> λ(newScope) ->

@@ -17,7 +17,6 @@ var { Base } = require('adt-simple');
 union Expr {
   Empty,
   Hole    { meta: Object },
-  Program { statements: Array },
   Module  { meta: Object, args: Array, exports: *, body: Array },
   Comment { meta: Object, comment: String },
   Id      { meta: Object, name: String },

@@ -196,5 +196,5 @@ ometa SirenParser {
   arglist = identifier:a (ws identifier)*:as              -> [a].concat(as),
 
   program = ws module:m ws eof    -> m
-          | ws stmtList:xs ws eof -> Expr.Program(xs)
+          | ws stmtList:xs ws eof -> Expr.Module({}, [], null, xs)
 }

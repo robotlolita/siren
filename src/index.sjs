@@ -34,10 +34,13 @@ function makeRuntime() {
 
 exports.run = run;
 function run(source, runtime, filename) {
-  global.Siren = runtime;
-  return filename && filename !== '<stdin>'?
-    require(filename).exports
-  : vm.runInThisContext(source, { filename: filename });
+  if (filename && filename !== '<stdin>') {
+    return require(filename)(runtime)
+  } else {
+    var module = { exports: { } };
+    vm.runInNewContext(source, { filename: filename, module: module });
+    return module.exports(runtime);
+  }
 }
 
 exports.installExtensions = installExtensions;

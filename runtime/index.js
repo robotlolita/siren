@@ -1107,8 +1107,6 @@ module.exports = function() {
     'Root': function(){ return Base }
   }));
 
-  global.Siren = Siren;
-
   // Define global objects that are reachable in the prelude
   // Modules are expected to update the globals as necessary
   require('./Meta')(Siren, Primitives);

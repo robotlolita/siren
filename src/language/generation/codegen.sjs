@@ -107,9 +107,9 @@ function selector(meta, name) {
 }
 
 function cloneMethods(meta, parent) {
-  parent = parent || dot({}, ['Siren', '$methods']);
+  parent = parent || dot({}, ['$Siren', '$methods']);
   return [
-    letb(meta, id('$send'), dot({}, ['Siren', '$send'])),
+    letb(meta, id('$send'), dot({}, ['$Siren', '$send'])),
     letb(meta, id('$methods'), methCall({}, parent, id('clone'), []))
   ]
 }
@@ -150,7 +150,7 @@ function generateProperty(bind, pair) {
     pair[0].meta,
     idToStr(generate(bind, _id)),
     methCall(_fn.meta,
-             id('Siren'),
+             id('$Siren'),
              id('$fn'),
              [
                generate(bind, _fn),
@@ -202,7 +202,7 @@ function makeBlock(bind, meta, args, body) {
 
 function generateModule(bind, meta, args, exports, body) {
   return set(meta, mem({}, id('module'), id('exports')),
-             fn({}, null, generate(bind, safeArgs(args)),
+             fn({}, null, generate(bind, [Expr.Id(meta, '$Siren')] +++ safeArgs(args)),
                 [js.ExprStmt({}, str('use strict'))]
                 +++ cloneMethods({})
                 +++ generate(bind, body)
@@ -384,7 +384,7 @@ function generate(bind, x) {
 
     Expr.Record(meta, xs) =>
       methCall(meta,
-               id('Siren'),
+               id('$Siren'),
                id('$make'),
                [generatePlainRecord(bind, Expr.Record(meta, xs))]),
 
@@ -404,11 +404,11 @@ function generate(bind, x) {
            [generatePlainRecord(bind, bindings)]),
 
     Expr.Extend(meta, source, bindings) =>
-      methCall(meta, id('Siren'), id('$extend'),
+      methCall(meta, id('$Siren'), id('$extend'),
                [generate(bind, source), generatePlainRecord(bind, bindings)]),
 
     Expr.Return(meta, expr) =>
-      methCall(meta, id('Siren'), id('$return'), [generate(bind, expr)]),
+      methCall(meta, id('$Siren'), id('$return'), [generate(bind, expr)]),
 
     Expr.Use(meta, traits, xs) =>
       js.Call(meta,
@@ -430,19 +430,10 @@ function generate(bind, x) {
       js.Id(meta, safeId(sel)),
 
     Expr.Global(meta, Expr.Id(_, sel)) =>
-      send(meta, id('Siren'), selector({}, str(sel)), []),
+      send(meta, id('$Siren'), selector({}, str(sel)), []),
 
     Expr.Do(meta, xs) =>
       generateDo(bind, meta, xs),
-
-    Expr.Program(xs) =>
-      js.ExprStmt({},
-                  js.Call({},
-                          fn({}, null, [],
-                             [js.ExprStmt({}, str('use strict'))]
-                             +++ cloneMethods({})
-                             +++ returnLast(generate(bind, xs).map(toStatement))),
-                          [])),
 
     Expr.Module(meta, args, exports, body) =>
       generateModule(bind, meta, args, exports, body),

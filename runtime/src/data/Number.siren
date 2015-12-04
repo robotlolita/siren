@@ -1,4 +1,4 @@
-module | root vm | where
+module | vm | where
 
 vm define-global: "Float" as: { vm native-float };
 
@@ -166,4 +166,5 @@ vm apply-trait-globally: extend Float with {
     vm float/floor: this
 };
 
-vm foreign/convert: Float as: { a | a }
+vm
+foreign/convert: Float as: { a | a }

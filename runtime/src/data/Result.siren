@@ -1,4 +1,4 @@
-module | root vm | where
+module | vm | where
 
 vm define-global: "Result" as: { Result };
 let Result = {

@@ -1,4 +1,4 @@
-module | root vm | where
+module | vm | where
 
 (* Things inheriting from Object.prototype *)
 vm apply-trait-globally: extend vm native-object with {
