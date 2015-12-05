@@ -8,6 +8,7 @@
   "main": "./lib/index.js",
   "dependencies": {
     "adt-simple": "^0.1.3",
+    "bignum": "^0.11.0",
     "boo": "~2.0.0",
     "core.arity": "~1.0.0",
     "core.check": "^0.1.1",

@@ -1,3 +1,14 @@
+(**********************************************************************
+ *
+ * This source file is part of the Siren project.
+ *
+ * Copyright (C) 2013-2015 Quildreen Motta.
+ * Licensed under the MIT licence.
+ *
+ * See LICENCE for licence information.
+ * See CONTRIBUTORS for the list of contributors to the project.
+ *
+ **********************************************************************)
 module | vm | where
 
 vm define-global: "String" as: { vm native-string };
@@ -11,7 +22,7 @@ vm apply-trait-globally: extend String with {
     this split: ""
 
   def repeat: times
-    (Array new: times with: this) join: ""
+    vm string: this repeat: times
 
   (* Character transformations / chopping *)
   def lower-case

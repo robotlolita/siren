@@ -1,4 +1,125 @@
+(**********************************************************************
+ *
+ * This source file is part of the Siren project.
+ *
+ * Copyright (C) 2013-2015 Quildreen Motta.
+ * Licensed under the MIT licence.
+ *
+ * See LICENCE for licence information.
+ * See CONTRIBUTORS for the list of contributors to the project.
+ *
+ **********************************************************************)
 module | vm | where
+(*
+The Numeric library provides definitions for the numeric tower in
+Siren. Right now it only differentiates between Integers, which
+are represented with arbitrary precision, and Floats, which use
+JavaScript's native 64-bit floating point numbers.
+*)
+
+vm define-global: "Integer" as: { vm native-integer };
+
+vm apply-trait-globally: extend Integer with {
+  def as-string
+    (* Returns a textual representation of the integer. *)
+    vm int/to-string: this
+
+  def as-float
+    (* Converts to a regular float.
+
+       This is a lossy convertion. *)
+    vm int/to-number: this
+
+  (* Ranges *)
+  def .. end
+    Range from: this to: end
+
+  def ... end
+    Range from: this to: end + 1
+
+  (* Arithmetic *)
+  def negated
+    vm int/neg: this
+
+  def + that
+    vm int/plus: this and: that
+
+  def - that
+    vm int/sub: this and: that
+
+  def * that
+    vm int/mul: this and: that
+
+  def ** that
+    vm int/pow: this and: that
+
+  def / that
+    vm int/div: this and: that
+
+  def modulus: that
+    vm int/mod: this and: that
+
+  (* Bitwise *)
+  def bit-shift-right: that
+    vm int/shift-right: this by: that
+
+  def bit-shift-left: that
+    vm int/shift-left: this by: that
+
+  def unsigned-bit-shift-right: that
+    this bit-shift-right: that >> absolute
+
+  def bit-and: that
+    vm int/band: this and: that
+
+  def bit-or: that
+    vm int/bor: this and: that
+
+  def bit-xor: that
+    vm int/bxor: this and: that
+
+  (* Maths *)
+  def square-root
+    vm int/sqrt: this
+
+  (* Rounding / Converting *)
+  def absolute
+    vm int/abs: this
+
+  def round
+    this
+
+  def ceil
+    this
+
+  def floor
+    this
+
+  (* Logical comparisons *)
+  def === that
+    vm if: (vm int/eq: this and: that)
+       then: True
+       else: False
+
+  def > that
+    vm if: (vm int/gt: this and: that)
+       then: True else: False
+
+  def >= that
+    vm if: (vm int/ge: this and: that)
+       then: True else: False
+
+  def < that
+    vm if: (vm int/lt: this and: that)
+       then: True else: False
+
+  def <= that
+    vm if: (vm int/le: this and: that)
+       then: True else: False
+};
+
+vm foreign/convert: Integer as: { a | a }
+
 
 vm define-global: "Float" as: { vm native-float };
 
@@ -166,5 +287,4 @@ vm apply-trait-globally: extend Float with {
     vm float/floor: this
 };
 
-vm
-foreign/convert: Float as: { a | a }
+vm foreign/convert: Float as: { a | a }

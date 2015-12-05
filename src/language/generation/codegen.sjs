@@ -376,6 +376,10 @@ function generate(bind, x) {
       val < 0?           js.Unary(meta, "-", true, js.Num({}, -val))
       : /* otherwise */  js.Num(meta, val),
 
+    Expr.Int(meta, sign, num) =>
+      sign === '+'?      methCall(meta, id('$Siren'), id('$int'), [js.Str({}, num)])
+      : /* otherwise */  methCall(meta, id('$siren'), id('$negint'), [js.Str({}, num)]),
+
     Expr.Str(meta, val) =>
       js.Str(meta, val),
 

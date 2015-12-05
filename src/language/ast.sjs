@@ -26,6 +26,7 @@ union Expr {
   Lambda  { meta: Object, args: Array, body: Array },
   Block   { meta: Object, args: Array, body: Array },
   Num     { meta: Object, value: Number },
+  Int     { meta: Object, sign: String, value: String },
   Str     { meta: Object, value: String },
   Vector  { meta: Object, value: Array },
   Record  { meta: Object, value: Array },

@@ -1,52 +1,52 @@
+(**********************************************************************
+ *
+ * This source file is part of the Siren project.
+ *
+ * Copyright (C) 2013-2015 Quildreen Motta.
+ * Licensed under the MIT licence.
+ *
+ * See LICENCE for licence information.
+ * See CONTRIBUTORS for the list of contributors to the project.
+ *
+ **********************************************************************)
 module | vm | where
 
-vm define-global: "Array" as: { vm native-array };
+vm define-global: "Tuple" as: { vm native-array };
 
-vm apply-trait-globally: extend Array with {
+vm apply-trait-globally: extend Tuple with {
   def as-string
     "[" + (this join: ", ") + "]"
 
-  def new: size with: value
-    vm array/new: size with: value
+  (* Constructing *)
+  def empty
+    []
 
-  def new: size
-    this new: size with: Unit
-  
   (* Testing *)
   def empty?
     this length === 0
   
   (* Accessing *)
   def at: index
-    vm array: this at: index
+    ((index > 1) && (index <= this length))
+      then: { Result failure: "Index " + index as-string
+                            + " out of range [1, " + this length as-string + "]" }
+      else: { Result ok: (vm array: this at: index) }
 
-  def at: index put: value
-    this copy at: index put!: value
-  
-  def at: index put!: value
-  vm array: this at: index put: value;
-    this
+  def at!: index
+    this at: index >> get!
+
+  def first
+    this at: 1
+
+  def first!
+    this first get!
 
   def last
     this at: this length
 
-  def remove-at: index
-    this copy remove-at!: index
-  
-  def remove-at!: index
-    vm array: this remove-at: index;
-    this
+  def last!
+    this last get!
 
-  def remove-all!
-    vm object: this at: "length" put: 0
-  
-  def remove: value
-    this copy remove!: value
-  
-  def remove!: value
-    this index-of: value >> map: (this remove-at!: _);
-    this
-  
   (* Collection operations *)
   def length
     vm array/length: this
@@ -70,9 +70,6 @@ vm apply-trait-globally: extend Array with {
   def join: separator
     vm array: (this map: _ as-string) join: separator
 
-  def copy
-    vm array/shallow-copy: this
-
   (* Iteration *)
   def each: computation
     vm array: this each: { a | computation call: a };
@@ -91,53 +88,18 @@ vm apply-trait-globally: extend Array with {
     vm array: this reduce-right: { a b | f call: a with: b } from: initial
   
   (* Mutation *)
-  def append: value
-    this copy push!: value
-
-  def append!: value
-    vm array: this push: value;
-    this
-
-  def take-last
-    this copy take-last!
-
-  def take-last!
-    vm array/pop: this
-
-  def prepend: value
-    this copy prepend!: value
-
-  def prepend!: value
-    vm array: this unshift: value;
-    this
-
-  def take-first
-    this copy take-first!
-
-  def take-first!
-    vm array/shift: this
-    
-
   def reverse
-    this copy reverse!
-
-  def reverse!
-    vm array/reverse: this;
-    this
+    vm array/reverse: (vm array/shallow-copy: this)
 
   def sort-by: comparator
-    this copy sort-by!: coparator
-
-  def sort-by!: comparator
-    vm array: this sort: { left right |
+    vm array: (vm array/shallow-copy: this) sort: { left right |
       comparator call: left with: right >> match: {
         def less-than    = -1
         def equal        =  0
         def greater-than =  1
       }
-    };
-    this
+    }
   
 };
 
-vm foreign/convert: Array as: { a | a map: (FFI export: _) }
+vm foreign/convert: Tuple as: { a | a map: (FFI export: _) }

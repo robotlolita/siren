@@ -1,0 +1,88 @@
+(**********************************************************************
+ *
+ * This source file is part of the Siren project.
+ *
+ * Copyright (C) 2013-2015 Quildreen Motta.
+ * Licensed under the MIT licence.
+ *
+ * See LICENCE for licence information.
+ * See CONTRIBUTORS for the list of contributors to the project.
+ *
+ **********************************************************************)
+module | vm | where
+
+vm define-global: "Boolean" as: { Boolean };
+let Boolean = { };
+
+vm define-global: "True" as: { True };
+let True = Boolean {
+  def as-string
+    (* A textual representation of the object. *)
+    "True"
+
+  def && that
+    (* Logical conjunction *)
+    that
+
+  def || that
+    (* Logical disjunction *)
+    this
+
+  def not
+    (* Logical negation *)
+    False
+
+  def then: consequent else: alternate
+    (* Branches in two expressions, depending on the value of the boolean.
+
+       If `True`, executes the consequent branch. Otherwise executes the
+       `alternate` branch. *)
+    consequent value
+
+  def otherwise: alternate
+    (* Executes a block if the receiver is `False`. *)
+    Unit
+
+  def then: consequent
+    (* Executes a block if the receiver is `True` *)
+    consequent value;
+    Unit
+};
+
+vm define-global: "False" as: { False };
+let False = Boolean {
+  def as-string
+    (* Return a textual representation of the object. *)
+    "False"
+
+  def && that
+    (* Logical conjunction *)
+    this
+
+  def || that
+    (* Logical disjunction *)
+    that
+
+  def not
+    (* Logical negation *)
+    True
+
+  def then: consequent else: alternate
+    (* Branches in two expressions, depending on the value of the boolean.
+
+       If `True`, executes the consequent branch. Otherwise executes the
+       `alternate` branch. *)
+    alternate value
+
+  def then: consequent
+    (* Executes a block if the receiver is `True` *)
+    Unit
+
+  def otherwise: alternate
+    (* Executes a block if the receiver is `False`. *)
+    alternate value;
+    Unit
+};
+
+vm foreign/convert: True as: { # | vm true };
+vm foreign/convert: False as: { # | vm false }

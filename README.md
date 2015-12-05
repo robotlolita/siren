@@ -13,6 +13,10 @@ Install the Node.js 4.0.0+ (you'll need WeakMaps and Symbols), Make, and
 Git. After that clone this repository, and run `make compile`. This will
 generate a `bin/siren` compiler/interpreter.
 
+Siren's support for arbitrary-precision arithmetic uses the
+[bignum](https://www.npmjs.com/package/bignum) library, so you'll need
+to have a C++ compiler and the headers for the OpenSSL library.
+
 ```sh
 $ git clone https://github.com/robotlolita/siren.git
 $ cd siren

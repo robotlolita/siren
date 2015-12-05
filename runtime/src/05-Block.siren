@@ -1,0 +1,78 @@
+(**********************************************************************
+ *
+ * This source file is part of the Siren project.
+ *
+ * Copyright (C) 2013-2015 Quildreen Motta.
+ * Licensed under the MIT licence.
+ *
+ * See LICENCE for licence information.
+ * See CONTRIBUTORS for the list of contributors to the project.
+ *
+ **********************************************************************)
+module | vm | where
+
+vm define-global: "Block" as: { vm native-function };
+
+vm apply-trait-globally: extend Block with {
+  (* Converting to other structures *)
+  def as-string
+    (* Returns a textual representation of the block. *)
+    vm function/name: this
+
+  (* Evaluating the block *)
+  def value
+    (* Invokes the block with no arguments. *)
+    vm function/invoke0: this
+
+  def call: a
+    (* Invokes the block with a single argument. *)
+    vm function/invoke1: this a: a
+
+  def call: a with: b
+    (* Invokes the block with two arguments. *)
+    vm function/invoke2: this a: a b: b
+
+  def call: a with: b with: c
+    (* Invokes the block with three arguments. *)
+    vm function/invoke3: this a: a b: b c: c
+
+  def call: a with: b with: c with: d
+    (* Invokes the block with four arguments. *)
+    vm function/invoke4: this a: a b: b c: c d: d
+
+  def call: a with: b with: c with: d with: e
+    (* Invokes the block with five arguments. *)
+    vm function/invoke5: this a: a b: b c: c d: d e: e
+
+  def apply: args
+    (* Invokes the block with many (not known in advance) arguments.
+
+       Apply allows one to pass any amount of arguments to a block
+       by providing a [[Tuple]].
+     *)
+    vm function/invoke*: this with: args
+
+  (* Combining blocks *)
+  def then: that
+    (* Combines two unary blocks. *)
+    { a | that call: (this call: a) }
+
+  def >=> that
+    (* Combines two unary blocks. *)
+    this then: that
+
+
+  (* Control structures *)
+  def while: predicate
+    (* Runs a block while the predicate holds. *)
+    vm while: { (predicate value) then: { vm true } else: { vm false } }
+       do: this;
+    this
+
+  def repeat-forever
+    (* Runs a block forever. *)
+    vm forever: this;
+    this
+};
+
+vm foreign/convert: Block as: { a | a }

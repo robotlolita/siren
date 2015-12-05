@@ -1,0 +1,275 @@
+(**********************************************************************
+ *
+ * This source file is part of the Siren project.
+ *
+ * Copyright (C) 2013-2015 Quildreen Motta.
+ * Licensed under the MIT licence.
+ *
+ * See LICENCE for licence information.
+ * See CONTRIBUTORS for the list of contributors to the project.
+ *
+ **********************************************************************)
+module | vm | where
+
+vm define-global: "JS-Alien" as: { Alien };
+
+@brand: "JS Alien"
+let JS-Alien = {
+  def traits = {
+    def Object = Object
+  }
+
+  def as-string
+    "<JS Alien>"
+
+  def alien? = True
+  def global = this for: vm native-global
+  def true   = this for: vm true
+  def false  = this for: vm false
+
+  def export: siren-object
+    (* Tries to convert a Siren object to a real JS object *)
+    vm foreign/export: siren-object
+
+  def import: object
+    (* Tries to convert a JS object to a real Siren object *)
+    let ffi = this;
+    let value = vm if: (vm brand/of: object is-same-brand?: this)
+                   then: { value#target } else: { value }
+                   >> value;
+    vm foreign/match: value with: {
+      def unit
+        Unit
+
+      def boolean
+        vm if: object then: True else: False
+
+      def primitive
+        object
+
+      def array
+        object map: (ffi import: _)
+
+      def object
+        ffi for: object
+    }
+
+  def for: object
+    (* Wraps a JS object into an Alien proxy *)
+    vm foreign/try-import: 
+    vm if: (vm brand/of: object is-same-brand?: this)
+       then: { object }
+       else: { this traits Object { def #target = object } }
+       >> value
+
+  def assert-alien?: object
+    vm if: (vm brand/of: object is-same-brand?: this)
+       then: { }
+       else: { Error panic!: "Expected a JS Alien" }
+       >> value
+};
+
+let JS-Object-Proto = JS-Alien {
+  def as-string
+    "<JS Alien: " + (vm js/to-string: this#target) + ">"
+
+  (* Core operations *)
+  def type
+    (* JavaScript's `typeof` operator *)
+    this for: (vm js/typeof: this#target)
+
+  def instance-of: that
+    (* JavaScript's `instanceof` operator *)
+    this assert-alien?: that;
+    this for: (vm js/value: this#target instance-of?: that#target)
+
+
+  (* Methods *)
+  def in: context invoke: method with-arguments: args
+    (* JavaScript method invocation *)
+    this assert-alien?: context;
+    this for: (vm js/from: this#target in: context invoke: method with: args)
+
+  def invoke: method with-arguments: args
+    (* JavaScript method invocation with implicit target *)
+    this for: (vm js/from: this#target in: this#target invoke: method with: args)
+
+  def invoke: method
+    (* JavaScript method invocation with no arguments *)
+    this for: (vm js/from: this#target invoke: method)
+
+  def invoke: method with: arg
+    (* JavaScript method invocation for unary functions *)
+    this for: (vm js/from: this#targed invoke: method arg1: arg)
+
+  def invoke: method with: arg1 and: arg2
+    (* JavaScript method invocation for binary functions *)
+    this for: (vm js/from: this#target invoke: method arg1: arg1 arg2: arg2)
+
+  def invoke: method with: arg1 and: arg2 and: arg3
+    (* JavaScript method invocation for ternary functions *)
+    this for: (vm js/from: this#target invoke: method arg1: arg1 arg2: arg2 arg3: arg3)
+
+  def value
+    (* JavaScript function invocation for nullary functions *)
+    this for: (vm js/call: this#target)
+
+  def call: arg
+    (* JavaScript function invocation for unary functions *)
+    this for: (vm js/call: this#target arg1: arg)
+
+  def call: arg1 with: arg2
+    (* JavaScript function invocation for binary functions *)
+    this for: (vm js/call: this#target arg1: arg1 arg2: arg2)
+
+  def call: arg1 with: arg2 and: arg3
+    (* JavaScript function invocation for ternary functions *)
+    this for: (vm js/call: this#target arg1: arg1 arg2: arg2 arg3: arg3)
+
+  def call-with-arguments: arguments
+    (* JavaScript function invocation *)
+    this for: (vm js/call: this#target with: arguments)
+
+  def new
+    (* JavaScript object construction *)
+    this for: (vm js/new: this#target)
+
+  def new-with-arguments: arguments
+    (* JavaScript object construction *)
+    this for: (vm js/new: this#target with: arguments)
+  
+
+  (* Objects as dictionaries *)
+  def has?: key
+    (* True if the object has a property at `key`. *)
+    this for: (vm js/object: this#target has: key)
+
+  def at: key
+    (* Retrieves the content of the property at `key`. *)
+    this for: (vm js/object: this#target at: key)
+
+  def at: key put!: value
+    (* Updates the content of the property at `key`. *)
+    vm js/object: this#target at: key put: value;
+    this
+
+  def delete-at!: key
+    (* Removes the property `key` from the object. *)
+    vm js/object: this#target delete-at: key;
+    this
+
+  (* Arithmetic operations *)
+  def + that
+    (* The `+` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/plus: this#target and: that#target)
+
+  def - that
+    (* The `-` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/minus: this#target and: that#target)
+
+  def / that
+    (* The `/` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/div: this#target and: that#target)
+
+  def * that
+    (* The `*` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/mul: this#target and: that#target)
+
+  def % that
+    (* The `%` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/mod: this#target and: that#target)
+
+  (* Bitwise operations *)
+  def bit-and: that
+    (* The `&` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/bit-and: this#target and: that#target)
+
+  def bit-or: that
+    (* The `|` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/bit-or: this#target and: that#target)
+
+  def bit-xor: that
+    (* The `^` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/bit-xor: this#target and: that#target)
+
+  def bit-shift-right: that
+    (* The `>>` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/bit-shr: this#target and: that#target)
+
+  def bit-shift-left: that
+    (* The `<<` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/bit-shl: this#target and: that#target)
+
+  def unsigned-bit-shift-right: that
+    (* The `>>>` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/bit-ushr: this#target and: that#target)
+
+  (* Boolean operations *)
+  def && that
+    (* The `&&` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/and: this#target and: that#target)
+  
+  def || that
+    (* The `||` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/or: this#target and: that#target)
+  
+  def not
+    (* The `not` operator in JS *)
+    this for: (vm js/not: this#target)
+
+  (* Comparison operations *)
+  def == that
+    (* The `==` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/abstract-equal: this#target and: that#target)
+  
+  def === that
+    (* The `===` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/strict-equal: this#target and: that#target)
+  
+  def != that
+    (* The `!=` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/abstract-not-equal: this#target and: that#target)
+  
+  def !== that
+    (* The `!==` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/strict-not-equal: this#target and: that#target)
+  
+  def > that
+    (* The `>` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/greater-than: this#target and: that#target)
+  
+  def < that
+    (* The `<` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/less-than: this#target and: that#target)
+  
+  def >= that
+    (* The `>=` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/greater-or-equal-to: this#target and: that#target)
+  
+  def <= that
+    (* The `<=` operator in JS *)
+    this assert-alien?: that;
+    this for: (vm js/less-or-equal-to: this#target and: that#target)
+};
+
+vm foreign/convert: JS-Object-Proto as: { a | a#target }

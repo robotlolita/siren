@@ -1,3 +1,14 @@
+(**********************************************************************
+ *
+ * This source file is part of the Siren project.
+ *
+ * Copyright (C) 2013-2015 Quildreen Motta.
+ * Licensed under the MIT licence.
+ *
+ * See LICENCE for licence information.
+ * See CONTRIBUTORS for the list of contributors to the project.
+ *
+ **********************************************************************)
 module | vm | where
 
 vm define-global: "Range" as: { Range };
@@ -6,9 +17,9 @@ let Range = {
   def as-string
     "<Range " + this start as-string + " .. " + this end as-string + ">"
 
-  def as-array
+  def as-tuple
     let result = [];
-    this each: { index | result append!: index };
+    this each: { index | vm array: result push: index };
     result
   
   def from: start to: end

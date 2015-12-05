@@ -1,0 +1,34 @@
+(**********************************************************************
+ *
+ * This source file is part of the Siren project.
+ *
+ * Copyright (C) 2013-2015 Quildreen Motta.
+ * Licensed under the MIT licence.
+ *
+ * See LICENCE for licence information.
+ * See CONTRIBUTORS for the list of contributors to the project.
+ *
+ **********************************************************************)
+module | vm | where
+
+vm define-global: "Reference" as: { Reference };
+let Reference = {
+  def as-string
+    "<Reference " + this value as-string + ">"
+
+  def new: value
+    (this {}) set!: value
+
+  def new
+    this new: Unit
+
+  def value
+    vm object: this at: "value"
+
+  def set!: value
+    vm object: this at: "value" put: value;
+    this
+
+  def === that
+    this value === that
+}

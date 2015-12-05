@@ -162,13 +162,15 @@ ometa SirenParser {
   binDigit = '0' | '1' | '_',
   digits = (digit | '_')+:as -> Number(as.join('').replace(/_/g, '')),
   number = '-'?:s ( '0' 'b' <binDigit+>:n
-                    -> Expr.Num({}, +((s || '+') + parseInt(n.replace(/_/g, ''), 2)))
+                    -> Expr.Int({}, (s || '+') + parseInt(n.replace(/_/g, ''), 2).toString())
                   | '0' 'o' <octDigit+>:n
-                    -> Expr.Num({}, +((s || '+') + parseInt(n.replace(/_/g, ''), 8)))
+                    -> Expr.Int({}, (s || '+') + parseInt(n.replace(/_/g, ''), 8).toString())
                   | '0' 'x' <hexDigit+>:n
-                    -> Expr.Num({}, +((s || '+') + parseInt(n.replace(/_/g, ''), 16)))
-                  | digits:a ('.' digits:b exponent:c)?
-                    -> Expr.Num({}, +((s || '+') + a + '.' + (b || 0) + (c || 0)))
+                    -> Expr.Int({}, (s || '+') + parseInt(n.replace(/_/g, ''), 16).toString())
+                  | digits:a '.' digits:b exponent?:c
+                    -> Expr.Num({}, +((s || '+') + a + '.' + b + (c || 0)))
+                  | digits:a
+                    -> Expr.Int({}, s || '+', String(a))
                   ),
   sign = '+' | '-',
   exponent = ('e' | 'E') sign?:s digits:d -> s + d,

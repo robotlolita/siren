@@ -1,9 +1,12 @@
+var _moduleContext = this;
+
 module.exports = function() {
   'use strict';
 
   // -- Dependencies ---------------------------------------------------
   var path = require('path');
   var fs = require('fs');
+  var BigNum = require('bignum');
   var isNumberP = require('is-number-object');
   var isStringP = require('is-string');
   var isBooleanP = require('is-boolean-object');
@@ -12,6 +15,9 @@ module.exports = function() {
   var prototypeOf = Object.getPrototypeOf;
   var keys = Object.keys;
   var internalClassOf = Object.prototype.toString;
+  var globalObject = typeof window !== 'undefined'?  window
+                   : typeof global !== 'undefined'?  global
+                   : /* otherwise */                 _moduleContext
 
   // -- Helpers --------------------------------------------------------
 
@@ -39,9 +45,16 @@ module.exports = function() {
       throw new RangeError('Wrong number of arguments (' + n + ') provided for ' + nameOf(f) );
     }
   }
+
   function assert_number(a) {
     if (internalClassOf.call(a) !== '[object Number]')
-      throw new TypeError('Not a number.');
+      throw new TypeError('Not a Float.');
+  }
+
+  function assert_bigint(a) {
+    if (!BigNum.isBigNum(a)) {
+      throw new TypeError('Not an Integer.')
+    }
   }
 
   function assert_function(a) {
@@ -343,14 +356,258 @@ module.exports = function() {
   // The base object from which all Siren objects descend
   var Base = Object.create(Object.prototype);
 
+  // A symbol for branding objects
+  var Brand = Symbol('Brand');
+
   // --- Primitive operations ------------------------------------------
   var Primitives = $makeObject({
     'as-string': function() {
       return '<VM primitives>';
     },
 
+    // Branding
+    'brand/of:is-same-brand?:': function(a, b) {
+      return a[Brand] && b[Brand] && a[Brand] === b[Brand];
+    },
+
+    'brand/new:': function(description) {
+      return { toString: function(){ return description }};
+    },
+
+    'brand/of:': function(object) {
+      return object[Brand];
+    },
+
+    'brand/attach:to:': function(brand, object) {
+      object[Brand] = brand;
+    },
+
+    // Special VM operations
     'failed?:': function(a) {
       return a == null;
+    },
+
+    'make-object:inheriting:': function(object, proto) {
+      return $makeObject(object, proto);
+    },
+
+    'apply-trait-globally:': function(trait) {
+      $methods.merge(trait);
+    },
+
+    'define-global:as:': function(name, value) {
+      var record = Object.create(null);
+      record[name] = value;
+      $methods.merge($extendObject(Siren, record));
+    },
+
+    'global-methods': function() {
+      return $methods;
+    },
+
+    // Native objects
+    'native-string': function() {
+      return String.prototype;
+    },
+
+    'native-float': function() {
+      return Number.prototype;
+    },
+
+    'native-integer': function() {
+      return BigNum.prototype;
+    },
+
+    'native-array': function() {
+      return Array.prototype;
+    },
+
+    'native-object': function() {
+      return Object.prototype;
+    },
+
+    'native-function': function() {
+      return Function.prototype;
+    },
+
+    'native-global': function() {
+      return globalObject;
+    },
+
+    // Special forms
+    'if:then:else:': function(a, b, c) {
+      return a? b : c;
+    },
+
+    'while:do:': function(a, b) {
+      while(a()) b();
+    },
+
+    'forever:': function(a) {
+      while(true) a();
+    },
+
+    'for:while:step:do:': function(a, b, c, d) {
+      for(a(); b(); c()) d();
+    },
+
+    // JS operations
+    'js/to-string:': function(a) {
+      return String(a);
+    },
+
+    'js/value:instance-of?:': function(a, b) {
+      return a instanceof b;
+    },
+
+    'js/from:in:invoke:with:': function(object, context, selector, args) {
+      return object[selector].apply(context, args);
+    },
+
+    'js/from:invoke:': function(object, selector) {
+      return object[selector]();
+    },
+
+    'js/from:invoke:arg1:': function(object, selector, a) {
+      return object[selector](a);
+    },
+
+    'js/from:invoke:arg1:arg2:': function(object, selector, a, b) {
+      return object[selector](a, b);
+    },
+
+    'js/from:invoke:arg1:arg2:arg3:': function(object, selector, a, b, c) {
+      return object[selector](a, b, c);
+    },
+
+    'js/call:': function(fn) {
+      return fn();
+    },
+
+    'js/call:arg1:': function(fn, a) {
+      return fn(a);
+    },
+
+    'js/call:arg1:arg2:': function(fn, a, b) {
+      return fn(a, b);
+    },
+
+    'js/call:arg1:arg2:arg3:': function(fn, a, b, c) {
+      return fn(a, b, c);
+    },
+
+    'js/call:with:': function(fn, args) {
+      return fn.apply(null, args);
+    },
+
+    'js/new:': function(Ctor) {
+      return new Ctor;
+    },
+
+    'js/new:with:': function(Ctor, args) {
+      var instance = Object.create(Ctor.prototype);
+      var result = Ctor.apply(instance, args);
+      return Object(result) === result? result : instance;
+    },
+
+    'js/object:has:': function(object, key) {
+      return key in object;
+    },
+
+    'js/object:at:': function(object, key) {
+      return object[key];
+    },
+
+    'js/object:at:put:': function(object, key, value) {
+      object[key] = value;
+    },
+
+    'js/object:delete-at:': function(object, key) {
+      delete object[key];
+    },
+
+    'js/plus:and:': function(a, b) {
+      return a + b;
+    },
+
+    'js/minus:and:': function(a, b) {
+      return a - b;
+    },
+
+    'js/div:and:': function(a, b) {
+      return a / b;
+    },
+
+    'js/mod:and:': function(a, b) {
+      return a % b;
+    },
+
+    'js/bit-and:and:': function(a, b) {
+      return a & b;
+    },
+
+    'js/bit-or:and:': function(a, b) {
+      return a | b;
+    },
+
+    'js/bit-xor:and:': function(a, b) {
+      return a ^ b;
+    },
+
+    'js/bit-shr:and:': function(a, b) {
+      return a >> b;
+    },
+
+    'js/bit-shl:and:': function(a, b) {
+      return a << b;
+    },
+
+    'js/bit-ushr:and:': function(a, b) {
+      return a >>> b;
+    },
+
+    'js/and:and:': function(a, b) {
+      return a && b;
+    },
+
+    'js/or:and:': function(a, b) {
+      return a || b;
+    },
+
+    'js/not:': function(a) {
+      return !a;
+    },
+
+    'js/abstract-equal:and:': function(a, b) {
+      return a == b;
+    },
+
+    'js/strict-equal:and:': function(a, b) {
+      return a === b;
+    },
+
+    'js/abstract-not-equal:and:': function(a, b) {
+      return a != b;
+    },
+
+    'js/strict-not-equal:and:': function(a, b) {
+      return a !== b;
+    },
+
+    'js/greater-than:and:': function(a, b) {
+      return a > b;
+    },
+
+    'js/less-than:and:': function(a, b) {
+      return a < b;
+    },
+
+    'js/greater-or-equal-to:and:': function(a, b) {
+      return a >= b;
+    },
+
+    'js/less-or-equal-to:and:': function(a, b) {
+      return a <= b;
     },
 
     // Method Boxes
@@ -626,7 +883,122 @@ module.exports = function() {
       return Math.round(a);
     },
 
+    // Big Ints
+    'int/to-string:': function(a) {
+      assert_bigint(a);
+      return a.toString();
+    },
+
+    'int/to-number:': function(a) {
+      assert_bigint(a);
+      return a.toNumber();
+    },
+
+    'int/plus:and:': function(a, b) {
+      assert_bigint(b);
+      return a.add(b);
+    },
+
+    'int/sub:and:': function(a, b) {
+      assert_bigint(b);
+      return a.sub(b);
+    },
+
+    'int/mul:and:': function(a, b) {
+      assert_bigint(b);
+      return a.mul(b);
+    },
+
+    'int/div:and:': function(a, b) {
+      assert_bigint(b);
+      return a.div(b);
+    },
+
+    'int/abs:': function(a) {
+      return a.abs();
+    },
+
+    'int/neg:': function(a) {
+      return a.neg();
+    },
+
+    'int/cmp:and:': function(a, b) {
+      assert_bigint(b);
+      return a.cmp(b);
+    },
+
+    'int/gt:and:': function(a, b) {
+      assert_bigint(b);
+      return a.gt(b);
+    },
+
+    'int/ge:and:': function(a, b) {
+      assert_bigint(b);
+      return a.ge(b);
+    },
+
+    'int/eq:and:': function(a, b) {
+      assert_bigint(b);
+      return a.eq(b);
+    },
+
+    'int/lt:and:': function(a, b) {
+      assert_bigint(b);
+      return a.lt(b);
+    },
+
+    'int/le:and:': function(a, b) {
+      assert_bigint(b);
+      return a.le(b);
+    },
+
+    'int/band:and:': function(a, b) {
+      assert_bigint(b);
+      return a.and(b);
+    },
+
+    'int/bor:and:': function(a, b) {
+      assert_bigint(b);
+      return a.or(b);
+    },
+
+    'int/bxor:and:': function(a, b) {
+      assert_bigint(b);
+      return a.xor(b);
+    },
+
+    'int/mod:and:': function(a, b) {
+      assert_bigint(b);
+      return a.mod(b);
+    },
+
+    'int/pow:by:': function(a, b) {
+      return a.pow(b);
+    },
+
+    'int/sqrt:': function(a) {
+      return a.sqrt();
+    },
+
+    'int/shift-left:by:': function(a, b) {
+      return a.shiftLeft(b);
+    },
+
+    'int/shift-right:by:': function(a, b) {
+      return a.shiftRight(b);
+    },
+
+    'int/bit-length:': function(a) {
+      return a.bitLength();
+    },
+
     // Strings
+    'string:repeat:': function(a, b) {
+      assert_string(a);
+      assert_number(b);
+      return Array(b + 1).join(a);
+    },
+
     'string/length:': function(a) {
       assert_string(a);
       return a.length;
@@ -707,6 +1079,10 @@ module.exports = function() {
     },
 
     // Arrays
+    'array/new': function() {
+      return [];
+    },
+
     'array/new:with:': function(a, b) {
       assert_number(a);
       var xs = [];
@@ -912,23 +1288,6 @@ module.exports = function() {
       return '<function ' + nameOf(this).slice(1, -1) + '>';
     },
 
-    // Syntactical constructs
-    'if:then:else:': function(a, b, c) {
-      return a? b : c;
-    },
-
-    'while:do:': function(a, b) {
-      while(a()) b();
-    },
-
-    'forever:': function(a) {
-      while(true) a();
-    },
-
-    'for:while:step:do:': function(a, b, c, d) {
-      for(a(); b(); c()) d();
-    },
-
     // foreign
     'symbol:': function(name) {
       return Symbol(name);
@@ -973,47 +1332,12 @@ module.exports = function() {
     'assert/number:is-at-least:and-at-most:': assert_bounds,
 
     // Global prototypes / Utilities
-    'native-string': function() {
-      return String.prototype;
-    },
-
-    'native-float': function() {
-      return Number.prototype;
-    },
-
-    'native-array': function() {
-      return Array.prototype;
-    },
-
-    'native-object': function() {
-      return Object.prototype;
-    },
-
-    'native-function': function() {
-      return Function.prototype;
-    },
-
     'native-console': function() {
       return console;
     },
 
-    'define-global:as:': function(name, value) {
-      var record = Object.create(null);
-      record[name] = value;
-      $methods.merge($extendObject(Siren, record));
-    },
 
-    'apply-trait-globally:': function(trait) {
-      $methods.merge(trait);
-    },
 
-    'global-methods': function() {
-      return $methods;
-    },
-
-    'make-object:inheriting:': function(object, proto) {
-      return $makeObject(object, proto);
-    },
 
     'meta/for:at:': function(object, name) {
       assert_string(name);
@@ -1099,6 +1423,8 @@ module.exports = function() {
     '$extend'       : $extendObject,
     '$make'         : $makeObject,
     '$fn'           : $makeFunction,
+    '$int'          : BigNum,
+    '$negint'       : function(a){ return BigNum(a).neg() },
     '$return'       : $return,
     '$handleReturn' : $handleReturn
   });

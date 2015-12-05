@@ -1,6 +1,22 @@
+(**********************************************************************
+ *
+ * This source file is part of the Siren project.
+ *
+ * Copyright (C) 2013-2015 Quildreen Motta.
+ * Licensed under the MIT licence.
+ *
+ * See LICENCE for licence information.
+ * See CONTRIBUTORS for the list of contributors to the project.
+ *
+ **********************************************************************)
 module | vm | where
+(*
+The Meta library provides facilities for decorating objects with
+meta-data.
+ *)
 
 vm define-global: "Meta" as: { Meta };
+
 let Meta = {
   def for: object at: name put: value
     vm meta/for: object at: name put: value;

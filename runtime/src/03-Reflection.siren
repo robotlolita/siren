@@ -1,3 +1,14 @@
+(**********************************************************************
+ *
+ * This source file is part of the Siren project.
+ *
+ * Copyright (C) 2013-2015 Quildreen Motta.
+ * Licensed under the MIT licence.
+ *
+ * See LICENCE for licence information.
+ * See CONTRIBUTORS for the list of contributors to the project.
+ *
+ **********************************************************************)
 module | vm | where
 
 
@@ -68,15 +79,16 @@ let Object-Mirror = {
 
   def methods
     (* Returns all methods the reflectee responds to in the method box. *)
-    FFI import: (vm method/list: this method-box for: this reflectee)
+    JS-Alien for: (vm method/list: this method-box for: this reflectee)
 
   def method-names
     (* Returns only the method names that the reflectee responds to. *)
-    this methods keys
+    vm object/keys: this methods#target
 
   def method-selectors
     (* Returns only the method selectors that the reflectee responds to. *)
-    this methods values
+    let methods = this methods;
+    (vm object/keys: this methods#target) map: { key | methods at: key }
 
   def responds-to?: name
     (* True if the reflectee can respond to the given message. *)
@@ -98,7 +110,7 @@ let Object-Mirror = {
 
   def method-for-selector: selector
     (* Returns the method with the given selector *)
-    let method = vm object: this reflectee at-key: selector;
+    let method = vm js/object: this reflectee at: selector;
     vm if: (vm failed?: method)
        then: { Result failure: (this reflectee as-string + " doesn't have a method that matches the selector " + selector) }
        else: { Result ok: method }
