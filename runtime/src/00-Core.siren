@@ -47,11 +47,14 @@ vm apply-trait-globally: extend vm native-object with {
        The message is given the selector, and the original arguments used,
        and can decide what to do with it. By default, it crashes the process.
      *)
-    let m1 = vm string: this as-string concat: " does not understand ";
+    let safe-as-string = { a | vm try: { a as-string }
+                                  recover: { _ | "<unrepresentable object>" }};
+    let m1 = vm string: (safe-as-string call: this) concat: " does not understand ";
     let m2 = vm string: m1 concat: selector;
-    let m3 = vm string: m2 concat: "\nIt was given the arguments:";
-    let m4 = vm string: m3 concat: args as-string;
-    let m5 = vm string: m4 concat: ", but is unable to perform any computation.
+    let m3 = vm string: m2 concat: "\nIt was given the arguments: [";
+    let args-string = vm array: (vm array: args map: safe-as-string) join: "; ";
+    let m4 = vm string: m3 concat: args-string;
+    let m5 = vm string: m4 concat: "], but is unable to perform any computation.
 Possible causes for this are:
 
  *  Mistyping the message name;

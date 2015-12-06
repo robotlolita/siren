@@ -15,6 +15,11 @@ VM_SRC_DIR := vm
 VM_SRC := $(shell find $(VM_SRC_DIR)/ -name '*.sjs')
 VM_TGT := ${VM_SRC:$(VM_SRC_DIR)/%.sjs=$(VM_TGT_DIR)/%.js}
 
+REPL_TGT_DIR := repl
+REPL_SRC_DIR := repl
+REPL_SRC := $(shell find $(REPL_SRC_DIR)/ -name '*.sjs')
+REPL_TGT := ${REPL_SRC:$(REPL_SRC_DIR)/%.sjs=$(REPL_TGT_DIR)/%.js}
+
 RT_TGT_DIR := runtime
 RT_SRC_DIR := runtime/src
 RT_SRC := $(shell find $(RT_SRC_DIR)/ -name '*.siren')
@@ -47,6 +52,16 @@ $(VM_TGT_DIR)/%.js: $(VM_SRC_DIR)/%.sjs
 	       --output $@ \
 	       $<
 
+$(REPL_TGT_DIR)/%.js: $(REPL_SRC_DIR)/%.sjs
+	$(sjs) --readable-names \
+	       --module lambda-chop/macros \
+	       --module adt-simple/macros \
+	       --module sparkler/macros \
+	       --module es6-macros/macros/destructure \
+	       --module macros.operators \
+	       --output $@ \
+	       $<
+
 $(RT_TGT_DIR)/%.js: $(RT_SRC_DIR)/%.siren
 	mkdir -p $(dir $@)
 	bin/siren -c $< > $@
@@ -59,12 +74,17 @@ language: $(LANG_TGT)
 
 vm: $(VM_TGT)
 
+repl: $(REPL_TGT)
+
 runtime: $(RT_TGT)
 
-all: node_modules vm language runtime
+all: node_modules vm repl language runtime
 
 clean-vm:
 	rm -f $(VM_TGT)
+
+clean-repl:
+	rm -f $(REPL_TGT)
 
 clean-language:
 	rm -f $(LANG_TGT)
@@ -74,6 +94,6 @@ clean-runtime:
 
 clean:
 	rm -rf node_modules
-	rm -f $(VM_TGT) $(LANG_TGT) $(RT_TGT)
+	rm -f $(VM_TGT) $(LANG_TGT) $(RT_TGT) $(REPL_TGT)
 
-.PHONY: clean
+.PHONY: clean clean-vm clean-repl clean-language clean-runtime

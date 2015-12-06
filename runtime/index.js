@@ -238,7 +238,12 @@ module.exports = function() {
         default: return object[selector].apply(object, args);
       }
     } else {
-      return $send(object, 'does-not-understand:with-arguments:', $methods, [message, args]);
+      console.log('>>', message, " <> ", args);
+      var recoverSelector = methods.lookup(Object(object), 'does-not-understand:with-arguments:');
+      if (recoverSelector && object[recoverSelector])
+        return object[recoverSelector].call(object, message, args);
+      else
+        throw new Error('Failed to send ' + message);
     }
   };
 
@@ -456,6 +461,14 @@ module.exports = function() {
 
     'for:while:step:do:': function(a, b, c, d) {
       for(a(); b(); c()) d();
+    },
+
+    'try:recover:': function(f, recover) {
+      try {
+        return f();
+      } catch(e) {
+        return recover(e);
+      }
     },
 
     // JS operations
