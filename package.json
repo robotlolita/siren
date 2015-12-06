@@ -1,12 +1,27 @@
 {
   "name": "@robotlolita/siren",
   "description": "An experimental prototype-based object-oriented language.",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "bin": {
     "siren": "bin/siren",
     "isiren": "bin/isiren"
   },
   "main": "./lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/robotlolita/siren.git"
+  },
+  "keywords": [
+    "language",
+    "oop",
+    "compiler"
+  ],
+  "author": "Quildreen Motta",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/robotlolita/siren/issues"
+  },
+  "homepage": "http://github.com/robotlolita/siren",
   "dependencies": {
     "adt-simple": "^0.1.3",
     "bignum": "^0.11.0",
