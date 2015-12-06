@@ -26,7 +26,7 @@ function toStatement(x) {
 
 function safeId(a) {
   return '_' + a.replace(/(\W)/g, function(_, a){
-    return '$' + a.charCodeAt(0) + '_';
+    return a === '-'? '_' : '$' + a.charCodeAt(0) + '_';
   });
 }
 
