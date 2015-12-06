@@ -15,7 +15,7 @@ to have a C++ compiler and the headers for the OpenSSL library.
 
 Install the Node.js 4.0.0+ (you'll need WeakMaps and Symbols), Make, and
 Git. After that clone this repository, and run `make compile`. This will
-generate a `bin/siren` compiler/interpreter.
+generate a `bin/siren` compiler/interpreter, and a REPL `bin/isiren`.
 
 ```sh
 $ git clone https://github.com/robotlolita/siren.git
@@ -23,6 +23,16 @@ $ cd siren
 $ npm install
 $ make all
 $ bin/siren
+```
+
+You can use the REPL to try out pieces of code interactively:
+
+```sh
+$ bin/isiren
+Type :quit to exit (or ^D).
+
+> 1 + 1
+=> 2
 ```
 
 You can run individual files with the same binary. There are examples in the
