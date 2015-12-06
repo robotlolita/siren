@@ -238,7 +238,6 @@ module.exports = function() {
         default: return object[selector].apply(object, args);
       }
     } else {
-      console.log('>>', message, " <> ", args);
       var recoverSelector = methods.lookup(Object(object), 'does-not-understand:with-arguments:');
       if (recoverSelector && object[recoverSelector])
         return object[recoverSelector].call(object, message, args);
@@ -645,22 +644,18 @@ module.exports = function() {
     },
 
     'object:at:': function(object, name) {
-      assert_string(name); assert_exists(object, name);
       return object[name];
     },
 
     'object:at-key:': function(object, name) {
-      assert_exists(object, name);
       return object[name];
     },
 
     'object:at:put:': function(object, name, value) {
-      assert_string(name);
       object[name] = value;
     },
 
     'object:remove-at:': function(object, key) {
-      assert_string(key);
       delete object[key];
     },
 
@@ -711,226 +706,191 @@ module.exports = function() {
     },
 
     'float/nan?:': function(a) {
-      assert_number(a);
       return isNaN(a);
     },
 
     'float/finite?:': function(a) {
-      assert_number(a);
       return isFinite(a);
     },
 
     'float/as-exponential:': function(a) {
-      assert_number(a);
       return a.toExponential();
     },
 
     'float:as-fixed:': function(a, b) {
-      assert_number(a);
       return a.toFixed(b);
     },
 
     'float/as-locale-string:': function(a) {
-      assert_number(a);
       return a.toLocaleString();
     },
 
     'float/as-string:': function(a) {
-      assert_number(a);
       return a.toString();
     },
 
     'float:plus:': function(a, b) {
-      assert_number(a); assert_number(b);
       return a + b;
     },
 
     'float:minus:': function(a, b) {
-      assert_number(a); assert_number(b);
       return a - b;
     },
 
     'float:times:': function(a, b) {
-      assert_number(a); assert_number(b);
       return a * b;
     },
 
     'float:div:': function(a, b) {
-      assert_number(a); assert_number(b);
       return a / b;
     },
 
     'float:modulus:': function(a, b) {
-      assert_number(a); assert_number(b);
       return a % b;
     },
 
     'float:equals?:': function(a, b) {
-      if (isNumber(a) && isNumber(b)) {
+      if (isNumber(b)) {
         return a.valueOf() === b.valueOf();
+      } else if (BigNum.isBigNum(b)) {
+        return a.valueOf() === b.toNumber();
       } else {
         return false;
       }
     },
 
     'float:not-equals?:': function(a, b) {
-      assert_number(a); assert_number(b);
-      return a.valueOf() !== b.valueOf();
+      if (BigNum.isBigNum(b)) {
+        return a.valueOf() !== b.toNumber();
+      } else if (isNumber(b)) {
+        return a.valueOf() !== b.valueOf();
+      } else {
+        return false;
+      }
     },
 
     'float:greater?:': function(a, b) {
-      assert_number(a); assert_number(b);
       return a > b;
     },
 
     'float:greater-or-equal?:': function(a, b) {
-      assert_number(a); assert_number(b);
       return a >= b;
     },
 
     'float:less-than?:': function(a, b) {
-      assert_number(a); assert_number(b);
       return a < b;
     },
 
     'float:less-than-or-equal?:': function(a, b) {
-      assert_number(a); assert_number(b);
       return a <= b;
     },
 
     'float:bit-shift-right:': function(a, b) {
-      assert_number(a); assert_number(b);
       return a >> b;
     },
 
     'float:bit-shift-left:': function(a, b) {
-      assert_number(a); assert_number(b);
       return a << b;
     },
 
     'float:unsigned-bit-shift-right:': function(a, b) {
-      assert_number(a); assert_number(b);
       return a >>> b;
     },
 
     'float:bit-or:': function(a, b) {
-      assert_number(a); assert_number(b);
       return a | b;
     },
 
     'float:bit-and:': function(a, b) {
-      assert_number(a); assert_number(b);
       return a & b;
     },
 
     'float:bit-xor:': function(a, b) {
-      assert_number(a); assert_number(b);
       return a ^ b;
     },
 
     'float/absolute:': function(a) {
-      assert_number(a);
       return Math.abs(a);
     },
 
     'float/arccosine:': function(a) {
-      assert_number(a);
       return Math.acos(a);
     },
 
     'float/arcsine:': function(a) {
-      assert_number(a);
       return Math.asin(a);
     },
 
     'float/arctangent:': function(a) {
-      assert_number(a);
       return Math.atan(a);
     },
 
     'float:arctangent:': function(a, b) {
-      assert_number(a); assert_number(b);
       return Math.atan2(a, b);
     },
 
     'float/cosine:': function(a) {
-      assert_number(a);
       return Math.cos(a);
     },
 
     'float/exp:': function(a) {
-      assert_number(a);
       return Math.exp(a);
     },
 
     'float/log:': function(a) {
-      assert_number(a);
       return Math.log(a);
     },
 
     'float:power:': function(a, b) {
-      assert_number(a); assert_number(b);
       return Math.pow(a, b);
     },
 
     'float/sine:': function(a) {
-      assert_number(a);
       return Math.sin(a);
     },
 
     'float/square-root:': function(a) {
-      assert_number(a);
       return Math.sqrt(a);
     },
 
     'float/tangent:': function(a) {
-      assert_number(a);
       return Math.tan(a);
     },
 
     'float/ceil:': function(a) {
-      assert_number(a);
       return Math.ceil(a);
     },
 
     'float/floor:': function(a) {
-      assert_number(a);
       return Math.floor(a);
     },
 
     'float/round:': function(a) {
-      assert_number(a);
       return Math.round(a);
     },
 
     // Big Ints
     'int/to-string:': function(a) {
-      assert_bigint(a);
       return a.toString();
     },
 
     'int/to-number:': function(a) {
-      assert_bigint(a);
       return a.toNumber();
     },
 
     'int/plus:and:': function(a, b) {
-      assert_bigint(b);
       return a.add(b);
     },
 
     'int/sub:and:': function(a, b) {
-      assert_bigint(b);
       return a.sub(b);
     },
 
     'int/mul:and:': function(a, b) {
-      assert_bigint(b);
       return a.mul(b);
     },
 
     'int/div:and:': function(a, b) {
-      assert_bigint(b);
       return a.div(b);
     },
 
@@ -943,52 +903,42 @@ module.exports = function() {
     },
 
     'int/cmp:and:': function(a, b) {
-      assert_bigint(b);
       return a.cmp(b);
     },
 
     'int/gt:and:': function(a, b) {
-      assert_bigint(b);
       return a.gt(b);
     },
 
     'int/ge:and:': function(a, b) {
-      assert_bigint(b);
       return a.ge(b);
     },
 
     'int/eq:and:': function(a, b) {
-      assert_bigint(b);
       return a.eq(b);
     },
 
     'int/lt:and:': function(a, b) {
-      assert_bigint(b);
       return a.lt(b);
     },
 
     'int/le:and:': function(a, b) {
-      assert_bigint(b);
       return a.le(b);
     },
 
     'int/band:and:': function(a, b) {
-      assert_bigint(b);
       return a.and(b);
     },
 
     'int/bor:and:': function(a, b) {
-      assert_bigint(b);
       return a.or(b);
     },
 
     'int/bxor:and:': function(a, b) {
-      assert_bigint(b);
       return a.xor(b);
     },
 
     'int/mod:and:': function(a, b) {
-      assert_bigint(b);
       return a.mod(b);
     },
 
@@ -1014,28 +964,22 @@ module.exports = function() {
 
     // Strings
     'string:repeat:': function(a, b) {
-      assert_string(a);
-      assert_number(b);
       return Array(b + 1).join(a);
     },
 
     'string/length:': function(a) {
-      assert_string(a);
       return a.length;
     },
 
     'string/from-char-code:': function(a) {
-      assert_string(a);
       return String.fromCharCode(a);
     },
 
     'string:at:': function(a, b) {
-      assert_string(a); assert_number(b); assert_bounds(b, 1, a.length);
       return a.charAt(b - 1);
     },
 
     'string:code-at:': function(a, b) {
-      assert_string(a); assert_number(b); assert_bounds(b, 1, a.length);
       return a.charCodeAt(b - 1);
     },
 
@@ -1044,43 +988,34 @@ module.exports = function() {
     },
 
     'string:index-of:': function(a, b) {
-      assert_string(a); assert_string(b);
       return a.indexOf(b) + 1;
     },
 
     'string:last-index-of:': function(a, b) {
-      assert_string(a); assert_string(b);
       return a.lastIndexOf(b) + 1;
     },
 
     'string:slice-from:': function(a, b) {
-      assert_string(a); assert_number(b); assert_bounds(b, 1, a.length);
       return a.slice(b + 1);
     },
 
     'string:slice-from:to:': function(a, b, c) {
-      assert_string(a); assert_number(b); assert_number(c);
-      assert_bounds(b, 1, a.length); assert_bounds(c, b, a.length);
       return a.slice(a, b, c);
     },
 
     'string/lower-case:': function(a) {
-      assert_string(a);
       return a.toLowerCase();
     },
 
     'string/upper-case:': function(a) {
-      assert_string(a);
       return a.toUpperCase();
     },
 
     'string/trim:': function(a) {
-      assert_string(a);
       return a.trim();
     },
 
     'string:each:': function(a, f) {
-      assert_string(a);
       for (var i = 0; i < a.length; ++i)
         f(a.charAt(i));
     },
@@ -1094,7 +1029,6 @@ module.exports = function() {
     },
 
     'string:split:': function(a, b) {
-      assert_string(a); assert_string(b);
       return a.split(b);
     },
 
@@ -1104,54 +1038,45 @@ module.exports = function() {
     },
 
     'array/new:with:': function(a, b) {
-      assert_number(a);
       var xs = [];
       for (var i = 0; i < a; ++i) xs[i] = b;
       return xs;
     },
 
     'array/length:': function(a) {
-      assert_array(a);
       return a.length;
     },
 
     'array:concat:': function(a, b) {
-      assert_array(a); assert_array(b);
       return a.concat(b);
     },
 
     'array:at:': function(a, b) {
-      assert_array(a); assert_number(b); assert_bounds(b, 1, a.length);
       return a[b - 1];
     },
 
     'array:at:put:': function(a, b, c) {
-      assert_array(a); assert_number(b); assert_bounds(b, 1, a.length);
       a[b - 1] = c;
     },
 
     'array:reduce:from:': function(a, f, i) {
-      assert_array(a);
       var r = i;
       for (var j = 0; j < a.length; ++j) r = f(r, a[j]);
       return r;
     },
 
     'array:reduce-right:from:': function(a, f, i) {
-      assert_array(a);
       var r = i;
       for (var j = a.length; --j;) r = f(r, a[j]);
       return r;
     },
 
     'array:each:': function(a, f) {
-      assert_array(a);
       for (var i = 0; i < a.length; ++i)
         f(a[i]);
     },
 
     'array:map:': function(a, f) {
-      assert_array(a);
       var result = [];
       for (var i = 0; i < a.length; ++i)
         result[i] = f(a[i]);
@@ -1159,7 +1084,6 @@ module.exports = function() {
     },
 
     'array:filter:': function(a, f) {
-      assert_array(a);
       var result = [];
       for (var i = 0; i < a.length; ++i)
         if (f(a[i]))  result.push(a[i]);
@@ -1167,57 +1091,46 @@ module.exports = function() {
     },
 
     'array:index-of:': function(a, b) {
-      assert_array(a);
       return a.indexOf(b) + 1;
     },
 
     'array:last-index-of:': function(a, b) {
-      assert_array(a);
       return a.lastIndexOf(b) + 1;
     },
 
     'array:join:': function(a, b) {
-      assert_array(a); assert_string(b);
       return a.join(b);
     },
 
     'array:push:': function(a, b) {
-      assert_array(a);
       a.push(b);
     },
 
     'array/shallow-copy:': function(a) {
-      assert_array(a);
       return a.slice();
     },
 
     'array/pop:': function(a) {
-      assert_array(a);
       return a.pop();
     },
 
     'array/shift:': function(a) {
-      assert_array(a);
       return a.shift();
     },
 
     'array:unshift:': function(a, b) {
-      assert_array(a);
       return a.unshift(b);
     },
 
     'array/reverse:': function(a) {
-      assert_array(a);
       return a.reverse();
     },
 
     'array:sort:': function(a, f) {
-      assert_array(a);
       return a.sort(f);
     },
 
     'array:remove-at:': function(a, b) {
-      assert_array(a); assert_number(b); assert_bounds(b, 1, a.length);
       a.splice(b, 1);
     },
 
@@ -1234,18 +1147,15 @@ module.exports = function() {
 
     // Parsing
     'parse/float:': function(a) {
-      assert_string(a);
       return parseFloat(a);
     },
 
     'parse/int:radix:': function(a, b) {
-      assert_string(a); assert_number(b);
       return parseInt(a, b);
     },
 
     // JSON
     'json/parse:': function(a) { // TODO: handle errors
-      assert_string(a);
       return JSON.parse(a);
     },
 
@@ -1360,12 +1270,10 @@ module.exports = function() {
 
 
     'meta/for:at:': function(object, name) {
-      assert_string(name);
       return $meta.get(object, name);
     },
 
     'meta/for:at:put:': function(object, name, value) {
-      assert_string(name);
       $meta.set(object, name, value);
     },
 
@@ -1397,11 +1305,9 @@ module.exports = function() {
       return path.extname(a);
     },
     'path/normalise:': function(a) {
-      assert_string(a);
       return path.normalize(a);
     },
     'path/absolute?:': function(a) {
-      assert_string(a);
       return path.isAbsolute(a);
     },
     'fs/exists?:notify:': function(p, c) {
@@ -1413,13 +1319,11 @@ module.exports = function() {
       });
     },
     'fs/change:owner:group:on-success:on-failure:': function(a, b, c, f, g) {
-      assert_number(b); assert_number(c);
       fs.chown(a, b, c, function(err, res) {
         if (err) g(err); else f(res);
       });
     },
     'fs/change:mode:on-success:on-failure:': function(a, b, f, g) {
-      assert_number(b);
       fs.chmod(a, b, function(err, res) {
         if (err) g(err); else f(res);
       });

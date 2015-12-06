@@ -71,6 +71,30 @@ let JS-Object-Proto = JS-Alien {
   def this as-string
     "<JS Alien: " + (vm js/to-string: this#target) + ">"
 
+  def this does-not-understand: selector with-arguments: args
+    (* Called when someone sends this object a message it can't understand.
+
+       This is used to call JS functions easily, by using the first
+       keyword as the JS function name:
+
+           alien log: "Foo" with: "Bar"
+           => alien.log("Foo", "Bar")
+
+       It also handles `new`:
+
+           alien new: "Foo" with: "Bar"
+           => alien.new("Foo", "Bar")
+     *)
+    let names = selector split: ":";
+    let name = names first!;
+    names length === 1 then: {
+      name === "new" then: { this new }
+                     else: { this at: name }
+    } else: {
+      name === "new" then: { this new-with-arguments: args }
+                     else: { this invoke: name with-arguments: args }
+    }
+
   (* Core operations *)
   def this type
     (* JavaScript's `typeof` operator *)
