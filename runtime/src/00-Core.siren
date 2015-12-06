@@ -21,11 +21,11 @@ Strings, Numbers, Functions, and Arrays.
 *)
 
 vm apply-trait-globally: extend vm native-object with {
-  def as-string
+  def this as-string
     (* Returns a textual representation of the object *)
     "<Object>"
 
-  def === that
+  def this === that
     (* Tests if two objects are equal.
     
        This compares things by reference. Specialised objects are
@@ -36,11 +36,11 @@ vm apply-trait-globally: extend vm native-object with {
        then: True
        else: False
 
-  def =/= that
+  def this =/= that
     (* Tests if two objects are not equal. *)
     (this === that) not
   
-  def does-not-understand: selector with-arguments: args
+  def this does-not-understand: selector with-arguments: args
     (* This message is invoked when the runtime can not send a particular
        message to the object.
 
@@ -57,9 +57,9 @@ Possible causes for this are:
  *  Mistyping the message name;
  *  Sending the message to the wrong object;
  *  Not importing the correct traits in the current scope.";
-    vm throw: (vm error: "Does Not Understand" reason: m5)
+    vm throw: (vm error: "Message-Send-Failure" reason: m5)
 
-  def clone: value
+  def this clone: value
     (* Returns a copy of the object, extended with the given properties.
 
        This is automatically invoked when inheriting from an object, with
@@ -73,7 +73,7 @@ Possible causes for this are:
 Root object from which all Siren objects (besides blocks) descend
 *)
 vm apply-trait-globally: extend Root with {
-  def as-string
+  def this as-string
     (* Returns a textual representation of the object. *)
     "<Root>"
 };
@@ -89,7 +89,7 @@ through the [[Result]] object in Siren.
 vm define-global: "Unit" as: { Unit };
 
 let Unit = {
-  def as-string
+  def this as-string
     (* Returns a textual representation of the object. *)
     "<Unit>"
 };
@@ -107,7 +107,7 @@ that job easier.
 vm define-global: "Singleton" as: { Singleton };
 
 let Singleton = {
-  def clone: anything
+  def this clone: anything
     this
 };
 
@@ -120,25 +120,25 @@ and ensure that programs behave correctly.
 *)
 vm define-global: "Ordering" as: { Ordering };
 let Ordering = Singleton {
-  def less-than    = Less-Than
-  def greater-than = Greater-Than
-  def equal        = Equal
+  def this less-than    = Less-Than
+  def this greater-than = Greater-Than
+  def this equal        = Equal
 };
 
 let Less-Than = Singleton {
-  def match: pattern
+  def this match: pattern
     pattern less-than
 };
 
 let Greater-Than = Singleton {
-  def match: pattern
+  def this match: pattern
     pattern greater-than
 };
 
 let Equal = Singleton {
-  def match: pattern
+  def this match: pattern
     pattern equal
-}
+};
 
 
 (*
@@ -178,7 +178,7 @@ but it evaluates the expression eagerly.
 vm define-global: "value" as: {
   { fn | let data = fn value;
          { data }}
-}
+};
 
 
 (*
@@ -190,4 +190,43 @@ vm define-global: "brand:" as: { name | { object |
   let brand = vm brand/new: name;
   vm brand/attach: brand to: object;
   object
-}}
+}};
+
+(*
+Some objects have behaviours that are used internally by the compiler.
+These need to be defined here too.
+*)
+vm apply-trait-globally: extend vm native-function with {
+  (* Evaluating the block *)
+  def this value
+    (* Invokes the block with no arguments. *)
+    vm function/invoke0: this
+
+  def this call: a
+    (* Invokes the block with a single argument. *)
+    vm function/invoke1: this a: a
+
+  def this call: a with: b
+    (* Invokes the block with two arguments. *)
+    vm function/invoke2: this a: a b: b
+
+  def this call: a with: b with: c
+    (* Invokes the block with three arguments. *)
+    vm function/invoke3: this a: a b: b c: c
+
+  def this call: a with: b with: c with: d
+    (* Invokes the block with four arguments. *)
+    vm function/invoke4: this a: a b: b c: c d: d
+
+  def this call: a with: b with: c with: d with: e
+    (* Invokes the block with five arguments. *)
+    vm function/invoke5: this a: a b: b c: c d: d e: e
+
+  def this apply: args
+    (* Invokes the block with many (not known in advance) arguments.
+
+       Apply allows one to pass any amount of arguments to a block
+       by providing a [[Tuple]].
+     *)
+    vm function/invoke*: this with: args
+}

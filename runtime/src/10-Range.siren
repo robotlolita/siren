@@ -14,21 +14,21 @@ module | vm | where
 vm define-global: "Range" as: { Range };
 
 let Range = {
-  def as-string
+  def this as-string
     "<Range " + this start as-string + " .. " + this end as-string + ">"
 
-  def as-tuple
+  def this as-tuple
     let result = [];
     this each: { index | vm array: result push: index };
     result
   
-  def from: start to: end
+  def this from: start to: end
     this {
-      def start = start
-      def end   = end
+      def _ start = start
+      def _ end   = end
     }
 
-  def each: computation
+  def this each: computation
     let index = Reference new: this start;
     {
       computation call: index value;

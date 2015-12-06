@@ -365,9 +365,16 @@ module.exports = function() {
       return '<VM primitives>';
     },
 
+    'does-not-understand:with-arguments:': function(message, args) {
+      throw new Error('No primitive ' + message);
+    },
+
     // Branding
     'brand/of:is-same-brand?:': function(a, b) {
-      return a[Brand] && b[Brand] && a[Brand] === b[Brand];
+      if (a == null || b == null)  return false;
+      else                         return a[Brand]
+                                       && b[Brand]
+                                       && a[Brand] === b[Brand];
     },
 
     'brand/new:': function(description) {
@@ -1435,27 +1442,18 @@ module.exports = function() {
 
   // Define global objects that are reachable in the prelude
   // Modules are expected to update the globals as necessary
-  require('./Meta')(Siren, Primitives);
-  require('./Reflection')(Siren, Primitives);
-  require('./FFI')(Siren, Primitives);
-  require('./data/Core')(Siren, Primitives);
-  require('./data/Function')(Siren, Primitives);
-  require('./data/Error')(Siren, Primitives);
-  require('./data/Number')(Siren, Primitives);
-  require('./data/Boolean')(Siren, Primitives);
-  require('./data/String')(Siren, Primitives);
-  require('./data/Array')(Siren, Primitives);
-  require('./data/Dictionary')(Siren, Primitives);
-  require('./data/Result')(Siren, Primitives);
-  require('./data/Reference')(Siren, Primitives);
-  require('./data/Range')(Siren, Primitives);
-  require('./data/Task')(Siren, Primitives);
-  require('./data/Channel')(Siren, Primitives);
-  require('./data/Event')(Siren, Primitives);
-  require('./io/Timer')(Siren, Primitives);
-  require('./io/Console')(Siren, Primitives);
-  require('./io/FileSystem')(Siren, Primitives);
-  require('./test/Test-Runner')(Siren, Primitives);
+  require('./00-Core')(Siren, Primitives);
+  require('./01-Meta')(Siren, Primitives);
+  require('./02-JS-Alien')(Siren, Primitives);
+  require('./03-Reflection')(Siren, Primitives);
+  require('./04-Result')(Siren, Primitives);
+  require('./05-Block')(Siren, Primitives);
+  require('./06-Boolean')(Siren, Primitives);
+  require('./07-Text')(Siren, Primitives);
+  require('./08-Tuple')(Siren, Primitives);
+  require('./09-Numeric')(Siren, Primitives);
+  require('./10-Range')(Siren, Primitives);
+  require('./11-Reference')(Siren, Primitives);
 
   return Siren;
 }();

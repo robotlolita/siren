@@ -178,8 +178,9 @@ function generateBind(bind, meta, target, selector) {
                  [generate(bind, target)])
 }
 
-function makeLambda(bind, meta, args, body) {
-  var compiledBody = js.Block(meta, returnLast(generate(bind, body).map(toStatement)));
+function makeLambda(bind, meta, self, args, body) {
+  var bodyPrefix = [letb({}, js.Id(self.meta, safeId(self.name)), js.This({}))];
+  var compiledBody = js.Block(meta, returnLast(bodyPrefix +++ generate(bind, body).map(toStatement)));
   if (nonLocalReturns.has(body)) {
     compiledBody = nonLocalReturns.wrap(compiledBody);
   }
@@ -190,14 +191,10 @@ function makeLambda(bind, meta, args, body) {
 }
 
 function makeBlock(bind, meta, args, body) {
-  var fn = js.FnExpr(meta, null, generate(bind, safeArgs(args)),
-                     [], null,
-                     js.Block({}, returnLast(generate(bind, body).map(toStatement))),
-                     false);
-
-  return js.Call(meta,
-                 js.Member(meta, fn, js.Str(meta, 'bind'), true),
-                 [js.This(meta)]);
+  return js.FnExpr(meta, null, generate(bind, safeArgs(args)),
+                   [], null,
+                   js.Block({}, returnLast(generate(bind, body).map(toStatement))),
+                   false);
 }
 
 function generateModule(bind, meta, args, exports, body) {
@@ -356,18 +353,18 @@ function generate(bind, x) {
     Expr.Empty =>
       js.Empty({}),
 
+    Expr.GlobalObject(meta) =>
+      js.Id(meta, '$Siren'),
+
     Expr.Comment(meta, comment) =>
       js.Empty(meta), // Doesn't look like Mozilla supports comments
 
     Expr.Id(meta, name) =>
       js.Id(meta, name),
 
-    Expr.Self(meta) =>
-      js.This(meta),
-
     // Values
-    Expr.Lambda(meta, args, body) =>
-      makeLambda(bind, meta, args, body),
+    Expr.Lambda(meta, self, args, body) =>
+      makeLambda(bind, meta, self, args, body),
 
     Expr.Block(meta, args, body) =>
       makeBlock(bind, meta, args, body),

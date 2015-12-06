@@ -16,14 +16,14 @@ var { Base } = require('adt-simple');
 // ## adt: Expr
 union Expr {
   Empty,
-  Hole    { meta: Object },
-  Module  { meta: Object, args: Array, exports: *, body: Array },
-  Comment { meta: Object, comment: String },
-  Id      { meta: Object, name: String },
-  Free    { meta: Object, selector: Id },
-  Self    { meta: Object },
+  GlobalObject { meta: Object },
+  Hole         { meta: Object },
+  Module       { meta: Object, args: Array, exports: *, body: Array },
+  Comment      { meta: Object, comment: String },
+  Id           { meta: Object, name: String },
+  Free         { meta: Object, selector: Id },
 
-  Lambda  { meta: Object, args: Array, body: Array },
+  Lambda  { meta: Object, self: Id, args: Array, body: Array },
   Block   { meta: Object, args: Array, body: Array },
   Num     { meta: Object, value: Number },
   Int     { meta: Object, sign: String, value: String },

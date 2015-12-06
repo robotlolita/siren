@@ -53,10 +53,11 @@ function resolve(scope, node) {
       |> λ(newScope) ->
            Expr.Module(m, args, resolve(newScope, expt), resolve(newScope, xs)),
 
-    Expr.Lambda(meta, args, body) =>
+    Expr.Lambda(meta, Expr.Id(mself, self), args, body) =>
       Expr.Lambda(meta,
+                  Expr.Id(mself, self),
                   args,
-                  resolve(scope +++ unpack(args) +++ collect(body), body)),
+                  resolve(scope +++ [self] +++ unpack(args) +++ collect(body), body)),
 
     Expr.Block(meta, args, body) =>
       Expr.Block(meta,

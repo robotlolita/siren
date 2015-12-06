@@ -18,30 +18,30 @@ meta-data.
 vm define-global: "Meta" as: { Meta };
 
 let Meta = {
-  def for: object at: name put: value
+  def this for: object at: name put: value
     vm meta/for: object at: name put: value;
     object
 
-  def at: name put: value
+  def this at: name put: value
     { object | this for: object at: name put: value }
 
-  def category: name
+  def this category: name
     (* Categorises an object. *)
     this at: "category" put: name
 
-  def name: name
+  def this name: name
     (* Names an object *)
     this at: "name" put: name
 
-  def version: version
+  def this version: version
     (* Versions an object. *)
     this at: "version" put: version
 
-  def documentation: text
+  def this documentation: text
     (* Provides documentation for a value. *)
     this at: "documentation" put: text
 
-  def example: code
+  def this example: code
     (* Provides example usage for the function. *)
     { object | let examples = vm meta/for: object at: "examples";
                vm if: (vm failed?: examples)

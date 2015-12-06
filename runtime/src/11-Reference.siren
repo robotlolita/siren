@@ -13,22 +13,22 @@ module | vm | where
 
 vm define-global: "Reference" as: { Reference };
 let Reference = {
-  def as-string
+  def this as-string
     "<Reference " + this value as-string + ">"
 
-  def new: value
+  def this new: value
     (this {}) set!: value
 
-  def new
+  def this new
     this new: Unit
 
-  def value
+  def this value
     vm object: this at: "value"
 
-  def set!: value
+  def this set!: value
     vm object: this at: "value" put: value;
     this
 
-  def === that
+  def this === that
     this value === that
 }

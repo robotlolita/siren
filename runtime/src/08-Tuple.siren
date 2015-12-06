@@ -14,89 +14,89 @@ module | vm | where
 vm define-global: "Tuple" as: { vm native-array };
 
 vm apply-trait-globally: extend Tuple with {
-  def as-string
+  def this as-string
     "[" + (this join: ", ") + "]"
 
   (* Constructing *)
-  def empty
+  def this empty
     []
 
   (* Testing *)
-  def empty?
+  def this empty?
     this length === 0
   
   (* Accessing *)
-  def at: index
+  def this at: index
     ((index > 1) && (index <= this length))
       then: { Result failure: "Index " + index as-string
                             + " out of range [1, " + this length as-string + "]" }
       else: { Result ok: (vm array: this at: index) }
 
-  def at!: index
+  def this at!: index
     this at: index >> get!
 
-  def first
+  def this first
     this at: 1
 
-  def first!
+  def this first!
     this first get!
 
-  def last
+  def this last
     this at: this length
 
-  def last!
+  def this last!
     this last get!
 
   (* Collection operations *)
-  def length
+  def this length
     vm array/length: this
 
-  def + that
+  def this + that
     vm array: this concat: that
 
-  def index-of: value
+  def this index-of: value
     let index = vm array: this index-of: value;
     (index === 0) then: { Result failure: "Not found." }
                   else: { Result ok: index }
 
-  def find: value
+  def this find: value
     this index-of: value >> map: (this at: _)
                 
-  def last-index-of: value
+  def this last-index-of: value
     let index = vm array: this last-index-of: value;
     (index === 0) then: { Result failure: "Not found." }
                   else: { Result ok: index }
 
-  def join: separator
+  def this join: separator
     vm array: (this map: _ as-string) join: separator
 
   (* Iteration *)
-  def each: computation
+  def this each: computation
     vm array: this each: { a | computation call: a };
     this
 
-  def map: computation
+  def this map: computation
     vm array: this map: { a | computation call: a }
 
-  def filter: predicate
+  def this filter: predicate
     vm array: this filter: { a | (predicate call: a) then: { vm true } else: { vm false } }
 
-  def fold: f from: initial
+  def this fold: f from: initial
     vm array: this reduce: { a b | f call: a with: b } from: initial
 
-  def fold-right: f from: initial
+  def this fold-right: f from: initial
     vm array: this reduce-right: { a b | f call: a with: b } from: initial
   
   (* Mutation *)
-  def reverse
+  def this reverse
     vm array/reverse: (vm array/shallow-copy: this)
 
-  def sort-by: comparator
+  def this sort-by: comparator
     vm array: (vm array/shallow-copy: this) sort: { left right |
       comparator call: left with: right >> match: {
-        def less-than    = -1
-        def equal        =  0
-        def greater-than =  1
+        def _ less-than    = -1
+        def _ equal        =  0
+        def _ greater-than =  1
       }
     }
   

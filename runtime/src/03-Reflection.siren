@@ -13,7 +13,7 @@ module | vm | where
 
 
 let meta = {
-  def get: name for: obj
+  def this get: name for: obj
     let value = vm meta/for: obj at: name;
     vm if: (vm failed?: value)
        then: { Result failure: "No meta-data " + name + " for " + obj as-string }
@@ -23,78 +23,78 @@ let meta = {
 
 vm define-global: "Mirror" as: { Mirror };
 let Mirror = {
-  def Meta = Meta-Mirror
-  def Object = Object-Mirror
-  def object: reflectee
+  def this Meta = Meta-Mirror
+  def this Object = Object-Mirror
+  def this object: reflectee
     this Object on: reflectee
-  def meta: reflectee
+  def this meta: reflectee
     this Meta on: reflectee
 };
 
 let Meta-Mirror = {
-  def on: reflectee
+  def this on: reflectee
     (* Constructs a Meta-Mirror for the reflectee. *)
-    this { def reflectee = reflectee }
+    this { def _ reflectee = reflectee }
 
-  def name
+  def this name
     (* Retrieves the name of the object. *)
     meta get: "name" for: this reflectee
 
-  def arguments
+  def this arguments
     (* Retrieves the arguments that the object takes (for blocks). *)
     meta get: "arguments" for: this reflectee
 
-  def filename
+  def this filename
     (* Retrieves the file name where the object was defined. *)
     meta get: "filename" for: this reflectee
 
-  def source
+  def this source
     (* Retrieves the source code of the object. *)
     meta get: "source" for: this reflectee
 
-  def category
+  def this category
     (* Retrieves the category of the object. *)
     meta get: "category" for: this reflectee
 
-  def documentation
+  def this documentation
     (* Retrieves the documentation of the object. *)
     meta get: "documentation" for: this reflectee
 
-  def examples
+  def this examples
     (* Retrieves the examples of the object. *)
     meta get: "examples" for: this reflectee
 };
 
 let Object-Mirror = {
-  def on: reflectee
+  def this on: reflectee
     (* Constructs a message mirror for the reflectee using the global method box. *)
     this on: reflectee using: vm global-methods
 
-  def on: reflectee using: methods
+  def this on: reflectee using: methods
     (* Constructs a message mirror for the reflectee using the given method box. *)
     this {
-      def reflectee = reflectee
-      def method-box = methods
+      def _ reflectee = reflectee
+      def _ method-box = methods
     }
 
-  def methods
+  def this methods
     (* Returns all methods the reflectee responds to in the method box. *)
     JS-Alien for: (vm method/list: this method-box for: this reflectee)
 
-  def method-names
+  def this method-names
     (* Returns only the method names that the reflectee responds to. *)
     vm object/keys: this methods#target
 
-  def method-selectors
+  def this method-selectors
     (* Returns only the method selectors that the reflectee responds to. *)
     let methods = this methods;
     (vm object/keys: this methods#target) map: { key | methods at: key }
 
-  def responds-to?: name
+  def this responds-to?: name
     (* True if the reflectee can respond to the given message. *)
     this methods has?: name
 
-  def method-selector: name
+  def this method-selector: name
     (* Returns the selector for the given name. *)
     let selector = vm method/lookup: name in: this method-box for: this reflectee;
     vm if: (vm failed?: selector)
@@ -102,13 +102,13 @@ let Object-Mirror = {
        else: { Result ok: selector }
        >> value
   
-  def method-for-name: name
+  def this method-for-name: name
     (* Returns the method with the given name. *)
     do { selector <- this method-selector: name
        ; this method-for-selector: selector
        }
 
-  def method-for-selector: selector
+  def this method-for-selector: selector
     (* Returns the method with the given selector *)
     let method = vm js/object: this reflectee at: selector;
     vm if: (vm failed?: method)
@@ -116,7 +116,7 @@ let Object-Mirror = {
        else: { Result ok: method }
        >> value
 
-  def prototype
+  def this prototype
     (* Returns the immediate prototype of the reflectee. *)
     let proto = vm prototype-of: this reflectee;
     vm if: (vm failed?: selector)

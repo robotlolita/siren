@@ -9,7 +9,7 @@ var Expr = ast.Expr;
 var Do = ast.DoClause;
 
 var reserved = [
-  'extend', 'let', 'this', 'do', 'module', 'exposing', 'def',
+  'extend', 'let', 'do', 'module', 'exposing', 'def',
   '|', '<-', '=', '>>', 'with', 'where', 'use', 'in', 'using', 'return',
   'trait'
 ]
@@ -27,9 +27,9 @@ function keywordApply(meta, target, args) {
   return Expr.Apply(meta, id, target, args.map(get(1)))
 }
 
-function keywordLambda(meta, args, body, docs) {
+function keywordLambda(meta, self, args, body, docs) {
   var id = Expr.Id(meta, args.map(get(0)).map(get('name')).join(''));
-  return [id, Expr.Lambda(extend(meta, { docs: docs }), args.map(get(1)), body)]
+  return [id, Expr.Lambda(extend(meta, { docs: docs }), self, args.map(get(1)), body)]
 }
 
 function decorateLet(letNode, expr) {
@@ -58,6 +58,8 @@ ometa SirenParser {
   identifier = <idStart idRest*>:a     ?(isValid(a)) -> Expr.Id({}, a),
   keyword    = <idStart idRest*>:a ':'               -> Expr.Id({}, a + ':'),
   symbols    = <symbol+>:a             ?(isValid(a)) -> Expr.Id({}, a),
+  argName    = identifier:a ~':' -> a
+             | '_'               -> Expr.Id({}, '_'),
 
   selector   = identifier
              | symbols
@@ -73,24 +75,24 @@ ometa SirenParser {
   docComment  = space* comment:a ws -> a,
   patternBody = docComment?:a ws ('=' ws)? stmtList:as -> [as, a || ''],
 
-  keywordArgs = (ws keyword:k ws identifier:n -> [k, n])+,
+  keywordArgs = (ws keyword:k ws argName:n -> [k, n])+,
 
-  keywordPattern = keywordArgs:as space* patternBody:v
-                -> keywordLambda({}, as, v[0], v[1]),
-  unaryPattern   = identifier:a ~':' space* patternBody:v
-                -> [a, Expr.Lambda({ docs: v[1] }, [], v[0])],
-  binaryPattern  = symbols:a ws identifier:b space* patternBody:v
-                -> [a, Expr.Lambda({ docs: v[1] }, [b], v[0])],
+  keywordPattern = argName:a space* keywordArgs:as space* patternBody:v
+                -> keywordLambda({}, a, as, v[0], v[1]),
+  unaryPattern   = argName:a space* argName:b space* patternBody:v
+                -> [b, Expr.Lambda({ docs: v[1] }, a, [], v[0])],
+  binaryPattern  = argName:a space* symbols:b ws argName:c space* patternBody:v
+                -> [b, Expr.Lambda({ docs: v[1] }, a, [c], v[0])],
 
 
 
   // Statements
   letStmt = '@' expr:a ws letStmt:b             -> decorateLet(b, a)
-          | kw('let') ws identifier:a ws '=' ws expr:b -> Expr.Let({}, a, b),
+          | kw('let') ws identifier:a ~':' ws '=' ws expr:b -> Expr.Let({}, a, b),
 
   module     = kw('module') ws moduleArgs?:a ws exportStmt?:b ws kw('where') ws stmtList:cs
              -> Expr.Module({}, a || [], b, cs),
-  moduleArgs = '|' ws identifier:a (ws identifier)*:as ws '|' -> [a].concat(as),
+  moduleArgs = '|' ws argName:a (ws argName)*:as ws '|' -> [a].concat(as),
   exportStmt = kw('exposing') ws expr:a -> a,
 
   useExpr = kw('use') ws listOf(#expr, ';'):xs ws kw('in') ws '{' ws stmtList:ys ws '}'
@@ -125,13 +127,13 @@ ometa SirenParser {
               | unaryExpr:a ws record:v               -> Expr.Clone({}, a, v)
               | unaryExpr:a ':' ':' identifier:i ~':' -> Expr.Bind({}, a, i)
               | primaryExpr,
-  primaryExpr = '_'                  -> Expr.Hole({})
+  primaryExpr = '_'                                -> Expr.Hole({})
               | doExpr
               | value
-              | identifier:a ~':'    -> Expr.Free({}, a)
-              | kw('this')           -> Expr.Self({})
-              | extendExpr:a         -> a
-              | '(' ws expr:a ws ')' -> a,
+              | identifier:a ~':'                  -> Expr.Free({}, a)
+              | keywordApp:a (ws keywordApp)*:as   -> keywordApply({}, Expr.GlobalObject({}), [a].concat(as))
+              | extendExpr:a                       -> a
+              | '(' ws expr:a ws ')'               -> a,
 
   extendExpr = kw('extend') ws expr:a ws kw('with') ws record:v -> Expr.Extend({}, a, v),
 
@@ -143,10 +145,10 @@ ometa SirenParser {
 
   doExpr = kw('do') ws '{' ws (doCase:c ws ';' ws -> c)*:xs ws doTailCase:x ws '}'
          -> Expr.Do({}, xs.concat([x])),
-  doAction     = identifier:i ws "<-" ws expr:e -> Do.Action({}, i, e)
+  doAction     = argName:i ws "<-" ws expr:e -> Do.Action({}, i, e)
                | doTailAction,
   doTailAction = expr:e                         -> Do.Action({}, Expr.Id({}, '_'), e),
-  doPure       = identifier:i ws "<-" ws kw('return') ws expr:e -> Do.Return({}, i, e)
+  doPure       = argName:i ws "<-" ws kw('return') ws expr:e -> Do.Return({}, i, e)
                | doTailPure,
   doTailPure   = kw('return') ws expr:e                         -> Do.Return({},
                                                                              Expr.Id({}, '_'),
@@ -195,7 +197,7 @@ ometa SirenParser {
   lambda  = '{' ws arglist:as ws '|' ws blockStmtList:a ws '}' -> Expr.Block({}, as, a)
           | '{' ws blockStmtList:a ws '}'                      -> Expr.Block({}, [], a),
 
-  arglist = identifier:a (ws identifier)*:as              -> [a].concat(as),
+  arglist = argName:a (ws argName)*:as              -> [a].concat(as),
 
   program = ws module:m ws eof    -> m
           | ws stmtList:xs ws eof -> Expr.Module({}, [], null, xs)

@@ -15,73 +15,73 @@ vm define-global: "String" as: { vm native-string };
 
 vm apply-trait-globally: extend String with {
   (* Conversions *) 
-  def as-string
+  def this as-string
     this
 
-  def as-array
+  def this as-array
     this split: ""
 
-  def repeat: times
+  def this repeat: times
     vm string: this repeat: times
 
   (* Character transformations / chopping *)
-  def lower-case
+  def this lower-case
     vm string/lower-case: this
 
-  def upper-case
+  def this upper-case
     vm string/upper-case: this
 
-  def trim
+  def this trim
     vm string/trim: this
 
   (* Constructing *)
-  def from-char-code: code
+  def this from-char-code: code
     vm string/from-char-code: code
 
   (* Accessing *)
-  def at: index
+  def this at: index
     vm string: this at: index
 
-  def code-at: index
+  def this code-at: index
     vm string: this code-at: index
 
   (* Collection operations *)
-  def length
+  def this length
     vm string/length: this
 
-  def + that
+  def this + that
     vm string: this concat: that
 
-  def index-of: value
+  def this index-of: value
     let index = vm string: this index-of: value;
     (index === 0) then: { Result failure: "Not found." }
                   else: { Result ok: index }
 
-  def last-index-of: value
+  def this last-index-of: value
     let index = vm string: this index-of: value;
     (index === 0) then: { Result failure: "Not found." }
                   else: { Result ok: index }
 
-  def slice-from: index
+  def this slice-from: index
     vm string: this slice-from: index
 
-  def slice-from: start to: end
+  def this slice-from: start to: end
     vm string: this slice-from: start to: end
 
-  def split: separator
+  def this split: separator
     vm string: this split: separator
 
   (* Logical comparisons *)
-  def === that
+  def this === that
     vm if: (vm string: this equals?: that)
        then: True
        else: False
 
-  def =/= that
+  def this =/= that
     (this === that) not
 
   (* Iteration *)
-  def each: computation
+  def this each: computation
     vm string: this each: { a | computation call: a }
 };
 
