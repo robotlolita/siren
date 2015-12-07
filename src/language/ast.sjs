@@ -32,7 +32,6 @@ union Expr {
   Record  { meta: Object, value: Array },
 
   Let    { meta: Object, name: Id, value: Expr },
-  Bind   { meta: Object, target: Expr, selector: Id },
   Apply  { meta: Object, selector: Id, target: Expr, args: Array },
   Clone  { meta: Object, source: Expr, bindings: Record },
   Extend { meta: Object, source: Expr, bindings: Record },

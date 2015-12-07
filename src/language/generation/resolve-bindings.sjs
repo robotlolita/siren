@@ -73,9 +73,6 @@ function resolve(scope, node) {
     Expr.Let(meta, name, value) =>
       Expr.Let(meta, name, resolve(scope, value)),
 
-    Expr.Bind(meta, target, sel) =>
-      Expr.Bind(meta, resolve(scope, target), sel),
-
     Expr.Apply(meta, sel, target, args) =>
       Expr.Apply(meta, sel, resolve(scope, target), resolve(scope, args)),
 

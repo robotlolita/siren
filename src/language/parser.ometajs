@@ -125,7 +125,6 @@ ometa SirenParser {
               | unaryExpr,
   unaryExpr   = unaryExpr:a ws identifier:i ~':'      -> Expr.Apply({}, i, a, [])
               | unaryExpr:a ws record:v               -> Expr.Clone({}, a, v)
-              | unaryExpr:a ':' ':' identifier:i ~':' -> Expr.Bind({}, a, i)
               | primaryExpr,
   primaryExpr = '_'                                -> Expr.Hole({})
               | doExpr

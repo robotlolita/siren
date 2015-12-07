@@ -166,18 +166,6 @@ function generateProperty(bind, pair) {
   )
 }
 
-function generateBind(bind, meta, target, selector) {
-  var ref = bind.free('$ref');
-  return js.Call(meta,
-                 fexpr(meta,
-                       [js.Id(meta, ref)],
-                       methCall(meta,
-                                mem(meta, js.Id(meta, ref), generate(bind, selector)),
-                                id('bind'),
-                                [js.Id(meta, ref)])),
-                 [generate(bind, target)])
-}
-
 function makeLambda(bind, meta, self, args, body) {
   var bodyPrefix = [letb({}, js.Id(self.meta, safeId(self.name)), js.This({}))];
   var compiledBody = js.Block(meta, returnLast(bodyPrefix +++ generate(bind, body).map(toStatement)));
@@ -391,9 +379,6 @@ function generate(bind, x) {
 
     Expr.Let(meta, Expr.Id(_, name), value) =>
       letb(meta, id(safeId(name)), generate(bind, value)),
-
-    Expr.Bind(meta, target, sel) =>
-      generateBind(bind, meta, target, sel),
 
     n @ Expr.Apply(meta, sel, target, args) =>
       generateApply(bind, n),
