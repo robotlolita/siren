@@ -10,6 +10,9 @@ var js = require('./jsast');
 // -- Helpers ----------------------------------------------------------
 function hasNonLocalReturn(node) {
   return match node {
+    Expr.Seq(_, body) =>
+      hasNonLocalReturn(body),
+
     Expr.Block(_, _, body) =>
       hasNonLocalReturn(body),
 

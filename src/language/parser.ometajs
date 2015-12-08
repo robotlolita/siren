@@ -198,6 +198,8 @@ ometa SirenParser {
 
   arglist = argName:a (ws argName)*:as              -> [a].concat(as),
 
+  replExpr = ws stmtList:xs ws eof -> Expr.Seq({}, xs),
+
   program = ws module:m ws eof    -> m
           | ws stmtList:xs ws eof -> Expr.Module({}, [], null, xs)
 }

@@ -82,6 +82,39 @@ vm apply-trait-globally: extend Root with {
 };
 
 (*
+The module system loads JS and Siren modules.
+*)
+vm apply-trait-globally: extend (vm native-module) with {
+  def this as-string
+    (* Returns a textual representation of the object. *)
+    "<Module>"
+
+  def this filename
+    (* Returns the directory the module is into *)
+    vm object: this at: "filename"
+
+  def this import: id with-arguments: args in-sandbox: sandbox
+    (* Imports a module from a module ID *)
+    let factory = vm js/from: this invoke: "require" arg1: id;
+    factory apply: [sandbox] + args
+
+  def this import: id with-arguments: args
+    (* Imports a module from a module ID *)
+    this import: id with-arguments: args in-sandbox: (vm object: this at: "runtime")
+
+  def this import: id in-sandbox: sandbox
+    this import: id with-arguments: [] in-sandbox: sandbox
+
+  def this import: id
+    (* Imports a module from a module ID *)
+    this import: id with-arguments: [] in-sandbox: (vm object: this at: "runtime")
+
+  def this import-js: id
+    (* Imports a JS file *)
+    JS-Alien for: (vm js/from: this invoke: "require" arg1: id)
+};
+
+(*
 The Unit object represents the lack of any value.
 
 It's, in a sense, similar to `null` in other dynamic languages, however

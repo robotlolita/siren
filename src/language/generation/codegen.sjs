@@ -109,6 +109,9 @@ function selector(meta, name) {
 function cloneMethods(meta, parent) {
   parent = parent || dot({}, ['$Siren', '$methods']);
   return [
+    letb(meta, id('_Module'),
+         methCall({}, id('$Siren'), id('$makeModule'),
+                  [id('module'), id('require'), id('$Siren')])),
     letb(meta, id('$send'), dot({}, ['$Siren', '$send'])),
     letb(meta, id('$methods'), methCall({}, parent, id('clone'), []))
   ]
@@ -423,6 +426,9 @@ function generate(bind, x) {
 
     Expr.Module(meta, args, exports, body) =>
       generateModule(bind, meta, args, exports, body),
+
+    Expr.Seq(meta, body) =>
+      js.Prog(meta, generate(bind, body).map(toStatement)),
 
     x @ Array => x.map(λ[generate(bind, #)]),
 

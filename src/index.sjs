@@ -16,8 +16,8 @@ function parse(text) {
 }
 
 exports.toJsAst = toJsAst;
-function toJsAst(ast) {
-  return generate(ast);
+function toJsAst(ast, knownNames) {
+  return generate(ast, knownNames || []);
 }
 
 exports.generateJs = generateJs;

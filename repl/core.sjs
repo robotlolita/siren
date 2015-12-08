@@ -16,6 +16,7 @@
 
 // -- Dependencies -----------------------------------------------------
 var { toJsAst, generateJs, makeRuntime } = require('../');
+var { Expr } = require('../lib/language/ast');
 var Parser   = require('../lib/language/parser').SirenParser;
 var readline = require('readline');
 var colours  = require('chalk');
@@ -49,82 +50,104 @@ function show(runtime, options, a) {
 
 function requireWithPath(origin) {
   return function(file) {
-    return require(path.join(origin, file));
+    return (/^\./.test(file))?  require(path.join(origin, file))
+    :      /* otherwise */      require(file);
+  }
+}
+
+function flatten(xss) {
+  return xss.reduce(λ[# +++ #], [])
+}
+
+function collect(node) {
+  return match node {
+    Expr.Let(_, Expr.Id(_, name), _) =>
+      [name],
+
+    Expr.Seq(_, xs) =>
+      collect(xs),
+
+    n @ Array => flatten(n.map(collect)),
+    n => []
   }
 }
 
 function replContext(runtime) {
+  var req = requireWithPath(process.cwd());
   return vm.createContext({
     process: process,
     console: console,
-    require: requireWithPath(process.cwd()),
+    require: req,
     setImmediate: setImmediate,
     setTimeout: setTimeout,
     clearTimeout: clearTimeout,
     '$Siren': runtime,
     '$send': runtime.$send,
     '$methods': runtime.$methods,
+    '_Module': runtime.$makeModule({ filename: '<repl>' }, req, runtime),
     __dirname: process.cwd()
   });
 }
 
 // -- Evaluation helpers -----------------------------------------------
-function loopEvaluation(runtime, context, rl, options) {
+function loopEvaluation(names, runtime, context, rl, options) {
   rl.question('> ', function(program) {
-    finishReplLoop(runtime, context, rl, program, options);
+    finishReplLoop(names, runtime, context, rl, program, options);
   });
 }
 
-function finishReplLoop(runtime, context, rl, program, options) {
-  evaluateCommand(runtime, context, rl, program, options);
+function finishReplLoop(names, runtime, context, rl, program, options) {
+  evaluateCommand(names, runtime, context, rl, program, options);
 }
 
-function continueRepl(err, runtime, context, rl, program, options) {
+function continueRepl(err, names, runtime, context, rl, program, options) {
   rl.question('... ', function(newProgram) {
     if (!newProgram.trim()) {
       showError(err, options);
-      loopEvaluation(runtime, context, rl, options);
+      loopEvaluation(names, runtime, context, rl, options);
     } else {
-      finishReplLoop(runtime, context, rl, program + '\n' + newProgram, options);
+      finishReplLoop(names, runtime, context, rl, program + '\n' + newProgram, options);
     }
   });
 }
 
-function evaluateCommand(runtime, context, rl, program, options) {
+function evaluateCommand(names, runtime, context, rl, program, options) {
   return program === ':quit'?  process.exit(0)
-  :      /* otherwise */       run(runtime, context, rl, program, options);
+  :      /* otherwise */       run(names, runtime, context, rl, program, options);
 }
 
-function run(runtime, context, rl, program, options) {
+function run(names, runtime, context, rl, program, options) {
   if (!(program || '').trim())  return;
 
   try {
-    var ast = Parser.matchAll(program.trim(), 'stmt');
+    var ast = Parser.matchAll(program.trim(), 'replExpr');
   } catch (e) {
-    return continueRepl(e, runtime, context, rl, program, options);
+    return continueRepl(e, names, runtime, context, rl, program, options);
   }
 
   try {
-    var code = toJsAst(ast);
+    var newNames = collect(ast);
+    var allNames = names +++ newNames;
+    var code = toJsAst(ast, allNames);
     var js   = generateJs(code);
     if (options.showJs)  console.log(faded(js));
   } catch(e) {
     showError(e, options);
-    return loopEvaluation(runtime, context, rl, options);
+    return loopEvaluation(names, runtime, context, rl, options);
   }
 
   try {
     var result = runProgram(runtime, context, js);
     maybeLog(runtime, options, result);
-    loopEvaluation(runtime, context, rl, options);
+    loopEvaluation(allNames, runtime, context, rl, options);
   } catch(e) {
     showError(e, options);
-    loopEvaluation(runtime, context, rl, options);
+    loopEvaluation(names, runtime, context, rl, options);
   }
 }
 
 function runProgram(runtime, context, js) {
-  return vm.runInNewContext(js, context, '<repl>');
+  return vm.runInContext(js, context, '<repl>');
 }
 
 
@@ -135,7 +158,8 @@ function repl(options) {
   var runtime = makeRuntime();
   var context = replContext(runtime);
 
-  loopEvaluation( runtime
+  loopEvaluation( ['Module']
+                , runtime
                 , context
                 , readline.createInterface({ input: process.stdin
                                            , output: process.stdout })

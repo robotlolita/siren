@@ -7,7 +7,7 @@ var { BindingBox, generate } = require('./codegen');
 var resolveBindings = require('./resolve-bindings');
 
 // -- Exports ----------------------------------------------------------
-module.exports = function(ast) {
-  return resolveBindings(['Module'], ast)
+module.exports = function(ast, knownNames) {
+  return resolveBindings(knownNames, ast)
       |> λ[generate(new BindingBox(), #)];
 }

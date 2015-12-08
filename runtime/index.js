@@ -326,6 +326,18 @@ module.exports = function() {
     return fn;
   }
 
+  // #### function: $makeModule(dirname, require, runtime)
+  // Constructs a module.
+  //
+  // @type: (String, Function, Siren) -> Module
+  function $makeModule(jsModule, require, runtime) {
+    var module = Object.create(ModuleProto);
+    module['filename'] = jsModule.filename;
+    module['require'] = require;
+    module['runtime'] = runtime;
+    return module;
+  }
+
   // --- Importing / Exporting objects ---------------------------------
   // A symbol attached to objects that describes how they convert to JS
   var $export = Symbol('siren->js');
@@ -359,6 +371,9 @@ module.exports = function() {
 
   // The base object from which all Siren objects descend
   var Base = Object.create(Object.prototype);
+
+  // The base prototype for modules
+  var ModuleProto = Object.create(Base);
 
   // A symbol for branding objects
   var Brand = Symbol('Brand');
@@ -443,6 +458,10 @@ module.exports = function() {
 
     'native-global': function() {
       return globalObject;
+    },
+
+    'native-module': function() {
+      return ModuleProto;
     },
 
     // Special forms
@@ -1262,13 +1281,6 @@ module.exports = function() {
     'assert/number:is-at-least:and-at-most:': assert_bounds,
 
     // Global prototypes / Utilities
-    'native-console': function() {
-      return console;
-    },
-
-
-
-
     'meta/for:at:': function(object, name) {
       return $meta.get(object, name);
     },
@@ -1347,6 +1359,7 @@ module.exports = function() {
     '$extend'       : $extendObject,
     '$make'         : $makeObject,
     '$fn'           : $makeFunction,
+    '$makeModule'   : $makeModule,
     '$int'          : BigNum,
     '$negint'       : function(a){ return BigNum(a).neg() },
     '$return'       : $return,

@@ -19,6 +19,7 @@ union Expr {
   GlobalObject { meta: Object },
   Hole         { meta: Object },
   Module       { meta: Object, args: Array, exports: *, body: Array },
+  Seq          { meta: Object, body: Array },
   Comment      { meta: Object, comment: String },
   Id           { meta: Object, name: String },
   Free         { meta: Object, selector: Id },

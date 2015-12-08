@@ -21,7 +21,7 @@ function collect(node) {
       [name],
 
     n @ Array => flatten(n.map(collect)),
-    n => n
+    n => []
   }
 }
 
@@ -49,9 +49,12 @@ function resolve(scope, node) {
       : /* otherwise */       Expr.Global(m1, Expr.Id(m2, name)),
 
     Expr.Module(m, args, expt, xs) =>
-      (scope +++ unpack(args) +++ collect(xs))
+      (scope +++ ['Module'] +++ unpack(args) +++ collect(xs))
       |> λ(newScope) ->
            Expr.Module(m, args, resolve(newScope, expt), resolve(newScope, xs)),
+
+    Expr.Seq(m, body) =>
+      Expr.Seq(m, resolve(scope, body)),
 
     Expr.Lambda(meta, Expr.Id(mself, self), args, body) =>
       Expr.Lambda(meta,
