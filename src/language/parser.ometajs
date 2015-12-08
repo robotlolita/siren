@@ -91,9 +91,9 @@ ometa SirenParser {
           | kw('let') ws identifier:a ~':' ws '=' ws expr:b -> Expr.Let({}, a, b),
 
   module     = kw('module') ws moduleArgs?:a ws exportStmt?:b ws kw('where') ws stmtList:cs
-             -> Expr.Module({}, a || [], b, cs),
+             -> Expr.Module({}, a || [], b || Expr.Record({}, []), cs),
   moduleArgs = '|' ws argName:a (ws argName)*:as ws '|' -> [a].concat(as),
-  exportStmt = kw('exposing') ws expr:a -> a,
+  exportStmt = kw('exposing') ws record:a -> a,
 
   useExpr = kw('use') ws listOf(#expr, ';'):xs ws kw('in') ws '{' ws stmtList:ys ws '}'
           -> Expr.Use({}, xs, ys),
@@ -200,5 +200,5 @@ ometa SirenParser {
   replExpr = ws stmtList:xs ws eof -> Expr.Seq({}, xs),
 
   program = ws module:m ws eof    -> m
-          | ws stmtList:xs ws eof -> Expr.Module({}, [], null, xs)
+          | ws stmtList:xs ws eof -> Expr.Module({}, [], Expr.Record({}, []), xs)
 }

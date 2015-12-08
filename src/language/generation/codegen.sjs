@@ -189,12 +189,17 @@ function makeBlock(bind, meta, args, body) {
 }
 
 function generateModule(bind, meta, args, exports, body) {
+  var hasExports = exports.value.length > 0;
   return set(meta, mem({}, id('module'), id('exports')),
              fn({}, null, generate(bind, [Expr.Id(meta, '$Siren')] +++ safeArgs(args)),
                 [js.ExprStmt({}, str('use strict'))]
                 +++ cloneMethods({})
                 +++ generate(bind, body)
-                +++ (exports? [js.Return({}, generate(bind, exports))] : [])))
+                +++ ( hasExports?
+                      [js.Return({}, methCall( {}, id('$Siren'), id('$make')
+                                             , [ generatePlainRecord(bind, exports)
+                                               , id('_Module') ]))]
+                    : /* otherwise */  [js.Return({}, id('_Module'))])))
 }
 
 function generateApply(bind, apExpr) {
