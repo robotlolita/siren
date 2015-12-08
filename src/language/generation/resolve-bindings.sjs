@@ -94,9 +94,6 @@ function resolve(scope, node) {
     Expr.Using(meta, traits) =>
       Expr.Using(meta, resolve(scope, traits)),
 
-    Expr.Assign(meta, id, expr) =>
-      Expr.Assign(meta, resolve(scope, id), resolve(scope, expr)),
-
     Expr.Do(meta, actions) =>
       Expr.Do(meta, propagate(scope, actions)),
 
