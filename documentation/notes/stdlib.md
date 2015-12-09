@@ -12,7 +12,7 @@ Some currently open questions:
 
 ## Core concepts
 
-Siren's hierarchy has a few core objects:
+Siren's hierarchy has a few core objects, which reify internal concepts:
 
 - `Root`, which is the basis of the entire Siren hierarchy. All objects
   must inherit from `Root`.
@@ -51,3 +51,38 @@ Siren's hierarchy has a few core objects:
   value, but **NOT** of an error, or "no object", so very different from
   `nil/null`. Errors are handled with a `Result` object.
 
+- `Error`,
+
+
+## Scalar types
+
+- Reference (atomic reference)
+- Boolean (True/False)
+- Numbers (Byte, Unsigned-Integer-32bit, Unsigned-Integer-64bits, Integer-16bits, Integer-32bits, Integer-64bit, **Integer** (arbitrary-precision), Float-32bits, **Float-64bits**, Rational, Decimal)
+- Text (Character)
+- Date (Time, Date, Date-Time, Period) (should probably be based on clj-time)
+
+## Container types
+
+- Buffer
+- Text (Text, Raw-Text (no encoding))
+- Slice (view of part of a sequence)
+- Collection (Pair, Tuple, List, Vector, Set, Ordered-Set, Map, Ordered-Map)
+- Lazy Collections (Stream, Range, Lazy-List, Lazy-Vector, Lazy-Set, Lazy-Ordered-Set, Lazy-Map, Lazy-Ordered-Map)
+- Result
+- Concurrency (Task, Future, Channel (and buffers), Event)
+- Isolates (Capabilities, Isolates, Communication Ports)
+
+
+## Other libraries
+
+- JS-Alien (JS interaction)
+- Mirror (Object-Mirror, Meta-Mirror, Method-Mirror)
+- Debug (inspecting, logging, tracing)
+- Process
+- File-System (Path, Node, File, Directory, Link)
+- OS
+- HTTP
+- Contracts
+- JSON
+- Pretty Printing (probably using something similar to Wadler's pprint)
