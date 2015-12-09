@@ -1,20 +1,20 @@
-(**********************************************************************
- *
- * This source file is part of the Siren project.
- *
- * Copyright (C) 2013-2015 Quildreen Motta.
- * Licensed under the MIT licence.
- *
- * See LICENCE for licence information.
- * See CONTRIBUTORS for the list of contributors to the project.
- *
- **********************************************************************)
+#-----------------------------------------------------------------------
+# 
+# This source file is part of the Siren project.
+#
+# Copyright (C) 2013-2015 Quildreen Motta.
+# Licensed under the MIT licence.
+#
+# See LICENCE for licence information.
+# See CONTRIBUTORS for the list of contributors to the project.
+#
+#-----------------------------------------------------------------------
 module | vm | where
 
 vm define-global: "String" as: { vm native-string };
 
 vm apply-trait-globally: extend String with {
-  (* Conversions *) 
+  # Conversions  
   def this as-string
     this
 
@@ -24,7 +24,7 @@ vm apply-trait-globally: extend String with {
   def this repeat: times
     vm string: this repeat: times
 
-  (* Character transformations / chopping *)
+  # Character transformations / chopping 
   def this lower-case
     vm string/lower-case: this
 
@@ -34,18 +34,18 @@ vm apply-trait-globally: extend String with {
   def this trim
     vm string/trim: this
 
-  (* Constructing *)
+  # Constructing 
   def this from-char-code: code
     vm string/from-char-code: code
 
-  (* Accessing *)
+  # Accessing 
   def this at: index
     vm string: this at: index
 
   def this code-at: index
     vm string: this code-at: index
 
-  (* Collection operations *)
+  # Collection operations 
   def this length
     vm string/length: this
 
@@ -71,7 +71,7 @@ vm apply-trait-globally: extend String with {
   def this split: separator
     vm string: this split: separator
 
-  (* Logical comparisons *)
+  # Logical comparisons 
   def this === that
     vm if: (vm string: this equals?: that)
        then: True
@@ -80,7 +80,7 @@ vm apply-trait-globally: extend String with {
   def this =/= that
     (this === that) not
 
-  (* Iteration *)
+  # Iteration 
   def this each: computation
     vm string: this each: { a | computation call: a }
 };

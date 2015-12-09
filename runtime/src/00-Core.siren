@@ -1,52 +1,48 @@
-(**********************************************************************
- *
- * This source file is part of the Siren project.
- *
- * Copyright (C) 2013-2015 Quildreen Motta.
- * Licensed under the MIT licence.
- *
- * See LICENCE for licence information.
- * See CONTRIBUTORS for the list of contributors to the project.
- *
- **********************************************************************)
+#-----------------------------------------------------------------------
+# 
+# This source file is part of the Siren project.
+#
+# Copyright (C) 2013-2015 Quildreen Motta.
+# Licensed under the MIT licence.
+#
+# See LICENCE for licence information.
+# See CONTRIBUTORS for the list of contributors to the project.
+#
+#-----------------------------------------------------------------------
 module | vm | where
 
-(*
-The Core module prepares things by providing essential messages and
-objects.
-
-All objects in Siren inherit from JavaScript's Object.prototype, by
-way of the `Root` object. This is so we can seamlessly work with JS
-Strings, Numbers, Functions, and Arrays.
-*)
+# The Core module prepares things by providing essential messages and
+# objects.
+# 
+# All objects in Siren inherit from JavaScript's Object.prototype, by
+# way of the `Root` object. This is so we can seamlessly work with JS
+# Strings, Numbers, Functions, and Arrays.
 
 vm apply-trait-globally: extend vm native-object with {
   def this as-string
-    (* Returns a textual representation of the object *)
+    # Returns a textual representation of the object
     "<Object>"
 
   def this === that
-    (* Tests if two objects are equal.
-    
-       This compares things by reference. Specialised objects are
-       expected to override this message with one that uses structural
-       equality, where possible.
-     *)
+    # Tests if two objects are equal.
+    # 
+    # This compares things by reference. Specialised objects are
+    # expected to override this message with one that uses structural
+    # equality, where possible.
     vm if: (vm object: this equals?: that)
        then: True
        else: False
 
   def this =/= that
-    (* Tests if two objects are not equal. *)
+    # Tests if two objects are not equal.
     (this === that) not
   
   def this does-not-understand: selector with-arguments: args
-    (* This message is invoked when the runtime can not send a particular
-       message to the object.
-
-       The message is given the selector, and the original arguments used,
-       and can decide what to do with it. By default, it crashes the process.
-     *)
+    # This message is invoked when the runtime can not send a particular
+    # message to the object.
+    #
+    # The message is given the selector, and the original arguments used,
+    # and can decide what to do with it. By default, it crashes the process.
     let safe-as-string = { a | vm try: { a as-string }
                                   recover: { _ | "<unrepresentable object>" }};
     let m1 = vm string: (safe-as-string call: this) concat: " does not understand ";
@@ -63,83 +59,75 @@ Possible causes for this are:
     vm throw: (vm error: "Message-Send-Failure" reason: m5)
 
   def this clone: value
-    (* Returns a copy of the object, extended with the given properties.
-
-       This is automatically invoked when inheriting from an object, with
-       the syntax `Parent { ... }`, which just expand to
-       `Parent clone: { ... }`.
-     *)
+    # Returns a copy of the object, extended with the given properties.
+    # 
+    # This is automatically invoked when inheriting from an object, with
+    # the syntax `Parent { ... }`, which just expand to
+    # `Parent clone: { ... }`.
     vm make-object: value inheriting: this
 };
 
-(*
-Root object from which all Siren objects (besides blocks) descend
-*)
+
+# Root object from which all Siren objects (besides blocks) descend
 vm apply-trait-globally: extend Root with {
   def this as-string
-    (* Returns a textual representation of the object. *)
+    # Returns a textual representation of the object.
     "<Root>"
 };
 
-(*
-The module system loads JS and Siren modules.
-*)
+# The module system loads JS and Siren modules.
 vm apply-trait-globally: extend (vm native-module) with {
   def this as-string
-    (* Returns a textual representation of the object. *)
+    # Returns a textual representation of the object.
     "<Module>"
 
   def this filename
-    (* Returns the directory the module is into *)
+    # Returns the directory the module is into
     vm object: this at: "filename"
 
   def this import: id with-arguments: args in-sandbox: sandbox
-    (* Imports a module from a module ID *)
+    # Imports a module from a module ID.
     let factory = vm js/from: this invoke: "require" arg1: id;
     factory apply: [sandbox] + args
 
   def this import: id with-arguments: args
-    (* Imports a module from a module ID *)
+    # Imports a module from a module ID.
     this import: id with-arguments: args in-sandbox: (vm object: this at: "runtime")
 
   def this import: id in-sandbox: sandbox
     this import: id with-arguments: [] in-sandbox: sandbox
 
   def this import: id
-    (* Imports a module from a module ID *)
+    # Imports a module from a module ID.
     this import: id with-arguments: [] in-sandbox: (vm object: this at: "runtime")
 
   def this import-js: id
-    (* Imports a JS file *)
+    # Imports a JS file.
     JS-Alien for: (vm js/from: this invoke: "require" arg1: id)
 };
 
-(*
-The Unit object represents the lack of any value.
-
-It's, in a sense, similar to `null` in other dynamic languages, however
-it exclusively denotes the lack of a value (as a result of an effect) in
-Siren, and is not used for signaling failures. Failures are handled
-through the [[Result]] object in Siren.
-*)
+# The Unit object represents the lack of any value.
+# 
+# It's, in a sense, similar to `null` in other dynamic languages, however
+# it exclusively denotes the lack of a value (as a result of an effect) in
+# Siren, and is not used for signaling failures. Failures are handled
+# through the [[Result]] object in Siren.
 vm define-global: "Unit" as: { Unit };
 
 let Unit = {
   def this as-string
-    (* Returns a textual representation of the object. *)
+    # Returns a textual representation of the object.
     "<Unit>"
 };
 
-(*
-It doesn't make sense to clone some objects in Siren. Things like
-boolean values should be unique in the whole system. To support
-these cases, Siren defines a `Singleton` object, which one
-can inherit to have this guarantee in their object.
-
-Of course, one can always override the `clone:` message in
-their objects themselves, as well, [[Singleton]] just makes
-that job easier.
-*)
+# It doesn't make sense to clone some objects in Siren. Things like
+# boolean values should be unique in the whole system. To support
+# these cases, Siren defines a `Singleton` object, which one
+# can inherit to have this guarantee in their object.
+# 
+# Of course, one can always override the `clone:` message in
+# their objects themselves, as well, [[Singleton]] just makes
+# that job easier.
 vm define-global: "Singleton" as: { Singleton };
 
 let Singleton = {
@@ -147,13 +135,11 @@ let Singleton = {
     this
 };
 
-(*
-Comparisons between objects return an `Ordering` value.
-
-In other languages, this is usually a number. By constraining
-the possible values of [[Ordering]] it's much easier to test
-and ensure that programs behave correctly.
-*)
+# Comparisons between objects return an `Ordering` value.
+# 
+# In other languages, this is usually a number. By constraining
+# the possible values of [[Ordering]] it's much easier to test
+# and ensure that programs behave correctly.
 vm define-global: "Ordering" as: { Ordering };
 let Ordering = Singleton {
   def this less-than    = Less-Than
@@ -177,92 +163,82 @@ let Equal = Singleton {
 };
 
 
-(*
-Sometimes you want to define an interface in an object, but don't have a
-concrete implementation of a method yet (or won't have a concrete
-implementation of the method). For cases, it makes sense to mark the
-method as `unimplemented`.
-
-This message on the global object does just that.
-*)
+# Sometimes you want to define an interface in an object, but don't have a
+# concrete implementation of a method yet (or won't have a concrete
+# implementation of the method). For cases, it makes sense to mark the
+# method as `unimplemented`.
+# 
+# This message on the global object does just that.
 vm define-global: "unimplemented" as: {
   Error panic!: "Unimplemented."
 };
 
 
-(* Below we define some global messages that are to be used as decorators. *)
+# Below we define some global messages that are to be used as decorators.
 
-(*
-Some methods are pure, and we would like to not have to run them over and
-over again, because we know there can only be one result from running it.
-
-The `lazy` decorator can be used to transform a pure method into one that
-caches the result of its computations, so it only runs the computation once.
-*)
+# Some methods are pure, and we would like to not have to run them over and
+# over again, because we know there can only be one result from running it.
+# 
+# The `lazy` decorator can be used to transform a pure method into one that
+# caches the result of its computations, so it only runs the computation once.
 vm define-global: "lazy" as: {
-  { fn | let data = vm false;
-         let update = { data = fn value; data };
-         { vm if: data then: data else: update value } }
+  { fn | let computed = Reference new: False;
+         let data = Reference new;
+         let update = { data set!: fn value; computed set!: True };
+         { computed then: { data value } else: { update value; data value } } }
 };
 
 
-(*
-Some methods just exist to proxy the access to a particular value, but the
-value has already been computed. This is similar to the `lazy` decorator,
-but it evaluates the expression eagerly.
-*)
+# Some methods just exist to proxy the access to a particular value, but the
+# value has already been computed. This is similar to the `lazy` decorator,
+# but it evaluates the expression eagerly.
 vm define-global: "value" as: {
   { fn | let data = fn value;
          { data }}
 };
 
 
-(*
-Some objects need branding, so we know what kind of object we're dealing with.
-The VM supports this concept of branding through a few internal methods. Adding
-a brand to an object can be thought of as a transformation of the object.
-*)
+# Some objects need branding, so we know what kind of object we're dealing with.
+# The VM supports this concept of branding through a few internal methods. Adding
+# a brand to an object can be thought of as a transformation of the object.
 vm define-global: "brand:" as: { name | { object |
   let brand = vm brand/new: name;
   vm brand/attach: brand to: object;
   object
 }};
 
-(*
-Some objects have behaviours that are used internally by the compiler.
-These need to be defined here too.
-*)
+# Some objects have behaviours that are used internally by the compiler.
+# These need to be defined here too.
 vm apply-trait-globally: extend vm native-function with {
-  (* Evaluating the block *)
+  # Evaluating the block
   def this value
-    (* Invokes the block with no arguments. *)
+    # Invokes the block with no arguments.
     vm function/invoke0: this
 
   def this call: a
-    (* Invokes the block with a single argument. *)
+    # Invokes the block with a single argument.
     vm function/invoke1: this a: a
 
   def this call: a with: b
-    (* Invokes the block with two arguments. *)
+    # Invokes the block with two arguments.
     vm function/invoke2: this a: a b: b
 
   def this call: a with: b with: c
-    (* Invokes the block with three arguments. *)
+    # Invokes the block with three arguments.
     vm function/invoke3: this a: a b: b c: c
 
   def this call: a with: b with: c with: d
-    (* Invokes the block with four arguments. *)
+    # Invokes the block with four arguments.
     vm function/invoke4: this a: a b: b c: c d: d
 
   def this call: a with: b with: c with: d with: e
-    (* Invokes the block with five arguments. *)
+    # Invokes the block with five arguments.
     vm function/invoke5: this a: a b: b c: c d: d e: e
 
   def this apply: args
-    (* Invokes the block with many (not known in advance) arguments.
-
-       Apply allows one to pass any amount of arguments to a block
-       by providing a [[Tuple]].
-     *)
+    # Invokes the block with many (not known in advance) arguments.
+    #
+    # Apply allows one to pass any amount of arguments to a block
+    # by providing a [[Tuple]].
     vm function/invoke*: this with: args
 }

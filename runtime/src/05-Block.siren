@@ -1,44 +1,44 @@
-(**********************************************************************
- *
- * This source file is part of the Siren project.
- *
- * Copyright (C) 2013-2015 Quildreen Motta.
- * Licensed under the MIT licence.
- *
- * See LICENCE for licence information.
- * See CONTRIBUTORS for the list of contributors to the project.
- *
- **********************************************************************)
+#-----------------------------------------------------------------------
+# 
+# This source file is part of the Siren project.
+#
+# Copyright (C) 2013-2015 Quildreen Motta.
+# Licensed under the MIT licence.
+#
+# See LICENCE for licence information.
+# See CONTRIBUTORS for the list of contributors to the project.
+#
+#-----------------------------------------------------------------------
 module | vm | where
 
 vm define-global: "Block" as: { vm native-function };
 
 vm apply-trait-globally: extend Block with {
-  (* Converting to other structures *)
+  # Converting to other structures 
   def this as-string
-    (* Returns a textual representation of the block. *)
+    # Returns a textual representation of the block. 
     vm function/name: this
 
 
-  (* Combining blocks *)
+  # Combining blocks 
   def this then: that
-    (* Combines two unary blocks. *)
+    # Combines two unary blocks. 
     { a | that call: (this call: a) }
 
   def this >=> that
-    (* Combines two unary blocks. *)
+    # Combines two unary blocks. 
     this then: that
 
 
-  (* Control structures *)
+  # Control structures 
   def this while: predicate
-    (* Runs a block while the predicate holds. *)
+    # Runs a block while the predicate holds. 
     vm while: { (predicate value) then: { vm true } else: { vm false } }
        do: this;
     this
 
   def this repeat-forever
-    (* Runs a block forever. *)
+    # Runs a block forever. 
     vm forever: this;
     this
 };

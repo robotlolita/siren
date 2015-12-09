@@ -69,11 +69,11 @@
 
   (setq font-lock-defaults '((siren-mode-font-lock-keywords)))
 
-  (setq comment-start "(*")
-  (setq comment-end   "*)")
-  (modify-syntax-entry ?*  ". 23" siren-mode-syntax-table)
-  (modify-syntax-entry ?\( "()1n" siren-mode-syntax-table)
-  (modify-syntax-entry ?\) ")(4n" siren-mode-syntax-table)
+
+  (setq comment-start "#")
+  (setq comment-end "")
+  (modify-syntax-entry ?# "< b" siren-mode-syntax-table)
+  (modify-syntax-entry ?\n "> b" siren-mode-syntax-table)
 )
 
 ;;

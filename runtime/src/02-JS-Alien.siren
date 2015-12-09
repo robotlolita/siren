@@ -1,14 +1,14 @@
-(**********************************************************************
- *
- * This source file is part of the Siren project.
- *
- * Copyright (C) 2013-2015 Quildreen Motta.
- * Licensed under the MIT licence.
- *
- * See LICENCE for licence information.
- * See CONTRIBUTORS for the list of contributors to the project.
- *
- **********************************************************************)
+#-----------------------------------------------------------------------
+# 
+# This source file is part of the Siren project.
+#
+# Copyright (C) 2013-2015 Quildreen Motta.
+# Licensed under the MIT licence.
+#
+# See LICENCE for licence information.
+# See CONTRIBUTORS for the list of contributors to the project.
+#
+#-----------------------------------------------------------------------
 module | vm | where
 
 vm define-global: "JS-Alien" as: { JS-Alien };
@@ -28,13 +28,13 @@ let JS-Alien = {
   def this false  = this for: vm false
 
   def this export: siren-object
-    (* Tries to convert a Siren object to a real JS object *)
+    # Tries to convert a Siren object to a real JS object 
     vm foreign/export: siren-object
 
   def this import: object
-    (* Tries to convert a JS object to a real Siren object *)
+    # Tries to convert a JS object to a real Siren object 
     let value = vm if: (vm brand/of: object is-same-brand?: this)
-                   then: { value#target } else: { value }
+                   then: { value target } else: { value }
                    >> value;
     vm foreign/match: value with: {
       def _ unit
@@ -54,10 +54,10 @@ let JS-Alien = {
     }
 
   def this for: object
-    (* Wraps a JS object into an Alien proxy *)
+    # Wraps a JS object into an Alien proxy 
     vm if: (vm brand/of: object is-same-brand?: this)
        then: { object }
-       else: { this traits Object { def _ #target = object } }
+       else: { this traits Object { def _ target = object } }
        >> value
 
   def this assert-alien?: object
@@ -69,22 +69,21 @@ let JS-Alien = {
 
 let JS-Object-Proto = JS-Alien {
   def this as-string
-    "<JS Alien: " + (vm js/to-string: this#target) + ">"
+    "<JS Alien: " + (vm js/to-string: this target) + ">"
 
   def this does-not-understand: selector with-arguments: args
-    (* Called when someone sends this object a message it can't understand.
-
-       This is used to call JS functions easily, by using the first
-       keyword as the JS function name:
-
-           alien log: "Foo" with: "Bar"
-           => alien.log("Foo", "Bar")
-
-       It also handles `new`:
-
-           alien new: "Foo" with: "Bar"
-           => alien.new("Foo", "Bar")
-     *)
+    # Called when someone sends this object a message it can't understand.
+    #
+    # This is used to call JS functions easily, by using the first
+    # keyword as the JS function name:
+    #
+    #     alien log: "Foo" with: "Bar"
+    #     => alien.log("Foo", "Bar")
+    #
+    # It also handles `new`:
+    #
+    #     alien new: "Foo" with: "Bar"
+    #     => alien.new("Foo", "Bar")
     let names = selector split: ":";
     let name = names first!;
     names length === 1 then: {
@@ -95,203 +94,203 @@ let JS-Object-Proto = JS-Alien {
                      else: { this invoke: name with-arguments: args }
     }
 
-  (* Core operations *)
+  # Core operations 
   def this type
-    (* JavaScript's `typeof` operator *)
-    this for: (vm js/typeof: this#target)
+    # JavaScript's `typeof` operator 
+    this for: (vm js/typeof: this target)
 
   def this instance-of: that
-    (* JavaScript's `instanceof` operator *)
+    # JavaScript's `instanceof` operator 
     this assert-alien?: that;
-    this for: (vm js/value: this#target instance-of?: that#target)
+    this for: (vm js/value: this target instance-of?: that target)
 
 
-  (* Methods *)
+  # Methods 
   def this in: context invoke: method with-arguments: args
-    (* JavaScript method invocation *)
+    # JavaScript method invocation 
     this assert-alien?: context;
-    this for: (vm js/from: this#target in: context invoke: method with: args)
+    this for: (vm js/from: this target in: context invoke: method with: args)
 
   def this invoke: method with-arguments: args
-    (* JavaScript method invocation with implicit target *)
-    this for: (vm js/from: this#target in: this#target invoke: method with: args)
+    # JavaScript method invocation with implicit target 
+    this for: (vm js/from: this target in: this target invoke: method with: args)
 
   def this invoke: method
-    (* JavaScript method invocation with no arguments *)
-    this for: (vm js/from: this#target invoke: method)
+    # JavaScript method invocation with no arguments 
+    this for: (vm js/from: this target invoke: method)
 
   def this invoke: method with: arg
-    (* JavaScript method invocation for unary functions *)
-    this for: (vm js/from: this#target invoke: method arg1: arg)
+    # JavaScript method invocation for unary functions 
+    this for: (vm js/from: this target invoke: method arg1: arg)
 
   def this invoke: method with: arg1 and: arg2
-    (* JavaScript method invocation for binary functions *)
-    this for: (vm js/from: this#target invoke: method arg1: arg1 arg2: arg2)
+    # JavaScript method invocation for binary functions 
+    this for: (vm js/from: this target invoke: method arg1: arg1 arg2: arg2)
 
   def this invoke: method with: arg1 and: arg2 and: arg3
-    (* JavaScript method invocation for ternary functions *)
-    this for: (vm js/from: this#target invoke: method arg1: arg1 arg2: arg2 arg3: arg3)
+    # JavaScript method invocation for ternary functions 
+    this for: (vm js/from: this target invoke: method arg1: arg1 arg2: arg2 arg3: arg3)
 
   def this value
-    (* JavaScript function invocation for nullary functions *)
-    this for: (vm js/call: this#target)
+    # JavaScript function invocation for nullary functions 
+    this for: (vm js/call: this target)
 
   def this call: arg
-    (* JavaScript function invocation for unary functions *)
-    this for: (vm js/call: this#target arg1: arg)
+    # JavaScript function invocation for unary functions 
+    this for: (vm js/call: this target arg1: arg)
 
   def this call: arg1 with: arg2
-    (* JavaScript function invocation for binary functions *)
-    this for: (vm js/call: this#target arg1: arg1 arg2: arg2)
+    # JavaScript function invocation for binary functions 
+    this for: (vm js/call: this target arg1: arg1 arg2: arg2)
 
   def this call: arg1 with: arg2 and: arg3
-    (* JavaScript function invocation for ternary functions *)
-    this for: (vm js/call: this#target arg1: arg1 arg2: arg2 arg3: arg3)
+    # JavaScript function invocation for ternary functions 
+    this for: (vm js/call: this target arg1: arg1 arg2: arg2 arg3: arg3)
 
   def this call-with-arguments: arguments
-    (* JavaScript function invocation *)
-    this for: (vm js/call: this#target with: arguments)
+    # JavaScript function invocation 
+    this for: (vm js/call: this target with: arguments)
 
   def this new
-    (* JavaScript object construction *)
-    this for: (vm js/new: this#target)
+    # JavaScript object construction 
+    this for: (vm js/new: this target)
 
   def this new-with-arguments: arguments
-    (* JavaScript object construction *)
-    this for: (vm js/new: this#target with: arguments)
+    # JavaScript object construction 
+    this for: (vm js/new: this target with: arguments)
   
 
-  (* Objects as dictionaries *)
+  # Objects as dictionaries 
   def this has?: key
-    (* True if the object has a property at `key`. *)
-    this for: (vm js/object: this#target has: key)
+    # True if the object has a property at `key`. 
+    this for: (vm js/object: this target has: key)
 
   def this at: key
-    (* Retrieves the content of the property at `key`. *)
-    this for: (vm js/object: this#target at: key)
+    # Retrieves the content of the property at `key`. 
+    this for: (vm js/object: this target at: key)
 
   def this at: key put!: value
-    (* Updates the content of the property at `key`. *)
-    vm js/object: this#target at: key put: value;
+    # Updates the content of the property at `key`. 
+    vm js/object: this target at: key put: value;
     this
 
   def this delete-at!: key
-    (* Removes the property `key` from the object. *)
-    vm js/object: this#target delete-at: key;
+    # Removes the property `key` from the object. 
+    vm js/object: this target delete-at: key;
     this
 
-  (* Arithmetic operations *)
+  # Arithmetic operations 
   def this + that
-    (* The `+` operator in JS *)
+    # The `+` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/plus: this#target and: that#target)
+    this for: (vm js/plus: this target and: that target)
 
   def this - that
-    (* The `-` operator in JS *)
+    # The `-` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/minus: this#target and: that#target)
+    this for: (vm js/minus: this target and: that target)
 
   def this / that
-    (* The `/` operator in JS *)
+    # The `/` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/div: this#target and: that#target)
+    this for: (vm js/div: this target and: that target)
 
   def this * that
-    (* The `*` operator in JS *)
+    # The `*` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/mul: this#target and: that#target)
+    this for: (vm js/mul: this target and: that target)
 
   def this % that
-    (* The `%` operator in JS *)
+    # The `%` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/mod: this#target and: that#target)
+    this for: (vm js/mod: this target and: that target)
 
-  (* Bitwise operations *)
+  # Bitwise operations 
   def this bit-and: that
-    (* The `&` operator in JS *)
+    # The `&` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/bit-and: this#target and: that#target)
+    this for: (vm js/bit-and: this target and: that target)
 
   def this bit-or: that
-    (* The `|` operator in JS *)
+    # The `|` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/bit-or: this#target and: that#target)
+    this for: (vm js/bit-or: this target and: that target)
 
   def this bit-xor: that
-    (* The `^` operator in JS *)
+    # The `^` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/bit-xor: this#target and: that#target)
+    this for: (vm js/bit-xor: this target and: that target)
 
   def this bit-shift-right: that
-    (* The `>>` operator in JS *)
+    # The `>>` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/bit-shr: this#target and: that#target)
+    this for: (vm js/bit-shr: this target and: that target)
 
   def this bit-shift-left: that
-    (* The `<<` operator in JS *)
+    # The `<<` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/bit-shl: this#target and: that#target)
+    this for: (vm js/bit-shl: this target and: that target)
 
   def this unsigned-bit-shift-right: that
-    (* The `>>>` operator in JS *)
+    # The `>>>` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/bit-ushr: this#target and: that#target)
+    this for: (vm js/bit-ushr: this target and: that target)
 
-  (* Boolean operations *)
+  # Boolean operations 
   def this && that
-    (* The `&&` operator in JS *)
+    # The `&&` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/and: this#target and: that#target)
+    this for: (vm js/and: this target and: that target)
   
   def this || that
-    (* The `||` operator in JS *)
+    # The `||` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/or: this#target and: that#target)
+    this for: (vm js/or: this target and: that target)
   
   def this not
-    (* The `not` operator in JS *)
-    this for: (vm js/not: this#target)
+    # The `not` operator in JS 
+    this for: (vm js/not: this target)
 
-  (* Comparison operations *)
+  # Comparison operations 
   def this == that
-    (* The `==` operator in JS *)
+    # The `==` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/abstract-equal: this#target and: that#target)
+    this for: (vm js/abstract-equal: this target and: that target)
   
   def this === that
-    (* The `===` operator in JS *)
+    # The `===` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/strict-equal: this#target and: that#target)
+    this for: (vm js/strict-equal: this target and: that target)
   
   def this != that
-    (* The `!=` operator in JS *)
+    # The `!=` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/abstract-not-equal: this#target and: that#target)
+    this for: (vm js/abstract-not-equal: this target and: that target)
   
   def this !== that
-    (* The `!==` operator in JS *)
+    # The `!==` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/strict-not-equal: this#target and: that#target)
+    this for: (vm js/strict-not-equal: this target and: that target)
   
   def this > that
-    (* The `>` operator in JS *)
+    # The `>` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/greater-than: this#target and: that#target)
+    this for: (vm js/greater-than: this target and: that target)
   
   def this < that
-    (* The `<` operator in JS *)
+    # The `<` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/less-than: this#target and: that#target)
+    this for: (vm js/less-than: this target and: that target)
   
   def this >= that
-    (* The `>=` operator in JS *)
+    # The `>=` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/greater-or-equal-to: this#target and: that#target)
+    this for: (vm js/greater-or-equal-to: this target and: that target)
   
   def this <= that
-    (* The `<=` operator in JS *)
+    # The `<=` operator in JS 
     this assert-alien?: that;
-    this for: (vm js/less-or-equal-to: this#target and: that#target)
+    this for: (vm js/less-or-equal-to: this target and: that target)
 };
 
-vm foreign/convert: JS-Object-Proto as: { a | a#target }
+vm foreign/convert: JS-Object-Proto as: { a | a target }

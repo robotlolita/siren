@@ -1,14 +1,14 @@
-(**********************************************************************
- *
- * This source file is part of the Siren project.
- *
- * Copyright (C) 2013-2015 Quildreen Motta.
- * Licensed under the MIT licence.
- *
- * See LICENCE for licence information.
- * See CONTRIBUTORS for the list of contributors to the project.
- *
- **********************************************************************)
+#-----------------------------------------------------------------------
+# 
+# This source file is part of the Siren project.
+#
+# Copyright (C) 2013-2015 Quildreen Motta.
+# Licensed under the MIT licence.
+#
+# See LICENCE for licence information.
+# See CONTRIBUTORS for the list of contributors to the project.
+#
+#-----------------------------------------------------------------------
 module | vm | where
 
 vm define-global: "Tuple" as: { vm native-array };
@@ -17,15 +17,15 @@ vm apply-trait-globally: extend Tuple with {
   def this as-string
     "[" + (this join: ", ") + "]"
 
-  (* Constructing *)
+  # Constructing 
   def this empty
     []
 
-  (* Testing *)
+  # Testing 
   def this empty?
     this length === 0
   
-  (* Accessing *)
+  # Accessing 
   def this at: index
     ((index > 1) && (index <= this length))
       then: { Result failure: "Index " + index as-string
@@ -47,7 +47,7 @@ vm apply-trait-globally: extend Tuple with {
   def this last!
     this last get!
 
-  (* Collection operations *)
+  # Collection operations 
   def this length
     vm array/length: this
 
@@ -70,7 +70,7 @@ vm apply-trait-globally: extend Tuple with {
   def this join: separator
     vm array: (this map: _ as-string) join: separator
 
-  (* Iteration *)
+  # Iteration 
   def this each: computation
     vm array: this each: { a | computation call: a };
     this
@@ -87,7 +87,7 @@ vm apply-trait-globally: extend Tuple with {
   def this fold-right: f from: initial
     vm array: this reduce-right: { a b | f call: a with: b } from: initial
   
-  (* Mutation *)
+  # Mutation 
   def this reverse
     vm array/reverse: (vm array/shallow-copy: this)
 

@@ -1,14 +1,14 @@
-(**********************************************************************
- *
- * This source file is part of the Siren project.
- *
- * Copyright (C) 2013-2015 Quildreen Motta.
- * Licensed under the MIT licence.
- *
- * See LICENCE for licence information.
- * See CONTRIBUTORS for the list of contributors to the project.
- *
- **********************************************************************)
+#-----------------------------------------------------------------------
+# 
+# This source file is part of the Siren project.
+#
+# Copyright (C) 2013-2015 Quildreen Motta.
+# Licensed under the MIT licence.
+#
+# See LICENCE for licence information.
+# See CONTRIBUTORS for the list of contributors to the project.
+#
+#-----------------------------------------------------------------------
 module | vm | where
 
 
@@ -33,69 +33,69 @@ let Mirror = {
 
 let Meta-Mirror = {
   def this on: reflectee
-    (* Constructs a Meta-Mirror for the reflectee. *)
+    # Constructs a Meta-Mirror for the reflectee. 
     this { def _ reflectee = reflectee }
 
   def this name
-    (* Retrieves the name of the object. *)
+    # Retrieves the name of the object. 
     meta get: "name" for: this reflectee
 
   def this arguments
-    (* Retrieves the arguments that the object takes (for blocks). *)
+    # Retrieves the arguments that the object takes (for blocks). 
     meta get: "arguments" for: this reflectee
 
   def this filename
-    (* Retrieves the file name where the object was defined. *)
+    # Retrieves the file name where the object was defined. 
     meta get: "filename" for: this reflectee
 
   def this source
-    (* Retrieves the source code of the object. *)
+    # Retrieves the source code of the object. 
     meta get: "source" for: this reflectee
 
   def this category
-    (* Retrieves the category of the object. *)
+    # Retrieves the category of the object. 
     meta get: "category" for: this reflectee
 
   def this documentation
-    (* Retrieves the documentation of the object. *)
+    # Retrieves the documentation of the object. 
     meta get: "documentation" for: this reflectee
 
   def this examples
-    (* Retrieves the examples of the object. *)
+    # Retrieves the examples of the object. 
     meta get: "examples" for: this reflectee
 };
 
 let Object-Mirror = {
   def this on: reflectee
-    (* Constructs a message mirror for the reflectee using the global method box. *)
+    # Constructs a message mirror for the reflectee using the global method box. 
     this on: reflectee using: vm global-methods
 
   def this on: reflectee using: methods
-    (* Constructs a message mirror for the reflectee using the given method box. *)
+    # Constructs a message mirror for the reflectee using the given method box. 
     this {
       def _ reflectee = reflectee
       def _ method-box = methods
     }
 
   def this methods
-    (* Returns all methods the reflectee responds to in the method box. *)
+    # Returns all methods the reflectee responds to in the method box. 
     JS-Alien for: (vm method/list: this method-box for: this reflectee)
 
   def this method-names
-    (* Returns only the method names that the reflectee responds to. *)
-    vm object/keys: this methods#target
+    # Returns only the method names that the reflectee responds to. 
+    vm object/keys: this methods target
 
   def this method-selectors
-    (* Returns only the method selectors that the reflectee responds to. *)
+    # Returns only the method selectors that the reflectee responds to. 
     let methods = this methods;
-    (vm object/keys: this methods#target) map: { key | methods at: key }
+    (vm object/keys: this methods target) map: { key | methods at: key }
 
   def this responds-to?: name
-    (* True if the reflectee can respond to the given message. *)
+    # True if the reflectee can respond to the given message. 
     this methods has?: name
 
   def this method-selector: name
-    (* Returns the selector for the given name. *)
+    # Returns the selector for the given name. 
     let selector = vm method/lookup: name in: this method-box for: this reflectee;
     vm if: (vm failed?: selector)
        then: { Result failure: (this reflectee as-string + " does not understand " + name) }
@@ -103,13 +103,13 @@ let Object-Mirror = {
        >> value
   
   def this method-for-name: name
-    (* Returns the method with the given name. *)
+    # Returns the method with the given name. 
     do { selector <- this method-selector: name
        ; this method-for-selector: selector
        }
 
   def this method-for-selector: selector
-    (* Returns the method with the given selector *)
+    # Returns the method with the given selector 
     let method = vm js/object: this reflectee at: selector;
     vm if: (vm failed?: method)
        then: { Result failure: (this reflectee as-string + " doesn't have a method that matches the selector " + selector) }
@@ -117,7 +117,7 @@ let Object-Mirror = {
        >> value
 
   def this prototype
-    (* Returns the immediate prototype of the reflectee. *)
+    # Returns the immediate prototype of the reflectee. 
     let proto = vm prototype-of: this reflectee;
     vm if: (vm failed?: selector)
        then: { Result failure: ("No prototype for " + this reflectee as-string) }

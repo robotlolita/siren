@@ -1,43 +1,42 @@
-(**********************************************************************
- *
- * This source file is part of the Siren project.
- *
- * Copyright (C) 2013-2015 Quildreen Motta.
- * Licensed under the MIT licence.
- *
- * See LICENCE for licence information.
- * See CONTRIBUTORS for the list of contributors to the project.
- *
- **********************************************************************)
+#-----------------------------------------------------------------------
+# 
+# This source file is part of the Siren project.
+#
+# Copyright (C) 2013-2015 Quildreen Motta.
+# Licensed under the MIT licence.
+#
+# See LICENCE for licence information.
+# See CONTRIBUTORS for the list of contributors to the project.
+#
+#-----------------------------------------------------------------------
 module | vm | where
-(*
-The Numeric library provides definitions for the numeric tower in
-Siren. Right now it only differentiates between Integers, which
-are represented with arbitrary precision, and Floats, which use
-JavaScript's native 64-bit floating point numbers.
-*)
+
+# The Numeric library provides definitions for the numeric tower in
+# Siren. Right now it only differentiates between Integers, which
+# are represented with arbitrary precision, and Floats, which use
+# JavaScript's native 64-bit floating point numbers.
 
 vm define-global: "Integer" as: { vm native-integer };
 
 vm apply-trait-globally: extend Integer with {
   def this as-string
-    (* Returns a textual representation of the integer. *)
+    # Returns a textual representation of the integer. 
     vm int/to-string: this
 
   def this as-float
-    (* Converts to a regular float.
+    # Converts to a regular float.
 
-       This is a lossy convertion. *)
+       This is a lossy convertion. 
     vm int/to-number: this
 
-  (* Ranges *)
+  # Ranges 
   def this .. end
     Range from: this to: end
 
   def this ... end
     Range from: this to: end + 1
 
-  (* Arithmetic *)
+  # Arithmetic 
   def this negated
     vm int/neg: this
 
@@ -59,7 +58,7 @@ vm apply-trait-globally: extend Integer with {
   def this modulus: that
     vm int/mod: this and: that
 
-  (* Bitwise *)
+  # Bitwise 
   def this bit-shift-right: that
     vm int/shift-right: this by: that
 
@@ -78,11 +77,11 @@ vm apply-trait-globally: extend Integer with {
   def this bit-xor: that
     vm int/bxor: this and: that
 
-  (* Maths *)
+  # Maths 
   def this square-root
     vm int/sqrt: this
 
-  (* Rounding / Converting *)
+  # Rounding / Converting 
   def this absolute
     vm int/abs: this
 
@@ -95,7 +94,7 @@ vm apply-trait-globally: extend Integer with {
   def this floor
     this
 
-  (* Logical comparisons *)
+  # Logical comparisons 
   def this === that
     vm if: (vm int/eq: this and: that)
        then: True
@@ -123,9 +122,9 @@ vm foreign/convert: Integer as: { a | a };
 
 vm define-global: "Float" as: { vm native-float };
 
-(* Native numbers just use Float64 *)
+# Native numbers just use Float64 
 vm apply-trait-globally: extend Float with {
-  (* Constants *)
+  # Constants 
   def this max-value
     vm float/max-value
 
@@ -141,7 +140,7 @@ vm apply-trait-globally: extend Float with {
   def this positive-infinity
     vm float/+infinity
 
-  (* Tests *)
+  # Tests 
   def this nan?
     vm if: (vm float/nan?: this)
        then: True
@@ -152,7 +151,7 @@ vm apply-trait-globally: extend Float with {
        then: True
        else: False
 
-  (* Logical comparisons *)
+  # Logical comparisons 
   def this === that
     vm if: (vm float: this equals?: that)
        then: True
@@ -183,7 +182,7 @@ vm apply-trait-globally: extend Float with {
        then: True
        else: False
 
-  (* Conversions *)
+  # Conversions 
   def this as-exponential
     vm float/as-exponential: this
 
@@ -196,14 +195,14 @@ vm apply-trait-globally: extend Float with {
   def this as-string
     vm float/as-string: this
 
-  (* Ranges *)
+  # Ranges 
   def this .. end
     Range from: this to: end
 
   def this ... end
     Range from: this to: end + 1
   
-  (* Arithmetic *)
+  # Arithmetic 
   def this + that
     vm float: this plus: that
 
@@ -222,7 +221,7 @@ vm apply-trait-globally: extend Float with {
   def this modulus: that
     vm float: this modulus: that
 
-  (* Bitwise *)
+  # Bitwise 
   def this bit-shift-right: that
     vm float: this bit-shift-right: that
 
@@ -241,7 +240,7 @@ vm apply-trait-globally: extend Float with {
   def this bit-xor: that
     vm float: this bit-xor: that
 
-  (* Geometry *)
+  # Geometry 
   def this arc-cosine
     vm float/arccosine: this
 
@@ -263,7 +262,7 @@ vm apply-trait-globally: extend Float with {
   def this tangent
     vm float/tangent: this
   
-  (* Maths/etc *)
+  # Maths/etc 
   def this exp
     vm float/exp: this
 
@@ -273,7 +272,7 @@ vm apply-trait-globally: extend Float with {
   def this square-root
     vm float/square-root: this
   
-  (* Rounding / Converting *)
+  # Rounding / Converting 
   def this absolute
     vm float/absolute: this
 

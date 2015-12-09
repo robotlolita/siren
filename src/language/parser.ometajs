@@ -42,10 +42,10 @@ function decorateLet(letNode, expr) {
 ometa SirenParser {
   space   = /\s/,
   ignored = space | comment,
-  comment = fromTo('(*', '*)'):a -> a.slice(2, -2).trim(),
+  comment = fromTo('#', '\n'):a -> a.slice(1),
   ws      = ignored*,
   sep     = ',' | '.',
-  symbol  = ~( letter | digit | space | '#'
+  symbol  = ~( letter | digit | space
              | '_' | '$' | '^' | '@' | ';' | ':' | '{' | '}' | '(' | ')' | '[' | ']'
              ) char,
   eof     = ~char,
@@ -53,7 +53,7 @@ ometa SirenParser {
 
 
   // Identifiers
-  idStart    = letter | '#',
+  idStart    = letter,
   idRest     = ~sep (letter | digit | symbol),
   identifier = <idStart idRest*>:a     ?(isValid(a)) -> Expr.Id({}, a),
   keyword    = <idStart idRest*>:a ':'               -> Expr.Id({}, a + ':'),
@@ -72,7 +72,7 @@ ometa SirenParser {
   decoratedPattern = '@' expr:a ws pattern:p
                   -> [p[0], Expr.Apply({}, Expr.Id({}, 'call:'), a, [p[1]])],
 
-  docComment  = space* comment:a ws -> a,
+  docComment  = (space* comment)+:as ws -> as.join('\n').trim(),
   patternBody = docComment?:a ws ('=' ws)? stmtList:as -> [as, a || ''],
 
   keywordArgs = (ws keyword:k ws argName:n -> [k, n])+,
