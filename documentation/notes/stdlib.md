@@ -51,7 +51,14 @@ Siren's hierarchy has a few core objects, which reify internal concepts:
   value, but **NOT** of an error, or "no object", so very different from
   `nil/null`. Errors are handled with a `Result` object.
 
-- `Error`,
+- `Exception`, which represents exceptional situations in code.
+
+- `StackTrace`, which represents stack traces in a program.
+
+
+## Traits
+
+
 
 
 ## Scalar types
@@ -65,7 +72,7 @@ Siren's hierarchy has a few core objects, which reify internal concepts:
 ## Container types
 
 - Buffer
-- Text (Text, Raw-Text (no encoding))
+- Text (**Text**, Raw-Text (no encoding))
 - Slice (view of part of a sequence)
 - Collection (Pair, Tuple, List, Vector, Set, Ordered-Set, Map, Ordered-Map)
 - Lazy Collections (Stream, Range, Lazy-List, Lazy-Vector, Lazy-Set, Lazy-Ordered-Set, Lazy-Map, Lazy-Ordered-Map)

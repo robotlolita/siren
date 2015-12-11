@@ -1,0 +1,205 @@
+# -- RUNTIME OBJECTS ---------------------------------------------------
+
+# Root of all Siren's hierarchy
+let Object = {
+  # internal:
+  #   'messages' { Text → Method }
+  #   'default-perspective' { Text → Selector }
+
+  def _ does-not-understand: Message → Unit
+    # Called when a message sent to this object can't be handled by it.
+
+  def _ describe → Text / Doc?
+    # Called to show this object for debugging/viewing
+
+  def _ perform: Message → Any
+    # Called to execute the message
+
+  def _ refined-by: Object → Object
+    # Clones and refines this object
+
+  def _ extend-with: Object → Perspective
+    # Extends an object, but doesn't install the names in the context
+}
+
+# Uniquely identifies a message
+let Selector = Object {
+  def _ with-description: Text → Selector
+    # Creates a new selector with the given description
+
+  def _ === Selector → Boolean
+    # Ref equality
+
+  def _ description → Text
+}
+
+# Represents message sends
+let Message = Object {
+  def _ selector: Selector arguments: Any Tuple → Message
+    # Creates a new message
+
+  def _ send-to: Object → Any
+    # Sends the message to the object
+
+  def _ selector → Selector
+  def _ arguments → Tuple
+}
+
+# Represents contexts for perspectives
+# These provide the mapping of names to selectors for specific objects
+let Context = Object {
+  def _ empty → Context                # new empty context
+  def _, Context → Context             # concatenation
+  def _ with: Perspective → Context    # extension
+  def _ without: Perspective → Context # restriction
+}
+
+# Represents a perspective
+# Perspectives are the result of extending an object, and they
+# can be "installed" in a context
+let Perspective = Object {
+  def _, Perspective → Perspective      # Concatenation
+  def _ target → Object                 # Object this is a perspective of
+}
+
+# Represents a module
+let Module = Object {
+  def _ file → File                     # A path node
+  def _ context → Context               # Context of the module
+  def _ import → Importer               # Allows importing things from here
+}
+
+let Importer = Object {
+  def _ siren: Module-ID
+  def _ siren: Module-ID with-arguments: Tuple
+  def _ siren: Module-ID with-arguments: Tuple in-sandbox: Runtime
+  def _ js: Module-ID
+  def _ json: Module-ID
+}
+
+# A Module-ID is something that can be mapped to a module object
+# or a File object
+let Module-ID = Object {
+  ???
+}
+
+# Brands represent types, hierarchies, and capabilities
+# See (https://gist.github.com/robotlolita/fd9ecab241b7ada81557)
+let Branding = Object { trait Oddball
+  def _ Brand
+  def _ Object-Branding
+}
+
+let Brand = Branding {
+  def _ with-description: Text → Brand
+  def _ refined-with-description: Text → Brand
+  def _ for-object: Object → Object-Branding
+  def _ === Brand # Ref eq
+  def _ is: Brand # Subtyping relationship
+
+  def _ description → Text
+}
+
+let Object-Branding = Branding {
+  def _ has?: Brand → Boolean
+  def _ attach!: Brand → Unit
+  def _ remove!: Brand → Unit
+}
+
+# Unit represends no value
+let Unit = Object { trait Oddball }
+
+
+# Block represents functions
+let Block = {
+  def _ apply: Tuple → Any
+}
+
+let Nullary-Block = Block {
+  def _ value → Any
+}
+
+let Unary-Block = Block {
+  def _ call: Any → Any
+}
+
+let Binary-Block = Block {
+  def _ call: Any with: Any → Any
+}
+
+let Ternary-Block = Block {
+  def _ call: Any with: Any with: Any → Any
+}
+
+let N-Ary-Block = Block {
+
+}
+
+# Methods represent the thing messages give you.
+# They're very similar to Blocks
+let Method = {
+  def _ in: Object apply: Tuple → Any
+}
+
+let Nullary-Method = Method {
+  def in: Object → Any
+}
+
+let Unary-Method = Method {
+  def _ in: Object call: Any → Any
+}
+
+let Binary-Method = Method {
+  def _ in: Object call: Any with: Any → Any
+}
+
+let Ternary-Method = Method {
+  def _ in: Object call: Any with: Any with: Any → Any
+}
+
+let N-Ary-Method = Method {
+
+}
+
+let Bound-Method = {
+  def _ apply: Tuple → Any
+  def _ object → Object
+}
+
+let Nullary-Bound-Method = Bound-Method {
+  def _ value → Any
+}
+
+let Unary-Bound-Method = Bound-Method {
+  def _ call: Any → Any
+}
+
+let Binary-Bound-Method = Bound-Method {
+  def _ call: Any with: Any → Any
+}
+
+let Ternary-Bound-Method = Bound-Method {
+  def _ call: Any with: Any with: Any → Any
+}
+
+let N-Ary-Bound-Method = Bound-Method {
+
+}
+
+# Exceptions are similar to JS, but used only to signal
+# unrecoverable/unpredictable/unexpected failures
+let Exception = Object {
+  def _ name: Text → Exception
+  def _ raise!: Text
+  def _ caused-by: Exception raise!: Text
+  
+  def _ name
+
+  # For raised exceptions
+  def _ message → Text
+  def _ stack → Stack-Trace
+}
+
+let Stack-Trace = Object {
+  ???
+}
