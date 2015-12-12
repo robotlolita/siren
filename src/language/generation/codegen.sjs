@@ -6,6 +6,7 @@
 
 // -- Dependencies -----------------------------------------------------
 var js = require('./jsast');
+var S = require('./gensiren');
 var nonLocalReturns = require('./returns');
 var { DoClause:Do, Expr } = require('../ast');
 var show = require('core.inspect');
@@ -34,8 +35,11 @@ function toSafeId {
   Expr.Id(meta, name) => Expr.Id(meta, safeId(name));
 }
 
-function safeArgs(args) {
-  return args.map(toSafeId);
+function safeArgs(bind, args) {
+  return args.map(function(a) {
+    return a.name === '_'?  Expr.Id(a.meta, bind.free('_'))
+    :      /* _ */          toSafeId(a)
+  });
 }
 
 function returnLast(ys) {
@@ -59,21 +63,27 @@ function fexpr(meta, args, expr) {
   return fn(meta, null, args, [js.Return(expr.meta, expr)])
 }
 
-function boundFn(meta, ident, args, body) {
-  return methCall(meta, fn({}, ident, args, body), id('bind'), [js.This({})])
-}
-
-function binding(meta, a, b) {
-  return methCall(meta, a, id('bind'), [b])
-}
-
 function set(meta, id, expr) {
   return js.Assignment(meta, '=', id, expr)
 }
 
 function send(meta, obj, sel, args) {
-  return js.Call(meta, id('$send'),
-                 [obj, sel, id('$methods'), js.ArrayExpr({}, args)]);
+  switch (args.length) {
+    case 0:
+    return methCall(meta, obj, id('send0'), [id('$methods'), sel]);
+
+    case 1:
+    return methCall(meta, obj, id('send1'), [id('$methods'), sel, args[0]]);
+
+    case 2:
+    return methCall(meta, obj, id('send2'), [id('$methods'), sel, args[0], args[1]]);
+
+    case 3:
+    return methCall(meta, obj, id('send3'), [id('$methods'), sel, args[0], args[1], args[2]]);
+
+    default:
+    return methCall(meta, obj, id('sendN'), [id('$methods'), sel, js.ArrayExpr({}, args)])
+  }
 }
 
 function letb(meta, name, expr) {
@@ -107,13 +117,10 @@ function selector(meta, name) {
 }
 
 function cloneMethods(meta, parent) {
-  parent = parent || dot({}, ['$Siren', '$methods']);
+  parent = parent || S.globalContext({});
   return [
-    letb(meta, id('_Module'),
-         methCall({}, id('$Siren'), id('$makeModule'),
-                  [id('module'), id('require'), id('$Siren')])),
-    letb(meta, id('$send'), dot({}, ['$Siren', '$send'])),
-    letb(meta, id('$methods'), methCall({}, parent, id('clone'), []))
+    letb(meta, id('_Module'), S.makeModule({})),
+    letb(meta, id('$methods'), dot({}, ['_Module', 'context']))
   ]
 }
 
@@ -152,53 +159,66 @@ function generateProperty(bind, pair) {
   return js.Property(
     pair[0].meta,
     idToStr(generate(bind, _id)),
-    methCall(_fn.meta,
-             id('$Siren'),
-             id('$fn'),
-             [
-               generate(bind, _fn),
-               js.Obj({},
-                      [
-                        js.Property({}, str('name'), str(_id.name), "init"),
-                        js.Property({}, str('documentation'), str(_l.meta.docs || ''), "init"),
-                        js.Property({}, str('arguments'),
-                                    js.ArrayExpr({}, _l.args.map(λ[str(#.name)])), "init")
-                      ])
-             ]),
+    S.makeFunction(
+      _fn.meta,
+      generate(bind, _fn),
+      {
+        name: _id.name,
+        docs: _l.meta.docs || '',
+        args: _l.args.map(λ[#.name]),
+        source: _l.source,
+        start: _l.start,
+        end: _l.end
+      }
+    ),
     "init"
   )
 }
 
 function makeLambda(bind, meta, self, args, body) {
-  var bodyPrefix = [letb({}, js.Id(self.meta, safeId(self.name)), js.This({}))];
-  var compiledBody = js.Block(meta, returnLast(bodyPrefix +++ generate(bind, body).map(toStatement)));
+  var compiledBody = js.Block(meta, returnLast(generate(bind, body).map(toStatement)));
   if (nonLocalReturns.has(body)) {
     compiledBody = nonLocalReturns.wrap(compiledBody);
   }
 
-  var fn = js.FnExpr(meta, null, generate(bind, safeArgs(args)), [], null, compiledBody, false);
+  var fn = js.FnExpr(meta, null, generate(bind, safeArgs(bind, [self] +++ args)), [], null, compiledBody, false);
 
   return fn
 }
 
 function makeBlock(bind, meta, args, body) {
-  return js.FnExpr(meta, null, generate(bind, safeArgs(args)),
-                   [], null,
-                   js.Block({}, returnLast(generate(bind, body).map(toStatement))),
-                   false);
+  return S.makeBlock(
+    meta,
+    js.FnExpr(
+      meta,
+      null,
+      generate(bind, safeArgs(bind, args)),
+      [],
+      null,
+      js.Block({}, returnLast(generate(bind, body).map(toStatement))),
+      false
+    ),
+    {
+      name: '(anonymous block' + (args.length? ': ' + args.map(λ[#.name]).join(', ') : '') + ')',
+      args: args.map(λ[#.name]),
+      source: meta.source,
+      start: meta.start,
+      end: meta.end
+    }
+  )
 }
 
 function generateModule(bind, meta, args, exports, body) {
   var hasExports = exports.value.length > 0;
   return set(meta, mem({}, id('module'), id('exports')),
-             fn({}, null, generate(bind, [Expr.Id(meta, '$Siren')] +++ safeArgs(args)),
+             fn({}, null, generate(bind, [Expr.Id(meta, '$Siren')] +++ safeArgs(bind, args)),
                 [js.ExprStmt({}, str('use strict'))]
                 +++ cloneMethods({})
                 +++ generate(bind, body)
                 +++ ( hasExports?
-                      [js.Return({}, methCall( {}, id('$Siren'), id('$make')
-                                             , [ generatePlainRecord(bind, exports)
-                                               , id('_Module') ]))]
+                      [js.Return({}, S.makeObject({},
+                                                  [generatePlainRecord(bind, exports)],
+                                                  id('_Module')))],
                     : /* otherwise */  [js.Return({}, id('_Module'))])))
 }
 
@@ -211,7 +231,7 @@ function generateApply(bind, apExpr) {
                   generate(bind, expr.args));
 
   if (holes.length > 0) {
-    return boundFn(expr.meta, null, generate(bind, holes), [js.Return({}, call)]);
+    return fn(expr.meta, null, generate(bind, holes), [js.Return({}, call)]);
   } else {
     return call;
   }
@@ -291,12 +311,12 @@ function generateDo(bind, meta, xs) {
 
   function map(m, r, i, e) {
     return send(m, r, selector({}, str('map:')),
-                [binding({}, fexpr(e.meta, [i], e), js.This({}))])
+                [fexpr(e.meta, [i], e)])
   }
 
   function chain(m, r, i, e) {
     return send(m, r, selector({}, str('chain:')),
-                [binding({}, fexpr(e.meta, [i], e), js.This({}))])
+                [fexpr(e.meta, [i], e)])
   }
 }
 
@@ -350,7 +370,7 @@ function generate(bind, x) {
       js.Empty({}),
 
     Expr.GlobalObject(meta) =>
-      js.Id(meta, '$Siren'),
+      S.global(meta),
 
     Expr.Comment(meta, comment) =>
       js.Empty(meta), // Doesn't look like Mozilla supports comments
@@ -366,24 +386,19 @@ function generate(bind, x) {
       makeBlock(bind, meta, args, body),
 
     Expr.Num(meta, val) =>
-      val < 0?           js.Unary(meta, "-", true, js.Num({}, -val))
-      : /* otherwise */  js.Num(meta, val),
+      S.float64(meta, val),
 
     Expr.Int(meta, sign, num) =>
-      sign === '+'?      methCall(meta, id('$Siren'), id('$int'), [js.Str({}, num)])
-      : /* otherwise */  methCall(meta, id('$siren'), id('$negint'), [js.Str({}, num)]),
+      S.integer(meta, sign, num),
 
     Expr.Str(meta, val) =>
-      js.Str(meta, val),
+      S.text(meta, val),
 
     Expr.Vector(meta, xs) =>
-      js.ArrayExpr(meta, generate(bind, xs)),
+      S.tuple(meta, generate(bind, xs)),
 
     Expr.Record(meta, xs) =>
-      methCall(meta,
-               id('$Siren'),
-               id('$make'),
-               [generatePlainRecord(bind, Expr.Record(meta, xs))]),
+      S.makeObject(meta, generatePlainRecord(bind, Expr.Record(meta, xs)), S.object({})),
 
     Expr.Let(meta, Expr.Id(_, name), value) =>
       letb(meta, id(safeId(name)), generate(bind, value)),
@@ -394,12 +409,8 @@ function generate(bind, x) {
     Expr.Clone(meta, source, bindings) =>
       send(meta,
            generate(bind, source),
-           selector({}, str('clone:')),
-           [generatePlainRecord(bind, bindings)]),
-
-    Expr.Extend(meta, source, bindings) =>
-      methCall(meta, id('$Siren'), id('$extend'),
-               [generate(bind, source), generatePlainRecord(bind, bindings)]),
+           selector({}, str('refined-by:')),
+           [S.makeObject({}, generatePlainRecord(bind, bindings), S.object({}))]),
 
     Expr.Return(meta, expr) =>
       methCall(meta, id('$Siren'), id('$return'), [generate(bind, expr)]),
@@ -418,7 +429,7 @@ function generate(bind, x) {
       js.Id(meta, safeId(sel)),
 
     Expr.Global(meta, Expr.Id(_, sel)) =>
-      send(meta, id('$Siren'), selector({}, str(sel)), []),
+      send(meta, S.global({}), selector({}, str(sel)), []),
 
     Expr.Do(meta, xs) =>
       generateDo(bind, meta, xs),

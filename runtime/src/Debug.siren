@@ -1,0 +1,28 @@
+#-----------------------------------------------------------------------
+# 
+# This source file is part of the Siren project.
+#
+# Copyright (C) 2013-2015 Quildreen Motta.
+# Licensed under the MIT licence.
+#
+# See LICENCE for licence information.
+# See CONTRIBUTORS for the list of contributors to the project.
+#
+#-----------------------------------------------------------------------
+module | vm | where
+
+vm extend: Root with: {
+  def_ Debug = Debug.
+}.
+
+let Debug = {
+  def self describe
+    "<Debug>".
+
+  def self show: object
+    self show: object tag: "[DEBUG]".
+
+  def self show: object tag: tag
+    vm debug/show: object tag: tag.
+    self.
+}.

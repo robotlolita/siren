@@ -1,0 +1,145 @@
+#-----------------------------------------------------------------------
+# 
+# This source file is part of the Siren project.
+#
+# Copyright (C) 2013-2015 Quildreen Motta.
+# Licensed under the MIT licence.
+#
+# See LICENCE for licence information.
+# See CONTRIBUTORS for the list of contributors to the project.
+#
+#-----------------------------------------------------------------------
+module | vm | where
+
+
+# -- Blocks ------------------------------------------------------------
+vm extend: Nullary-Block with: {
+  def self try
+    vm try: { Result ok: self value }
+       recover: { e | Result failure: (vm text: (vm object: e at: "message")) }.
+
+  def self while: predicate
+    vm while: { (predicate value) then: { vm true } else: { vm false } }
+       do: self.
+    Unit.
+}.
+
+
+# -- Branding ----------------------------------------------------------
+let Branding = {
+  def self traits {
+    def_ Brand = Brand.
+    def_ Object-Branding = Object-Branding.
+  }
+
+  def self for: object
+    self traits Object-Branding { def_ object = object }
+}.
+
+vm extend: Root with: {
+  def_ Branding = Branding.
+}.
+
+vm extend: Brand with: {
+  def self describe
+    "<Brand: ", self description, ">".
+
+  def self description
+    "Root-Brand".
+
+  def self with-description: description
+    self { def _ description = description }.
+
+  def self === brand
+    vm if: (vm refeq: self and: brand)
+       then: True
+       else: False.
+    
+  def self is: brand
+    vm if: (vm branding/brand: self is: brand)
+       then: True
+       else: False.
+}.
+
+vm extend: Object-Branding with: {
+  def self describe
+    "<Branding for: ", self object describe, ">".
+
+  def self has?: brand
+    vm if: (vm branding/object: self object has: brand)
+       then: True
+       else: False.
+
+  def self attach!: brand
+    vm branding/object: self object attach: brand.
+    self.
+
+  def self remove!: brand
+    vm branding/object: self object remove: brand.
+    self.
+}.
+
+
+# -- Unit --------------------------------------------------------------
+let Unit = {
+  def self describe
+    "<Unit>".
+
+  def self refined-by: _ in: _
+    self.
+
+  def self refined-by: _
+    self.
+}.
+
+vm extend: Root with: {
+  def_ Unit = Unit.
+}.
+
+
+# -- Exceptions --------------------------------------------------------
+let Exception = {
+  def self name = "Exception".
+
+  def self name: name
+    self { def_ name = name }.
+
+  def self raise!: reason
+    vm throw: (vm error: self name message: reason).
+}.
+
+vm extend: Root with: {
+  def_ Exception = Exception.
+}.
+
+
+# -- Core support for traits -------------------------------------------
+let Traits = {}.
+
+vm extend: Root with: {
+  def_ traits = Traits.
+}.
+
+
+# -- Utility decorators / messages -------------------------------------
+vm extend: Root with: {
+  def_ unimplemented
+    Exception name: "<Unimplemented>" raise!: "unimplemented".
+
+  def_ lazy { fn |
+    let computed = Reference new: False.
+    let data = Reference new: Unit.
+    let update = { data set!: fn value. computed set!: True }.
+    { computed then: { data value } else: { update value. data value } }.
+  }
+
+  def_ value { fn |
+    let data = fn value.
+    { data }.
+  }
+
+  def_ brand: brand { object |
+    (Branding for: object) attach!: brand.
+    object.
+  }
+}

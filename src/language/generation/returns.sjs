@@ -28,9 +28,6 @@ function hasNonLocalReturn(node) {
     Expr.Clone(_, source, _) =>
       hasNonLocalReturn(source),
 
-    Expr.Extend(_, source, _) =>
-      hasNonLocalReturn(source),
-
     Expr.Use(_, traits, exprs) =>
       hasNonLocalReturn(traits) || hasNonLocalReturn(exprs),
 

@@ -39,10 +39,10 @@ function maybeLog(runtime, options, a) {
 
 function show(runtime, options, a) {
   try {
-    console.log(faded('=>'), runtime.$send(a, 'as-string', runtime.$methods, []));
+    console.log(faded('=>'), a.send0(runtime.$context, 'describe').toString());
   } catch(e) {
     if (options.verbose) {
-      console.log(faded('*** Failed to send `as-string` to:'), a);
+      console.log(faded('*** Failed to send `describe` to:'), a);
       showError(e, options);
     }
   }
@@ -74,6 +74,7 @@ function collect(node) {
 
 function replContext(runtime) {
   var req = requireWithPath(process.cwd());
+  var mod = runtime.$makeModule({ filename: '<repl>' }, req, runtime);
   return vm.createContext({
     process: process,
     console: console,
@@ -82,9 +83,8 @@ function replContext(runtime) {
     setTimeout: setTimeout,
     clearTimeout: clearTimeout,
     '$Siren': runtime,
-    '$send': runtime.$send,
-    '$methods': runtime.$methods,
-    '_Module': runtime.$makeModule({ filename: '<repl>' }, req, runtime),
+    '$methods': mod.context,
+    '_Module': mod,
     __dirname: process.cwd()
   });
 }
@@ -117,7 +117,9 @@ function evaluateCommand(names, runtime, context, rl, program, options) {
 }
 
 function run(names, runtime, context, rl, program, options) {
-  if (!(program || '').trim())  return;
+  if (!(program || '').trim()) {
+      return continueRepl(null, names, runtime, context, rl, program, options);
+  }
 
   try {
     var ast = Parser.matchAll(program.trim(), 'replExpr');

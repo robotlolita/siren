@@ -1,0 +1,208 @@
+#-----------------------------------------------------------------------
+# 
+# This source file is part of the Siren project.
+#
+# Copyright (C) 2013-2015 Quildreen Motta.
+# Licensed under the MIT licence.
+#
+# See LICENCE for licence information.
+# See CONTRIBUTORS for the list of contributors to the project.
+#
+#-----------------------------------------------------------------------
+module | vm | where
+
+let Division-By-Zero = Exception {
+  def_ describe = "<Exception: division by zero>".
+  def_ name = "<Division by zero>".
+}.
+
+vm extend: Numeric with: {
+  def_ describe = "<Numeric>".
+
+  def_ exceptions {
+    def_ Division-By-Zero = Division-By-Zero
+  }
+}.
+
+vm extend: Integer with: {
+  def self describe
+    "<Integer: ", (vm text: (vm integer->string: self)), ">".
+
+  def self as-float
+    vm integer->float: self.
+
+  def self as-integer
+    self.
+
+  def self integral?
+    True.
+
+  def self fractional?
+    False.
+
+  def self === n
+    vm assert/numeric: n.
+    vm if: (vm integer: self equals: n)
+       then: True else: False.
+
+  def self =/= n
+    (self === n) not.
+
+  def self compared-to: n
+    vm assert/numeric: n.
+    vm integer/compare: self to: n
+       less-than:    traits Ordered Less-Than
+       equal:        traits Ordered Equal
+       greater-than: traits Ordered Greater-Than.
+
+  def self < n
+    vm assert/numeric: n.
+    vm if: (vm integer: self less-than: n)
+       then: True else: False.
+
+  def self <= n
+    (self === n) || (self < n).
+
+  def self > n
+    vm assert/numeric: n.
+    vm if: (vm integer: self greater-than: n)
+       then: True else: False.
+
+  def self >= n
+    (self === n) || (self > n).
+
+  def self + n
+    vm assert/numeric: n.
+    vm integer: self plus: n.
+
+  def self negated
+    0 - self.
+
+  def self - n
+    vm assert/numeric: n.
+    vm integer: self minus: n.
+
+  def self * n
+    vm assert/numeric: n.
+    vm integer: self times: n.
+
+  def self ** n
+    vm assert/numeric: n.
+    vm integer: self power: n.
+
+  def self absolute
+    vm integer/absolute: self.
+
+  def self / n
+    vm assert/numeric: n.
+    vm integer: self float-division: n.
+
+  def self divided-by: n
+    vm assert/numeric: n.
+    (n === 0) then: { Result failure: self exceptions Division-By-Zero new }
+              else: { Result ok: (vm integer: self divide: n) }
+
+  def self modulo: n
+    vm assert/numeric: n.
+    (n === 0) then: { Result failure: self exceptions Division-By-Zero }
+              else: { Result ok: (vm integer: self modulo: n) }.
+
+  def self successor
+    self + 1.
+
+  def self predecessor
+    self - 1.
+}.
+
+vm extend: Float-64bits with: {
+  def self describe
+    "<Float(64): ", (vm text: (vm float->string: self)), ">".
+
+  def self as-integer
+    vm float->integer: self.
+
+  def self as-float
+    self.
+
+  def self integral?
+    vm if: (vm float/is-integer: self)
+       then: True else: False.
+
+  def self fractional?
+    self integral? not.
+
+  def self === n
+    vm assert/numeric: n.
+    vm if: (vm float: self equals: n)
+       then: True else: False.
+
+  def self =/= n
+    vm assert/numeric: n.
+    vm if: (vm float: self not-equals: n)
+       then: True else: False.
+
+  def self compared-to: n
+    vm assert/numeric: n.
+    vm float/compare: self to: n
+       less-than:    traits Ordered Less-Than
+       equal:        traits Ordered Equal
+       greater-than: traits Ordered Greater-Than.
+
+  def self < n
+    vm assert/numeric: n.
+    vm if: (vm float: self less-than: n)
+       then: True else: False.
+
+  def self <= n
+    (self === n) || (self < n).
+
+  def self > n
+    vm assert/numeric: n.
+    vm if: (vm float: self greater-than: n)
+       then: True else: False.
+
+  def self >= n
+    (self === n) || (self > n).
+
+  def self + n
+    vm assert/numeric: n.
+    vm float: self plus: n.
+
+  def self negated
+    0 - self.
+
+  def self - n
+    vm assert/numeric: n.
+    vm float: self minus: n.
+
+  def self * n
+    vm assert/numeric: n.
+    vm float: self times: n.
+
+  def self ** n
+    vm assert/numeric: n.
+    vm float: self power: n.
+
+  def self absolute
+    vm float/absolute: self.
+
+  def self / n
+    vm assert/numeric: n.
+    vm float: self division: n.
+
+  def self divided-by: n
+    vm assert/numeric: n.
+    (n === 0) then: { Result failure: self exceptions Division-By-Zero new }
+              else: { Result ok: (vm float: self integer-division: n) }.
+
+  def self modulo: n
+    vm assert/numeric: n.
+    (n === 0) then: { Result failure: self exceptions Division-By-Zero new }
+              else: { Result ok: (vm float: self modulo: n) }.
+
+  def self successor
+    self + 1.0.
+
+  def self predecessor
+    self - 1.0.
+}.

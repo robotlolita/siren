@@ -1,0 +1,204 @@
+#-----------------------------------------------------------------------
+# 
+# This source file is part of the Siren project.
+#
+# Copyright (C) 2013-2015 Quildreen Motta.
+# Licensed under the MIT licence.
+#
+# See LICENCE for licence information.
+# See CONTRIBUTORS for the list of contributors to the project.
+#
+#-----------------------------------------------------------------------
+module | vm | where
+  # The JS-Alien library allows seamless interaction between JS and
+  # Siren code. It does so by converting the objects back and fort
+  # in the correct representation for the context where they'll be
+  # used.
+  #
+  # Aliens allow safe interaction, and support OCS. Not only are people
+  # unable to cross boundaries like this at all without having an Alien
+  # object, a person creating an Alien for a Siren object can choose
+  # in which context the messages to that object will be resolved.
+  #
+  # Aliens use the terminology `alienate:` for importing values from
+  # another system into Siren, and `expatriate:` for exporting Siren
+  # values to another system.
+  #
+  # It should be noted that scalar values in Siren are exported as
+  # primitive values to JS:
+  #
+  #     Siren             JS
+  #     ------------      --------
+  #     Integer       ⇐  BigNum
+  #     Integer       ⇔  BigNum
+  #     Float-64bits  ⇔  Number
+  #     Text          ⇔  String
+  #     Boolean       ⇔  Boolean
+  #     Unit          ⇒  null
+  #     Unit          ⇐  null or undefined
+  #     Selector      ⇔  Symbol
+  #     Tuple         ⇔  Array
+  #     Block         ⇒  Function
+  #     Method        ⇒  Function
+  #     Alien(a)      ⇒  a
+  #     a             ⇐  Expat(a)
+  #     Object        ⇒  Expat(Object)
+  #     Alien(Object) ⇐  Object
+  #
+  # Note that due to JS's lack of good numeric types, Aliens have a strict
+  # and a loose mode. In strict mode (the default), integers are converted
+  # to JS as `BigNum` values, this requires one to use `as-float` in all
+  # objects before passing them to the JS side. To make things simpler in
+  # situations where you don't care about the precision, the loose mode
+  # will convert all numbers to `Number`.
+  #
+  # Also note that while `alienate: (expatriate: a)` is roughly functionally
+  # equivalent to `a`, you don't get the same object. In particular, meta-data
+  # and reference will be different.
+  #
+  # An object may define a message `expatriate-to-JS` to define how its value
+  # should be expatriated.
+
+
+let JS-Alien-Brand = Brand with-description: "JS Alien".
+
+let alien? = { a | Branding for: a; has?: JS-Alien-Brand }.
+
+vm extend: Root with: {
+  def_ JS = JS-Alien.
+}.
+
+
+@brand: JS-Alien-Brand
+let JS-Alien = {
+  def_ traits {
+    def_ JS-Object = JS-Object.
+  }
+
+  def self describe
+    "<JS Alien>".
+
+  def self global
+    self alienate: vm js/global.
+
+  def self alien?: object
+    Branding for: object; has?: JS-Alien-Brand.
+
+  def self alien?
+    self alien?: self.
+
+  def self alienate: object
+    vm js/type: object switch: {
+      def_ siren
+        (self alien?: object) then: {
+          Exception raise!: "Trying to alienate an alien."
+        }.
+        object.
+
+      def_ big-num  = vm integer: object.
+      def_ number   = vm float: object.
+      def_ string   = vm text: string.
+      def_ boolean  = vm if: object then: True else: False.
+      def_ null     = Unit.
+      def_ array    = vm tuple: object.
+      def_ object   = self traits JS-Object { def_ expatriate-to-JS = object }.      
+    }
+
+  def self expatriate: object
+    object expatriate-to-JS.
+}.
+
+let JS-Object = JS-Alien {
+  def self describe
+    "<JS Alien: ", (vm text: (vm js/to-string: self expatriate-to-JS)), ">".
+
+  def self does-not-understand: message
+    let names = vm text: message name split: ":".
+    let name = names first!.
+    
+    
+    names length === 1 then: {
+      self at: name.
+    } else: {
+      name === "new" then: { self new-with-arguments: message arguments }
+                     else: { self invoke: name with-arguments: message arguments }
+    }.
+
+  def self new
+    self alienate: (vm js/new: self expatriate-to-JS).
+
+  def self new-with-arguments: arguments
+    self alienate: (vm js/new: self expatriate-to-JS
+                       with-arguments: (self expatriate: arguments)).
+
+  def self invoke: name with-arguments: arguments
+    self alienate: (vm js: self expatriate-to-JS
+                       invoke: (self expatriate: name)
+                       with-arguments: (self expatriate: arguments)).
+
+  def self apply: arguments
+    self alienate: (vm js: self expatriate-to-JS
+                       apply: (self expatriate: arguments)).
+
+  def self at: key
+    self alienate: (vm js: self expatriate-to-JS at: (self expatriate: key)).
+
+  def self at: key put!: value
+    vm js: self expatriate-to-JS at: (self expatriate: key) put: (self expatriate: value).
+    self.
+
+  def self has?: key
+    vm if: (vm js: self expatriate-to-JS has: (self expatriate: key))
+       then: True else: False.
+}.
+
+vm extend: Object with: {
+  def self expatriate-to-JS = self.
+}.
+
+vm extend: Integer with: {
+  def self expatriate-to-JS = vm unwrap-number: self.
+}.
+
+vm extend: Float-64bits with: {
+  def self expatriate-to-JS = vm unwrap-number: self.
+}.
+
+vm extend: Text with: {
+  def self expatriate-to-JS = vm unwrap-text: self.
+}.
+
+vm extend: True with: {
+  def self expatriate-to-JS = vm true.
+}.
+
+vm extend: False with: {
+  def self expatriate-to-JS = vm false.
+}.
+
+vm extend: Unit with: {
+  def self expatriate-to-JS = vm js/null.
+}.
+
+vm extend: Selector with: {
+  def self expatriate-to-JS = vm unwrap-selector: self.
+}.
+
+vm extend: Tuple with: {
+  def self expatriate-to-JS = vm unwrap-tuple: (self map: { a | a expatriate-to-JS }).
+}.
+
+vm extend: Block with: {
+  def self expatriate-to-JS = vm unwrap-block: self.
+}.
+
+vm extend: Method with: {
+  def self expatriate-to-JS = vm unwrap-method: self.
+}.
+
+vm extend: Importer with: {
+  def self js: id
+    vm assert/text: id.
+    let require = JS alienate: (vm object: self at: "require").
+    require apply: [id].
+}.

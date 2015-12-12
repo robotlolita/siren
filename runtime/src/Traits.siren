@@ -11,24 +11,27 @@
 #-----------------------------------------------------------------------
 module | vm | where
 
-vm define-global: "Reference" as: { Reference };
-let Reference = {
-  def this as-string
-    "<Reference " + this value as-string + ">"
+vm extend: traits with: {
+  def_ Ordering = Ordering.
+}.
 
-  def this new: value
-    (this {}) set!: value
+let Ordering = {
+  def_ less-than    = Less-Than.
+  def_ greater-than = Greater-Than.
+  def_ equal        = Equal.
+}.
 
-  def this new
-    this new: Unit
+let Less-Than = {
+  def self match: pattern
+    pattern less-than.
+}.
 
-  def this value
-    vm object: this at: "value"
+let Greater-Than = {
+  def self match: pattern
+    pattern greater-than.
+}.
 
-  def this set!: value
-    vm object: this at: "value" put: value;
-    this
-
-  def this === that
-    this value === that
-}
+let Equal = {
+  def self match: pattern
+    pattern equal.
+}.

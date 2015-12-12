@@ -1,0 +1,104 @@
+#-----------------------------------------------------------------------
+# 
+# This source file is part of the Siren project.
+#
+# Copyright (C) 2013-2015 Quildreen Motta.
+# Licensed under the MIT licence.
+#
+# See LICENCE for licence information.
+# See CONTRIBUTORS for the list of contributors to the project.
+#
+#-----------------------------------------------------------------------
+module | vm | where
+
+vm extend: Text with: {
+  def_ traits {
+    def_ Character-View = Character-View.
+  }
+
+  def self, text
+    vm assert/text: text.
+    vm text: (vm text: self concat: text).
+
+  def self === text
+    vm assert/text: text.
+    vm if: (vm text: self equals: text)
+       then: True else: False.
+
+  def self =/= text
+    (self === text) not.
+
+  def self empty?
+    self === "".
+
+  def self starts-with?: text
+    vm assert/text: text.
+    vm if: (vm text: self starts-with: text)
+       then: True else: False.
+
+  def self ends-with?: text
+    vm assert/text: text.
+    vm if: (vm text: self ends-with: text)
+       then: True else: False.
+
+  def self contains?: text
+    vm assert/text: text.
+    vm if: (vm text: self contains: text)
+       then: True else: False.
+
+  def self length
+    vm integer: (vm text/length: self).
+
+  def self characters
+    let length = self length.
+    let result = self traits Character-View {
+      def_ start = 1.
+      def_ end   = length.
+    }.
+    vm object: result at: "text" put: self.
+    result.
+}.
+
+let Character-View = {
+  def_ traits {
+    def_ Character = Character-Trait.
+  }
+
+  def self as-text
+    let text = vm object: self at: "text".
+    vm text: (vm text/slice: text from: self start to: self end).
+
+  def self at: offset
+    vm assert/number: offset between: self start and: self end.
+    let result = self traits Character {}.
+    let text = vm object: self at: "text".
+    vm object: result at: "character" put: (vm text: text at: self start + offset).
+    result.
+
+  def self slice-from: start to: end
+    vm assert/number: start between: self start and: self end.
+    vm assert/number: end between: self start and: self end.
+    end < start then: { vm assert/fail: "End of the range can't be less than the start." }.
+    self {
+      def_ start = self start + start.
+      def_ end   = self start + end.
+    }.
+}.
+
+let Character = {
+  def _ from-code: code
+    vm assert/numeric: code.
+    vm text: (vm text/from-code: code).
+}.
+
+let Character-Trait = Character {
+  def self code
+    vm integer: (vm text/char-code: (vm object: self at: "character")).
+
+  def self as-text
+    vm text: (vm object: self at: "character").
+}.
+
+vm extend: Root with: {
+  def_ Character = Character.
+}.

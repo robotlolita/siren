@@ -82,9 +82,6 @@ function resolve(scope, node) {
     Expr.Clone(meta, source, bindings) =>
       Expr.Clone(meta, resolve(scope, source), resolve(scope, bindings)),
 
-    Expr.Extend(meta, source, bindings) =>
-      Expr.Extend(meta, resolve(scope, source), resolve(scope, bindings)),
-
     Expr.Return(meta, expr) =>
       Expr.Return(meta, resolve(scope, expr)),
 

@@ -1,0 +1,175 @@
+#-----------------------------------------------------------------------
+# 
+# This source file is part of the Siren project.
+#
+# Copyright (C) 2013-2015 Quildreen Motta.
+# Licensed under the MIT licence.
+#
+# See LICENCE for licence information.
+# See CONTRIBUTORS for the list of contributors to the project.
+#
+#-----------------------------------------------------------------------
+module | vm | where
+
+vm extend: Root with: {
+  def_ Mirror = Mirror.
+}.
+
+let Mirror = {
+  def_ traits {
+    def_ Object-Mirror = Object-Mirror.
+    def_ Meta-Mirror = Meta-Mirror.
+  }
+
+  def self reflect: object context: context
+    self traits Object-Mirror {
+      def_ reflectee = object.
+      def_ reflectee-context = context.
+    }.
+
+  def self reflect: object
+    self reflect: object context: vm global-context
+}.
+
+let Object-Mirror = Mirror {
+  def self describe
+    "<Object-Mirror on: ", self reflectee describe, " context: ", self reflectee-context describe, ">".
+
+  def self meta
+    self traits Meta-Mirror {
+      def_ reflectee = object.
+    }.
+
+  def self methods
+    let xs = vm reflect/methods: self reflectee context: self reflectee-context.
+    xs map: { pair | pair first! => pair last! }.
+
+  def self selector-from-name: name
+    vm assert/text: name.
+    let selector = vm reflect/method-selector: name
+                      on: self reflectee
+                      in: self reflectee-context.
+    vm if: (vm failed?: selector)
+       then: { Result failure: "No such method: ", name }
+       else: { Result ok: selector }.
+
+  def self method-for-name: name do {
+    selector <- self selector-from-name: name.
+    self method-for-selector: selector.
+  }
+
+  def self method-for-selector: selector
+    vm assert/selector: selector.
+    let result = vm reflect/method: selector on: self reflectee.
+    vm if: (vm failed?: result)
+       then: { Result failure: "No such method: ", selector describe }
+       else: { Result ok: result };
+       value.
+
+  def self responds-to?: name
+    (self method-for-name: name) then: { True } else: { False }.
+
+  def self parent
+    let result = vm reflect/parent: self.
+    vm if: (vm failed?: result)
+       then: { Result failure: "No parent." }
+       else: { Result ok: result };
+       value.
+}.
+
+let Meta-Mirror = {
+  def_ traits {
+    def_ Source-Location = Source-Location.
+  }
+
+  def self describe
+    "<Meta-Mirror on: ", self reflectee describe, ">".
+
+  def self at: name
+    vm assert/text: name.
+    let result = vm meta: self reflectee at: name.
+    vm if: (vm failed?: result)
+       then: { Result failure: "No meta-data ", name, " for ", self reflectee describe }
+       else: { Result ok: result };
+       value.
+
+  def self at: name put: value
+    vm assert/text: name.
+    vm meta: self reflectee at: name put: value.
+    self.
+
+  def self name
+    self at: "name".
+
+  def self name: name
+    vm assert/text: name.
+    self at: "name" put: name.
+
+  def self arguments
+    self at: "arguments".
+
+  def self arguments: args
+    vm assert/tuple: args.
+    self at: "arguments" put: args.
+
+  def self source
+    self traits Source-Location {
+      @value def_ code      = self at: "source".
+      @value def_ start     = self at: "start-offset".
+      @value def_ end       = self at: "end-offset".
+      @value def_ filename  = self at: "filename".
+    }.
+
+  def self source: source
+    source code map: { code | self at: "source" put: code }.
+    source start map: { n | self at: "start-offset" put: n }.
+    source end map: { n | self at: "end-offset" put: n }.
+    source filename map: { name | self at: "filename" put: name }.
+
+  def self category
+    self at: "category".
+
+  def self category: category
+    vm assert/text: category.
+    self at: "category" put: category.
+
+  def self tags
+    self at: "tags".
+
+  def self tags: tags
+    vm assert/tuple: tags.
+    self at: "tags" put: tags.
+
+  def self documentation
+    self at: "documentation".
+
+  def self documentation: docs
+    vm assert/text: docs.
+    self at: "documentation" put: docs.
+
+  def self examples
+    self at: "examples".
+
+  def self examples: examples
+    vm assert/tuple: examples.
+    self at: "examples" put: examples.
+}.
+
+let Source-Location = {
+  def self describe
+    "<Source-Location(", self start describe, ", ", self end describe, "): ", self filename describe, ">".
+
+  def self source: code
+    self { def_ source = code }.
+
+  def self start: n
+    vm assert/numeric: n.
+    self { def_ start = n }.
+
+  def self end: n
+    vm assert/numeric: n.
+    self { def_ end = n }.
+
+  def self filename: name
+    self { def_ filename = name }.
+}.

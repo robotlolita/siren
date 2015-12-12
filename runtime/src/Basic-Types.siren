@@ -1,0 +1,200 @@
+#-----------------------------------------------------------------------
+# 
+# This source file is part of the Siren project.
+#
+# Copyright (C) 2013-2015 Quildreen Motta.
+# Licensed under the MIT licence.
+#
+# See LICENCE for licence information.
+# See CONTRIBUTORS for the list of contributors to the project.
+#
+#-----------------------------------------------------------------------
+module | vm | where
+
+# -- Booleans ----------------------------------------------------------
+vm extend: Root with: {
+  def_ Boolean = Boolean.
+  def_ True    = True.
+  def_ False   = False.
+}.
+
+let Boolean = {
+  def_ describe = "<Boolean>".
+  def_ True = True.
+  def_ False = False.
+}.
+
+let True = Boolean {
+  def self describe
+    "<True>".
+
+  def self && that
+    that.
+
+  def self || that
+    self.
+
+  def self not
+    self False.
+
+  def self then: consequent else: alternate
+    consequent value.
+
+  def self otherwise: alternate
+    Unit.
+
+  def self then: consequent
+    consequent value.
+    Unit.
+}.
+
+let False = Boolean {
+  def self describe
+    "<False>".
+
+  def self && that
+    self.
+
+  def self || that
+    that.
+
+  def self not
+    self True
+
+  def self then: consequent else: alternate
+    alternate value.
+
+  def self otherwise: alternate
+    alternate value.
+    Unit.
+
+  def self then: consequent
+    Unit.
+}.
+
+
+# -- Result ------------------------------------------------------------
+vm extend: Root with: {
+  def_ Result = Result.
+}.
+
+let Result = {
+  def_ describe = "<Result>".
+
+  def_ traits {
+    def_ Ok = Ok.
+    def_ Failure = Failure.
+  }
+
+  def self ok: value
+    self traits Ok { def_ value = value }.
+
+  def self failure: value
+    self traits Failure { def_ value = value }.
+}.
+
+let Ok = Result {
+  def self describe
+    "<Result ok: ", self value describe, ">".
+
+  def self map: transformation
+    let new-value = transformation call: self value.
+    self { def_ value = new-value }.
+
+  def self chain: transformation
+    transformation call: self value.
+
+  def self match: pattern
+    pattern ok: self value.
+
+  def self recover: handler
+    self.
+
+  def self as-tuple
+    [self value].
+
+  def self === that
+    that match: {
+      def_ ok: v      = v === self value.
+      def_ failure: v = False.
+    }.
+
+  def self merge
+    self value.
+
+  def self then: ok else: failure
+    ok value.
+
+  def self get!
+    self value.
+
+  def self get-or-default: default-value
+    default-value.
+}.
+
+let Failure = Result {
+  def self describe
+    "<Result failure: ", self value describe, ">".
+
+  def self map: transformation
+    self.
+
+  def self chain: transformation
+    self.
+
+  def self match: pattern
+    self failure: self value.
+
+  def self recover: handler
+    handler call: self value.
+
+  def self as-tuple
+    [].
+
+  def self === that
+    that match: {
+      def_ ok: v      = False.
+      def_ failure: v = v === self value.
+    }.
+
+  def self then: ok else: failure
+    failure value.
+
+  def self get-or-default: default-value
+    default-value.
+
+  def self merge
+    self value.
+}.
+
+
+# -- Reference ---------------------------------------------------------
+vm extend: Root with: {
+  def_ Reference = Reference.
+}.
+
+let Reference = {
+  def_ describe
+    "<Reference>"
+    
+  def_ traits {
+    def_ Mutable-Reference = Mutable-Reference.
+  }
+
+  def self new: value
+    let result = self traits Mutable-Reference {}.
+    vm object: result at: "value" put: value.
+    result.
+}.
+
+let Mutable-Reference = {
+  def self describe
+    "<Reference: ", self value, ">".
+
+  def self value
+    vm object: self at: "value".
+
+  def self set!: value
+    vm object: self at: "value" put: value.
+    self.
+}.

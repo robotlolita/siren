@@ -9,8 +9,8 @@ var Expr = ast.Expr;
 var Do = ast.DoClause;
 
 var reserved = [
-  'extend', 'let', 'do', 'module', 'exposing', 'def',
-  '|', '<-', '=', '>>', 'with', 'where', 'use', 'in', 'using', 'return',
+  'let', 'do', 'module', 'exposing', 'def',
+  '|', '<-', '=', 'where', 'use', 'in', 'using', 'return',
   'trait'
 ]
 
@@ -38,15 +38,24 @@ function decorateLet(letNode, expr) {
                   Expr.Apply(letNode.meta, Expr.Id({}, 'call:'), expr, [letNode.value]))
 }
 
+function src(start, end) {
+  return {
+    start: start.off,
+    end: end.off,
+    source: start.src.slice(start.off, end.off)
+  }
+}
+
 // ## object: SirenParser
 ometa SirenParser {
+  pos     = ?(true) -> ({ src: this._source, off: this._offset }),
   space   = /\s/,
   ignored = space | comment,
   comment = fromTo('#', '\n'):a -> a.slice(1),
   ws      = ignored*,
-  sep     = ',' | '.',
+  sep     = ',',
   symbol  = ~( letter | digit | space
-             | '_' | '$' | '^' | '@' | ';' | ':' | '{' | '}' | '(' | ')' | '[' | ']'
+             | '_' | '$' | '^' | '@' | ';' | ':' | '{' | '}' | '(' | ')' | '[' | ']' | '.'
              ) char,
   eof     = ~char,
   kw :xs  = seq(xs) ~(letter | digit | symbol | sep | ':'),
@@ -67,10 +76,11 @@ ometa SirenParser {
 
   // Patterns
   pattern = decoratedPattern
-          | kw('def') ws (keywordPattern | binaryPattern | unaryPattern),
+          | pos:sp kw('def') ws (keywordPattern | binaryPattern | unaryPattern):p pos:ep
+            -> [p[0], Expr.Lambda(extend(src(sp, ep), p[1].meta), p[1].self, p[1].args, p[1].body)],
 
-  decoratedPattern = '@' expr:a ws pattern:p
-                  -> [p[0], Expr.Apply({}, Expr.Id({}, 'call:'), a, [p[1]])],
+  decoratedPattern = pos:sp '@' expr:a ws pattern:p pos:ep
+                  -> [p[0], Expr.Apply(src(sp, ep), Expr.Id({}, 'call:'), a, [p[1]])],
 
   docComment  = (space* comment)+:as ws -> as.join('\n').trim(),
   patternBody = docComment?:a ws ('=' ws)? stmtList:as -> [as, a || ''],
@@ -78,7 +88,7 @@ ometa SirenParser {
   keywordArgs = (ws keyword:k ws argName:n -> [k, n])+,
 
   keywordPattern = argName:a space* keywordArgs:as space* patternBody:v
-                -> keywordLambda({}, a, as, v[0], v[1]),
+                -> keywordLambda({ docs: v[1] }, a, as, v[0], v[1]),
   unaryPattern   = argName:a space* argName:b space* patternBody:v
                 -> [b, Expr.Lambda({ docs: v[1] }, a, [], v[0])],
   binaryPattern  = argName:a space* symbols:b ws argName:c space* patternBody:v
@@ -90,28 +100,27 @@ ometa SirenParser {
   letStmt = '@' expr:a ws letStmt:b             -> decorateLet(b, a)
           | kw('let') ws identifier:a ~':' ws '=' ws expr:b -> Expr.Let({}, a, b),
 
-  module     = kw('module') ws moduleArgs?:a ws exportStmt?:b ws kw('where') ws stmtList:cs
-             -> Expr.Module({}, a || [], b || Expr.Record({}, []), cs),
+  module     = pos:sp kw('module') ws moduleArgs?:a ws exportStmt?:b ws kw('where') docComment?:doc ws stmtList:cs pos:ep
+             -> Expr.Module(extend(src(sp, ep), { doc: doc || '' }), a || [], b || Expr.Record({}, []), cs),
   moduleArgs = '|' ws argName:a (ws argName)*:as ws '|' -> [a].concat(as),
   exportStmt = kw('exposing') ws record:a -> a,
 
-  useExpr = kw('use') ws listOf(#expr, ';'):xs ws kw('in') ws '{' ws stmtList:ys ws '}'
+  useExpr = kw('use') ws exprList:xs ws kw('in') ws '{' ws stmtList:ys ws '}'
           -> Expr.Use({}, xs, ys),
 
-  usingStmt = kw('using') ws listOf(#expr, ';'):xs -> Expr.Using({}, xs),
+  usingStmt = kw('using') ws exprList:xs -> Expr.Using({}, xs),
 
   // Expressions
   stmt = letStmt
        | usingStmt
-       | ';'        -> Expr.Empty
        | expr,
 
   expr = useExpr
        | pipeExpr,
 
-  pipeExpr = pipeExpr:a ws ">>" ws identifier:i ~':'        -> Expr.Apply({}, i, a, [])
-           | pipeExpr:a ws ">>" ws symbols:s ws unaryExpr:b -> Expr.Apply({}, s, a, [b])
-           | pipeExpr:a ws ">>" (ws keywordApp)+:as         -> keywordApply({}, a, as)
+  pipeExpr = pipeExpr:a ws ";" ws identifier:i ~':'        -> Expr.Apply({}, i, a, [])
+           | pipeExpr:a ws ";" ws symbols:s ws unaryExpr:b -> Expr.Apply({}, s, a, [b])
+           | pipeExpr:a ws ";" (ws keywordApp)+:as         -> keywordApply({}, a, as)
            | appExpr,
 
   appExpr = keywordExpr
@@ -130,27 +139,28 @@ ometa SirenParser {
               | value
               | identifier:a ~':'                  -> Expr.Free({}, a)
               | keywordApp:a (ws keywordApp)*:as   -> keywordApply({}, Expr.GlobalObject({}), [a].concat(as))
-              | extendExpr:a                       -> a
               | '(' ws expr:a ws ')'               -> a,
 
-  extendExpr = kw('extend') ws expr:a ws kw('with') ws record:v -> Expr.Extend({}, a, v),
-
-  stmtList = stmt:a (ws ';' ws stmt)*:as -> [a].concat(as),
+  exprList = expr:a (ws '.' ws exprList)?:as -> [a].concat(as || [])
+           | expr:a (ws '.')? -> [a],
+  stmtList = stmt:a (ws '.' ws stmtList)?:as -> [a].concat(as || [])
+           | stmt:a (ws '.')? -> [a],
 
   blockStmt = stmt
             | '^' ws expr:a -> Expr.Return({}, a),
-  blockStmtList = blockStmt:a (ws ';' ws blockStmt)*:as -> [a].concat(as),
+  blockStmtList = blockStmt:a (ws '.' ws blockStmtList)?:as -> [a].concat(as || [])
+                | blockStmt:a (ws '.')? -> [a],
 
-  doExpr = kw('do') ws '{' ws (doCase:c ws ';' ws -> c)*:xs ws doTailCase:x ws '}'
+  doExpr = kw('do') ws '{' ws (doCase:c ws '.' ws -> c)*:xs ws doTailCase:x ws '}'
          -> Expr.Do({}, xs.concat([x])),
   doAction     = argName:i ws "<-" ws expr:e -> Do.Action({}, i, e)
                | doTailAction,
-  doTailAction = expr:e                         -> Do.Action({}, Expr.Id({}, '_'), e),
+  doTailAction = expr:e (ws '.')?            -> Do.Action({}, Expr.Id({}, '_'), e),
   doPure       = argName:i ws "<-" ws kw('return') ws expr:e -> Do.Return({}, i, e)
                | doTailPure,
-  doTailPure   = kw('return') ws expr:e                         -> Do.Return({},
-                                                                             Expr.Id({}, '_'),
-                                                                             e),
+  doTailPure   = kw('return') ws expr:e (ws '.')?            -> Do.Return({},
+                                                                          Expr.Id({}, '_'),
+                                                                          e),
   doCase       = doPure | doAction,
   doTailCase   = doTailPure | doTailAction,
 
@@ -186,19 +196,20 @@ ometa SirenParser {
   string           = seq('"""') <unescapableChars*>:as seq('"""') -> Expr.Str({}, as)
                    | '"' (stringChar)*:as '"'                     -> Expr.Str({}, as.join('')),
 
-  vector = '[' ws expr:hd (ws ';' ws expr)*:tl ws ']' -> Expr.Vector({}, [hd].concat(tl))
-         | '[' ws ']'                                 -> Expr.Vector({}, []),
+  vector = '[' ws exprList?:xs ws ']' -> Expr.Vector({}, xs || []),
 
   record = '{' ws pattern:hd (ws pattern)*:tl ws '}' -> Expr.Record({}, [hd].concat(tl))
          | '{' ws '}'                                -> Expr.Record({}, []),
 
-  lambda  = '{' ws arglist:as ws '|' ws blockStmtList:a ws '}' -> Expr.Block({}, as, a)
-          | '{' ws blockStmtList:a ws '}'                      -> Expr.Block({}, [], a),
+  lambda  = pos:sp '{' ws arglist:as ws '|' ws blockStmtList:a ws '}' pos:ep
+            -> Expr.Block(src(sp, ep), as, a)
+          | pos:sp '{' ws blockStmtList:a ws '}' pos:ep
+            -> Expr.Block(src(sp, ep), [], a),
 
   arglist = argName:a (ws argName)*:as              -> [a].concat(as),
 
   replExpr = ws stmtList:xs ws eof -> Expr.Seq({}, xs),
 
   program = ws module:m ws eof    -> m
-          | ws stmtList:xs ws eof -> Expr.Module({}, [], Expr.Record({}, []), xs)
+          | ws pos:sp stmtList:xs pos:ep ws eof -> Expr.Module(src(sp, ep), [], Expr.Record({}, []), xs)
 }

@@ -1,1389 +1,1503 @@
-var _moduleContext = this;
+//----------------------------------------------------------------------
+//
+// This source file is part of the Siren project.
+//
+// Copyright (C) 2013-2015 Quildreen Motta.
+// Licensed under the MIT licence.
+//
+// See LICENCE for licence information.
+// See CONTRIBUTORS for the list of contributors to the project.
+//
+//----------------------------------------------------------------------
 
-module.exports = function() {
-  'use strict';
+// # module: siren/runtime
+'use strict';
 
-  // -- Dependencies ---------------------------------------------------
-  var path = require('path');
-  var fs = require('fs');
-  var BigNum = require('bignum');
-  var isNumberP = require('is-number-object');
-  var isStringP = require('is-string');
-  var isBooleanP = require('is-boolean-object');
+// -- Dependencies -----------------------------------------------------
+var BigNum    = require('bignum');
+var isNumber  = require('is-number-object');
+var isString  = require('is-string');
+var isBoolean = require('is-boolean-object');
+var showJs    = require('core.inspect');
 
-  // -- Aliases --------------------------------------------------------
-  var prototypeOf = Object.getPrototypeOf;
-  var keys = Object.keys;
-  var internalClassOf = Object.prototype.toString;
-  var globalObject = typeof window !== 'undefined'?  window
-                   : typeof global !== 'undefined'?  global
-                   : /* otherwise */                 _moduleContext
 
-  // -- Helpers --------------------------------------------------------
+// -- Aliases ----------------------------------------------------------
+var prototypeOf   = Object.getPrototypeOf;
+var isPrototypeOf = Object.prototype.isPrototypeOf;
+var keys          = Object.keys;
+var globalObject  = typeof window !== 'undefined'?  window
+                  : typeof global !== 'undefined'?  global
+                  : /* otherwise */                 raise(new Error('This platform is not supported.'));
 
-  // ### function: nameOf(f)
-  // Tries to guess the name of a function.
-  //
-  // @type: (Function) -> String
-  function nameOf(f) {
-    return '<' + (f.displayName || f.name || 'anonymous-function') + '#' + f.length + '>';
+
+// -- Helpers ----------------------------------------------------------
+
+// ### function: raise(error)
+//
+// `throw` as an expression.
+function raise(error) {
+  throw error;
+}
+
+// ### function: extend(a, b)
+//
+// Copies all own enumerable properties of `b` to `a`
+//
+// @type: (Object, Object) -> Object
+function extend(a, b) {
+  var ks = keys(b);
+  for (var i = 0; i < ks.length; ++i) {
+    var key = ks[i];
+    a[key] = b[key];
+  }
+  return a;
+}
+
+function parseArgs(fn) {
+  return (fn.toString().match(/function\s*[^\(]*\(([^\)]*)\)/) || [null, ''])[1]
+           .split(',')
+           .map(function(a){ return a.trim(); })
+           .filter(Boolean);
+}
+
+function safeDescribe(o) {
+  try {
+    var s = o.send0($context, 'describe');
+    assert_text(s);
+    return s.string;
+  } catch (e) {
+    return '<unrepresentable object>';
+  }
+}
+
+
+// -- Assertions -------------------------------------------------------
+function assert_arity(f, n) {
+  if (f.length !== n) {
+    throw new RangeError('Wrong number of arguments: ' + f.length + ' of ' + n);
+  }
+}
+
+function assert_string(s) {
+  if (typeof s !== 'string')
+    throw new TypeError('Expected Text.');
+}
+
+function assert_tuple(a) {
+  if (!(a instanceof _Tuple))
+    throw new TypeError('Expected Tuple.');
+}
+
+function assert_text(a) {
+  if (!(a instanceof _Text))
+    throw new TypeError('Expected Text.');
+}
+
+function assert_message(m) {
+  if (!(m instanceof _Message))
+    throw new TypeError('Expected Message.');
+}
+
+function assert_context(a) {
+  if (!(a instanceof Context))
+    throw new TypeError('Expected Context.');
+}
+
+function assert_selector(a) {
+  if (!(a instanceof _Selector))
+    throw new TypeError('Expected Selector.');
+}
+
+function assert_perspective(a) {
+  if (!(a instanceof _Perspective))
+    throw new TypeError('Expected Perspective.');
+}
+
+
+// -- Internal object hierarchy ----------------------------------------
+
+var Siren_Object = Object.create(null);
+
+var Siren_Root = Object.create(Siren_Object);
+var Siren_Module = Object.create(Siren_Object);
+var Siren_Importer = Object.create(Siren_Object);
+var Siren_Context = Object.create(Siren_Object);
+var Siren_Perspective = Object.create(Siren_Object);
+var Siren_Selector = Object.create(Siren_Object);
+var Siren_Message = Object.create(Siren_Object);
+
+var Siren_Brand = Object.create(Siren_Object);
+var Siren_ObjectBranding = Object.create(Siren_Object);
+
+var Siren_Block = Object.create(Siren_Object);
+var Siren_Block0 = Object.create(Siren_Block);
+var Siren_Block1 = Object.create(Siren_Block);
+var Siren_Block2 = Object.create(Siren_Block);
+var Siren_Block3 = Object.create(Siren_Block);
+var Siren_BlockN = Object.create(Siren_Block);
+
+var Siren_Method = Object.create(Siren_Object);
+var Siren_Method0 = Object.create(Siren_Method);
+var Siren_Method1 = Object.create(Siren_Method);
+var Siren_Method2 = Object.create(Siren_Method);
+var Siren_Method3 = Object.create(Siren_Method);
+var Siren_MethodN = Object.create(Siren_Method);
+
+
+var Siren_Text = Object.create(Siren_Object);
+var Siren_Numeric = Object.create(Siren_Object);
+var Siren_Integer = Object.create(Siren_Numeric);
+var Siren_Float = Object.create(Siren_Numeric);
+var Siren_Tuple = Object.create(Siren_Object);
+
+
+// -- Internal names ---------------------------------------------------
+
+// Points to the default perspective.
+var defaultPerspective = Symbol('default-perspective');
+
+// Points to the list of brands attached to the object.
+var brands = Symbol('brands');
+
+
+// -- Handling meta-data -----------------------------------------------
+
+// ### class: Meta()
+//
+// Every object in Siren may contain meta-data about itself. This
+// meta-data lives in a separate object. The `Meta` object holds
+// mappings of Siren objects to a dictionary of meta-data.
+function Meta() {
+  this.data = new WeakMap();
+}
+
+// #### method: get(object, name)
+//
+// Retrieves a particular piece of data about an object.
+//
+// @type: (Siren.Object, String) -> Siren.Object | null
+Meta.prototype.get = function(object, name) {
+  return (this.data.get(object) || {})[name];
+};
+
+// #### method: set(object, name, value)
+//
+// Attaches a piece of meta-data to an object.
+//
+// @type: (Siren.Object, String, Siren.Object) -> null
+Meta.prototype.set = function(object, name, value) {
+  var metas = this.data.get(object) || {};
+  metas[name] = value;
+  this.data.set(object, metas);
+};
+
+
+// -- Context for perspectives -----------------------------------------
+
+// ### class: Context()
+//
+// Provides scoped resolution of message names to message selectors.
+//
+// Messages in Siren are stored in each object as unique selector
+// values. To translate a name such as `+` or `add:to:` it uses a
+// `MethodBox` object available in that scope, which provides the
+// mapping of names to selector values.
+//
+// @type: new(Context | null)
+function Context(parent) {
+  this.parent   = parent;
+  this.mappings = new WeakMap();
+}
+
+Context.prototype = Siren_Context;
+
+// #### method: set(object, value)
+//
+// Adds a new mapping to the given object.
+//
+// @type: (Siren.Object, { String -> Symbol }) -> null
+Context.prototype.set = function(object, value) {
+  this.mappings.set(object, value);
+};
+
+// #### method: get(object)
+//
+// Returns the mapping for the given object.
+//
+// @type: Siren.Object -> { String -> Symbol }
+Context.prototype.get = function(object) {
+  return this.mappings.get(object);
+};
+
+// #### method: lookup(object, name)
+//
+// Retrieves the selector value for the object / name pair provided.
+// Looks up in the whole prototype chain of the object before falling
+// back to the parent (Context) scope.
+//
+// @type: (Siren.Object, String) -> Symbol | null
+Context.prototype.lookup = function(object, name) {
+  if (object == null)  return null;
+
+  var box = this.get(object);
+  if (box) {
+    var selector = box[name];
+    if (selector)  return selector;
+  }
+  if (this.parent) {
+    var selector = this.parent.lookup(object, name);
+    if (selector)  return selector;
+  }
+  return this.lookup(prototypeOf(object), name);
+};
+
+// #### method: merge(...traits)
+//
+// Adds a series of traits to the mappings in this method box.
+//
+// @type: (...(Object, { String -> Symbol })) -> null
+Context.prototype.merge = function(pairs) {
+  for (var i = 0; i < pairs.length; ++i) {
+    var pair = pairs[i];
+    var object = pair[0];
+    var mappings = pair[1];
+    var box = this.get(object) || {};
+    extend(box, mappings);
+    this.set(object, box);
+  }
+};
+
+// #### method: clone()
+//
+// Returns a new Context that inherits the mappings of this one.
+//
+// @type: () -> Context
+Context.prototype.clone = function() {
+  return new Context(this);
+};
+
+// -- Non-local returns ------------------------------------------------
+// #### class: Return()
+//
+// Represents non-local returns.
+//
+// @type: new (Siren.Object)
+function Return(value) {
+  this.value = value;
+}
+
+// #### function: $return(value)
+//
+// Does a non-local return (can only be used inside blocks).
+//
+// @type: (Siren.Object) -> null :: throws Siren.Object
+function $return(value) {
+  throw new Return(value);
+}
+
+// #### function: $handleReturn(value)
+//
+// Handles non-local returns after the stack has been unwinded.
+// This accounts for the possibility of non-Return objects being
+// thrown by Siren code.
+//
+// @type: (Any) -> Siren.Object | null :: throws Object
+function $handleReturn(value) {
+  if (value instanceof Return)
+    return value.value;
+  else
+    throw value;
+}
+
+
+// -- Support for constructing instances of internal objects -----------
+
+function _Block0(fn) {
+  assert_arity(fn, 0);
+  this.call = fn;
+}
+_Block0.prototype = Siren_Block0;
+
+function _Block1(fn) {
+  assert_arity(fn, 1);
+  this.call = fn;
+}
+_Block1.prototype = Siren_Block1;
+
+function _Block2(fn) {
+  assert_arity(fn, 2);
+  this.call = fn;
+}
+_Block2.prototype = Siren_Block2;
+
+function _Block3(fn) {
+  assert_arity(fn, 3);
+  this.call = fn;
+}
+_Block3.prototype = Siren_Block3;
+
+function _BlockN(fn) {
+  this.call = fn;
+}
+_BlockN.prototype = Siren_BlockN;
+
+
+function _Method0(fn) {
+  assert_arity(fn, 0);
+  this.call = fn;
+}
+_Method0.prototype = Siren_Method0;
+
+function _Method1(fn) {
+  assert_arity(fn, 1);
+  this.call = fn;
+}
+_Method1.prototype = Siren_Method1;
+
+function _Method2(fn) {
+  assert_arity(fn, 2);
+  this.call = fn;
+}
+_Method2.prototype = Siren_Method2;
+
+function _Method3(fn) {
+  assert_arity(fn, 3);
+  this.call = fn;
+}
+_Method3.prototype = Siren_Method3;
+
+function _MethodN(fn) {
+  this.call = fn;
+}
+_MethodN.prototype = Siren_MethodN;
+
+
+function _Text(s) {
+  this.string = s;
+}
+_Text.prototype = Siren_Text;
+_Text.prototype.toString = function(){ return this.string; };
+
+
+function _Integer(n) {
+  this.number = n;
+}
+_Integer.prototype = Siren_Integer;
+
+
+function _Float(n) {
+  this.number = n;
+}
+_Float.prototype = Siren_Float;
+
+
+function _Tuple(v) {
+  this.array = v;
+}
+_Tuple.prototype = Siren_Tuple;
+
+
+function _Perspective(object, mappings) {
+  this.object = object;
+  this.mappings = mappings;
+}
+_Perspective.prototype = Siren_Perspective;
+
+
+function _Selector(symbol) {
+  this.symbol = symbol;
+}
+_Selector.prototype = Siren_Selector;
+
+
+function _Message(name, args) {
+  this.name = name;
+  this.args = args;
+}
+_Message.prototype = Siren_Message;
+
+
+function _Importer(mod) {
+  this.module = mod;
+  this.require = mod.require;
+}
+_Importer.prototype = Siren_Importer;
+
+
+// -- Internal methods -------------------------------------------------
+
+// Recovering messages
+function recover(object, context, originalMessage, args) {
+  var selector = context.lookup(object, 'does-not-understand:');
+  if (selector && object[selector]) {
+    var message = new _Message(originalMessage, args);
+    return object[selector].call(object, message);
+  } else {
+    throw new Error('Failed to send ' + message);
+  }
+}
+
+// Sending messages
+Siren_Object.send0 = function(context, message) {
+  var selector = context.lookup(this, message);
+  if (selector)
+    return this[selector].call(this);
+  else
+    return recover(this, context, message, []);
+};
+
+Siren_Object.send1 = function(context, message, a) {
+  var selector = context.lookup(this, message);
+  if (selector)
+    return this[selector].call(this, a);
+  else
+    return recover(this, context, message, [a]);
+};
+
+Siren_Object.send2 = function(context, message, a, b) {
+  var selector = context.lookup(this, message);
+  if (selector)
+    return this[selector].call(this, a, b);
+  else
+    return recover(this, context, message, [a, b]);
+};
+
+Siren_Object.send3 = function(context, message, a, b, c) {
+  var selector = context.lookup(this, message);
+  if (selector)
+    return this[selector].call(this, a, b, c);
+  else
+    return recover(this, context, message, [a, b, c]);
+};
+
+Siren_Object.sendN = function(context, message, args) {
+  var selector = context.lookup(this, message);
+  if (selector)
+    return this[selector].call.apply(this[selector], [this].concat(args));
+  else
+    return recover(this, context, message, args);
+};
+
+
+// -- Global instances -------------------------------------------------
+
+// The global context for perspectives
+var $context = new Context(null);
+
+// The global meta-data mapping
+var $meta = new Meta();
+
+
+// -- Constructing internal instances ----------------------------------
+
+function objectToRecord(object, context) {
+  var box = context.get(object) || {};
+  var r = {};
+  keys(box).forEach(function(key) {
+    r[key] = object[box[key]];
+  });
+  return r;
+}
+
+function $extendObject(object, record) {
+  var mapping = {};
+  var ks = keys(record);
+  for (var i = 0; i < ks.length; ++i) {
+    var key = ks[i];
+    var selector = Symbol(key);
+    object[selector] = record[key];
+    mapping[key] = selector;
   }
 
-  // ### function: extend(a, b)
-  // Copies all own enumerable properties of `b` to `a`.
-  //
-  // @type: (Object, Object) -> Object
-  function extend(a, b) {
-    keys(b).forEach(function(k){ a[k] = b[k] });
-    return a;
-  }
-
-
-  // Type checkers
-  function assert_arity(f, n) {
-    if (f.length !== n) {
-      throw new RangeError('Wrong number of arguments (' + n + ') provided for ' + nameOf(f) );
-    }
-  }
-
-  function assert_number(a) {
-    if (internalClassOf.call(a) !== '[object Number]')
-      throw new TypeError('Not a Float.');
-  }
-
-  function assert_bigint(a) {
-    if (!BigNum.isBigNum(a)) {
-      throw new TypeError('Not an Integer.')
-    }
-  }
-
-  function assert_function(a) {
-    if (typeof a !== 'function')
-      throw new TypeError('Not a function.');
-  }
-
-  function assert_string(a) {
-    if (internalClassOf.call(a) !== '[object String]')
-      throw new TypeError('Not a string.');
-  }
-
-  function assert_array(a) {
-    if (!Array.isArray(a))
-      throw new TypeError('Not an array.');
-  }
-
-  function assert_exists(object, key) {
-    if (!(key in object))
-      throw new TypeError(key + ' does not exist in Object.');
-  }
-
-  function isNumber(a) {
-    return internalClassOf.call(a) === '[object Number]';
-  }
-
-  function isString(a) {
-    return internalClassOf.call(a) === '[object String]';
-  }
-
-  function isFunction(a) {
-    return typeof a === 'function';
-  }
-
-  function isPrimitiveP(a) {
-    return isNumberP(a)
-        || isStringP(a)
-        || isFunction(a);
-  }
-
-  function assert_bounds(n, min, max) {
-    if (n < min || n > max) {
-      throw new RangeError("Index " + n + " out of bounds " + min + "..." + max);
-    }
-  }
-
-  // -- Message handling -----------------------------------------------
-
-  // ### class: MethodBox()
-  //
-  // Provides scoped resolution of message names to message selectors.
-  //
-  // Messages in Siren are stored in each object as unique selector
-  // values. To translate a name such as `+` or `add:to:` it uses a
-  // `MethodBox` object available in that scope, which provides the
-  // mapping of names to selector values.
-  //
-  // @type: new (MethodBox | null)
-  function MethodBox(parent) {
-    this.parent = parent;
-    this.methods = new WeakMap();
-  }
-
-  // #### method: set(object, value)
-  // Adds a new mapping to the given object.
-  //
-  // @type: (Object, { String -> Symbol }) -> Unit
-  MethodBox.prototype.set = function(object, value) {
-    this.methods.set(object, value);
-  };
-
-  // #### method: get(object)
-  // Returns the mapping for the given object.
-  //
-  // @type: Object -> { String -> Symbol }
-  MethodBox.prototype.get = function(object) {
-    return this.methods.get(object);
-  };
-
-  // #### method: lookup(object, name)
-  // Retrieves the selector value for the object / name pair provided.
-  // Looks up in the whole prototype chain of the object before falling
-  // back to the parent (MethodBox) scope.
-  //
-  // @type: (Object, String) -> Symbol | null
-  MethodBox.prototype.lookup = function(object, name) {
-    if (object == null)  return null;
-
-    var box = this.get(object);
-    if (box) {
-      var selector = box[name];
-      if (selector)  return selector;
-    }
-    if (this.parent) {
-      var selector = this.parent.lookup(object, name);
-      if (selector)  return selector;
-    }
-    return this.lookup(prototypeOf(object), name);
-  };
-
-  // #### method: list(object)
-  // Returns a dictionary containing all translations of name -> selector value
-  // for the given object in this box (and any of its parents).
-  //
-  // @type: Object -> { String -> Symbol }
-  MethodBox.prototype.list = function(object) {
-    if (object == null)  return {};
-
-    var methods = extend({}, this.get(object) || {});
-    if (this.parent)  extend(methods, this.parent.list(object));
-    extend(methods, this.list(prototypeOf(object)));
-    return methods;
-  };
-
-  // #### method: clone()
-  // Returns a new MethodBox that inherits the mappings of this one.
-  //
-  // @type: () -> MethodBox
-  MethodBox.prototype.clone = function() {
-    return new MethodBox(this);
-  };
-
-  // #### method: merge(...traits)
-  // Adds a series of traits to the mappings in this method box.
-  //
-  // @type: (...(Object, { String -> Symbol })) -> Unit
-  MethodBox.prototype.merge = function() {
-    [].forEach.call(arguments, function(pair) {
-      var proto = pair[0];
-      var mappings = pair[1];
-      var box = this.get(proto) || {};
-      extend(box, mappings);
-      this.set(proto, box);
-    }.bind(this));
-  };
-
-  // -- Meta-data handling ---------------------------------------------
-
-  // ### class: Meta()
-  //
-  // Every object in Siren can contain meta-data about itself,
-  // this meta-data lives in a separate object. The `Meta` object
-  // holds mappings of Object to a dictionary of meta-data.
-  function Meta() {
-    this.data = new WeakMap();
-  }
-
-  // #### method: get(object, name)
-  // Retrieves a meta-data property from the object.
-  //
-  // @type: (Object, String) -> Siren.Object | null
-  Meta.prototype.get = function(object, name) {
-    return (this.data.get(object) || {})[name];
-  };
-
-  // #### method: set(object, name, value)
-  // Defines a new meta-data for the object.
-  //
-  // @type: (Object, String, Siren.Object) -> Unit
-  Meta.prototype.set = function(object, name, value) {
-    var metas = this.data.get(object) || {};
-    metas[name] = value;
-    this.data.set(object, metas);
-  };
-
-  // -- VM primitives --------------------------------------------------
-
-  // --- Messages ------------------------------------------------------
-  // #### function: $send(object, message, method, args)
-  // Sends a message to an object.
-  //
-  // @type: (Siren.Object, String, MethodBox, [Siren.Object]) -> Siren.Object
-  function $send(object, message, methods, args) {
-    var selector = methods.lookup(Object(object), message);
-    if (selector) {
-      switch (args.length) {
-        case 0: return object[selector]();
-        case 1: return object[selector](args[0]);
-        case 2: return object[selector](args[0], args[1]);
-        case 3: return object[selector](args[0], args[1], args[2]);
-        default: return object[selector].apply(object, args);
-      }
-    } else {
-      var recoverSelector = methods.lookup(Object(object), 'does-not-understand:with-arguments:');
-      if (recoverSelector && object[recoverSelector])
-        return object[recoverSelector].call(object, message, args);
-      else
-        throw new Error('Failed to send ' + message);
-    }
-  };
-
-  // --- Non-local returns ---------------------------------------------
-
-  // #### class: Return()
-  // Represents non-local returns.
-  //
-  // @type: new (Siren.Object)
-  function Return(value) {
-    this.value = value;
-  }
-
-  // #### function: $return(value)
-  // Does a non-local return (can only be used inside blocks).
-  //
-  // @type: (Siren.Object) -> Unit :: throws Siren.Object
-  function $return(value) {
-    throw new Return(value);
-  }
-
-  // #### function: $handleReturn(value)
-  // Handles non-local returns after the stack has been unwinded.
-  // This accounts for the possibility of non-Return objects being
-  // thrown by Siren code.
-  //
-  // @type: (Any) -> Siren.Object | Unit :: throws Object
-  function $handleReturn(value) {
-    if (value instanceof Return)
-      return value.value;
-    else
-      throw value;
-  }
-
-  // --- Scoped extensions / traits ------------------------------------
-
-  // #### function: pairsToObject(pairs)
-  // Reifies a series of [selector, value] pairs into an Object.
-  //
-  // @type: [(Symbol, Siren.Object)] -> { Symbol -> Siren.Object }
-  function pairsToObject(pairs) {
-    return pairs.reduce(function(r, p) {
-      r[p[0]] = p[1];
-      return r;
-    }, Object.create(null));
-  }
-
-  // #### function: $extendObject(object, record)
-  // Extends a Siren object with properties coming from a plain JS object.
-  //
-  // @type: (Siren.Object, { String -> Siren.Object }) -> Siren.Object
-  function $extendObject(object, record) {
-    var pairs = keys(record).map(function(k) {
-      var selector = Symbol(k);
-      object[selector] = record[k];
-      return [k, selector];
-    });
-
-    return [object, pairsToObject(pairs)];
-  }
-
-  // #### function: $makeObject(record, prototype)
-  // Constructs a new Siren object, optionally with the given prototype.
-  //
-  // @type: ({ String -> Siren.Object}, Siren.Object | null) -> Siren.Object
-  function $makeObject(record, prototype) {
-    if (prototype === undefined) prototype = Base;
-    var result = Object.create(prototype);
-    $methods.merge($extendObject(result, record));
-    return result;
-  }
-
-  // #### function: $makeFunction(fn, meta)
-  // Constructs a function and assigns meta-data to it.
-  //
-  // @type: (Function, { String -> Siren.Object }) -> Function
-  function $makeFunction(fn, meta) {
-    meta = meta || {};
-    if (meta.name) fn.displayName = meta.name;
-    $meta.set(fn, meta);
-    return fn;
-  }
-
-  // #### function: $makeModule(dirname, require, runtime)
-  // Constructs a module.
-  //
-  // @type: (String, Function, Siren) -> Module
-  function $makeModule(jsModule, require, runtime) {
-    var module = Object.create(ModuleProto);
-    module['filename'] = jsModule.filename;
-    module['require'] = require;
-    module['runtime'] = runtime;
-    return module;
-  }
-
-  // --- Importing / Exporting objects ---------------------------------
-  // A symbol attached to objects that describes how they convert to JS
-  var $export = Symbol('siren->js');
-  var $import = Symbol('js->siren');
-
-  // #### function: wrap(instance, namespace)
-  // Wraps an object giving it a `send` method for interacting in the JS side.
-  //
-  // @type: (Siren.Object, MethodBox) -> Object
-  function wrap(instance, namespace) {
-    var wrapper = {
-      send: function(message, args) {
-        return wrap($send(instance, message, namespace, args), namespace);
-      }
-    };
-    wrapper[$import] = function(){
-      return instance;
-    };
-    return wrapper;
-  }
-
-  // --- Global instances ----------------------------------------------
-  // The cache of modules that have been lazily loaded
-  var moduleCache = Object.create(null);
-
-  // The global method scope
-  var $methods = new MethodBox();
-
-  // The global meta-data mapping
-  var $meta = new Meta();
-
-  // The base object from which all Siren objects descend
-  var Base = Object.create(Object.prototype);
-
-  // The base prototype for modules
-  var ModuleProto = Object.create(Base);
-
-  // A symbol for branding objects
-  var Brand = Symbol('Brand');
-
-  // --- Primitive operations ------------------------------------------
-  var Primitives = $makeObject({
-    'as-string': function() {
-      return '<VM primitives>';
-    },
-
-    'does-not-understand:with-arguments:': function(message, args) {
-      throw new Error('No primitive ' + message);
-    },
-
-    // Branding
-    'brand/of:is-same-brand?:': function(a, b) {
-      if (a == null || b == null)  return false;
-      else                         return a[Brand]
-                                       && b[Brand]
-                                       && a[Brand] === b[Brand];
-    },
-
-    'brand/new:': function(description) {
-      return { toString: function(){ return description }};
-    },
-
-    'brand/of:': function(object) {
-      return object[Brand];
-    },
-
-    'brand/attach:to:': function(brand, object) {
-      object[Brand] = brand;
-    },
-
-    // Special VM operations
-    'failed?:': function(a) {
-      return a == null;
-    },
-
-    'make-object:inheriting:': function(object, proto) {
-      return $makeObject(object, proto);
-    },
-
-    'apply-trait-globally:': function(trait) {
-      $methods.merge(trait);
-    },
-
-    'define-global:as:': function(name, value) {
-      var record = Object.create(null);
-      record[name] = value;
-      $methods.merge($extendObject(Siren, record));
-    },
-
-    'global-methods': function() {
-      return $methods;
-    },
-
-    // Native objects
-    'native-string': function() {
-      return String.prototype;
-    },
-
-    'native-float': function() {
-      return Number.prototype;
-    },
-
-    'native-integer': function() {
-      return BigNum.prototype;
-    },
-
-    'native-array': function() {
-      return Array.prototype;
-    },
-
-    'native-object': function() {
-      return Object.prototype;
-    },
-
-    'native-function': function() {
-      return Function.prototype;
-    },
-
-    'native-global': function() {
-      return globalObject;
-    },
-
-    'native-module': function() {
-      return ModuleProto;
-    },
-
-    // Special forms
-    'if:then:else:': function(a, b, c) {
-      return a? b : c;
-    },
-
-    'while:do:': function(a, b) {
-      while(a()) b();
-    },
-
-    'forever:': function(a) {
-      while(true) a();
-    },
-
-    'for:while:step:do:': function(a, b, c, d) {
-      for(a(); b(); c()) d();
-    },
-
-    'try:recover:': function(f, recover) {
-      try {
-        return f();
-      } catch(e) {
-        return recover(e);
-      }
-    },
-
-    // JS operations
-    'js/to-string:': function(a) {
-      return String(a);
-    },
-
-    'js/value:instance-of?:': function(a, b) {
-      return a instanceof b;
-    },
-
-    'js/from:in:invoke:with:': function(object, context, selector, args) {
-      return object[selector].apply(context, args);
-    },
-
-    'js/from:invoke:': function(object, selector) {
-      return object[selector]();
-    },
-
-    'js/from:invoke:arg1:': function(object, selector, a) {
-      return object[selector](a);
-    },
-
-    'js/from:invoke:arg1:arg2:': function(object, selector, a, b) {
-      return object[selector](a, b);
-    },
-
-    'js/from:invoke:arg1:arg2:arg3:': function(object, selector, a, b, c) {
-      return object[selector](a, b, c);
-    },
-
-    'js/call:': function(fn) {
-      return fn();
-    },
-
-    'js/call:arg1:': function(fn, a) {
-      return fn(a);
-    },
-
-    'js/call:arg1:arg2:': function(fn, a, b) {
-      return fn(a, b);
-    },
-
-    'js/call:arg1:arg2:arg3:': function(fn, a, b, c) {
-      return fn(a, b, c);
-    },
-
-    'js/call:with:': function(fn, args) {
-      return fn.apply(null, args);
-    },
-
-    'js/new:': function(Ctor) {
-      return new Ctor;
-    },
-
-    'js/new:with:': function(Ctor, args) {
-      var instance = Object.create(Ctor.prototype);
-      var result = Ctor.apply(instance, args);
-      return Object(result) === result? result : instance;
-    },
-
-    'js/object:has:': function(object, key) {
-      return key in object;
-    },
-
-    'js/object:at:': function(object, key) {
-      return object[key];
-    },
-
-    'js/object:at:put:': function(object, key, value) {
-      object[key] = value;
-    },
-
-    'js/object:delete-at:': function(object, key) {
-      delete object[key];
-    },
-
-    'js/plus:and:': function(a, b) {
-      return a + b;
-    },
-
-    'js/minus:and:': function(a, b) {
-      return a - b;
-    },
-
-    'js/div:and:': function(a, b) {
-      return a / b;
-    },
-
-    'js/mod:and:': function(a, b) {
-      return a % b;
-    },
-
-    'js/bit-and:and:': function(a, b) {
-      return a & b;
-    },
-
-    'js/bit-or:and:': function(a, b) {
-      return a | b;
-    },
-
-    'js/bit-xor:and:': function(a, b) {
-      return a ^ b;
-    },
-
-    'js/bit-shr:and:': function(a, b) {
-      return a >> b;
-    },
-
-    'js/bit-shl:and:': function(a, b) {
-      return a << b;
-    },
-
-    'js/bit-ushr:and:': function(a, b) {
-      return a >>> b;
-    },
-
-    'js/and:and:': function(a, b) {
-      return a && b;
-    },
-
-    'js/or:and:': function(a, b) {
-      return a || b;
-    },
-
-    'js/not:': function(a) {
-      return !a;
-    },
-
-    'js/abstract-equal:and:': function(a, b) {
-      return a == b;
-    },
-
-    'js/strict-equal:and:': function(a, b) {
-      return a === b;
-    },
-
-    'js/abstract-not-equal:and:': function(a, b) {
-      return a != b;
-    },
-
-    'js/strict-not-equal:and:': function(a, b) {
-      return a !== b;
-    },
-
-    'js/greater-than:and:': function(a, b) {
-      return a > b;
-    },
-
-    'js/less-than:and:': function(a, b) {
-      return a < b;
-    },
-
-    'js/greater-or-equal-to:and:': function(a, b) {
-      return a >= b;
-    },
-
-    'js/less-or-equal-to:and:': function(a, b) {
-      return a <= b;
-    },
-
-    // Method Boxes
-    'method/list:for:': function(box, object) {
-      return box.list(object);
-    },
-
-    'method/lookup:in:for:': function(name, box, object) {
-      return box.lookup(object, name);
-    },
-
-    // Objects
-    'object:has?:': function(object, name) {
-      return name in Object(object);
-    },
-
-    'object:at:': function(object, name) {
-      return object[name];
-    },
-
-    'object:at-key:': function(object, name) {
-      return object[name];
-    },
-
-    'object:at:put:': function(object, name, value) {
-      object[name] = value;
-    },
-
-    'object:remove-at:': function(object, key) {
-      delete object[key];
-    },
-
-    'object/keys:': function(object) {
-      return Object.keys(object);
-    },
-
-    'object:equals?:': function(a, b) {
-      return a === b;
-    },
-
-    'object:not-equals?:': function(a, b) {
-      return a !== b;
-    },
-
-    'object/new': function() {
-      return Object.create(null);
-    },
-
-    // Booleans
-    'true': function() {
-      return true;
-    },
-
-    'false': function() {
-      return false;
-    },
-
-    // Numbers
-    'float/max-value': function() {
-      return Number.MAX_VALUE;
-    },
-
-    'float/min-value': function() {
-      return Number.MIN_VALUE;
-    },
-
-    'float/nan': function() {
-      return NaN;
-    },
-
-    'float/-infinity': function() {
-      return Number.NEGATIVE_INFINITY;
-    },
-
-    'float/+infinity': function() {
-      return Number.POSITIVE_INFINITY;
-    },
-
-    'float/nan?:': function(a) {
-      return isNaN(a);
-    },
-
-    'float/finite?:': function(a) {
-      return isFinite(a);
-    },
-
-    'float/as-exponential:': function(a) {
-      return a.toExponential();
-    },
-
-    'float:as-fixed:': function(a, b) {
-      return a.toFixed(b);
-    },
-
-    'float/as-locale-string:': function(a) {
-      return a.toLocaleString();
-    },
-
-    'float/as-string:': function(a) {
-      return a.toString();
-    },
-
-    'float:plus:': function(a, b) {
-      return a + b;
-    },
-
-    'float:minus:': function(a, b) {
-      return a - b;
-    },
-
-    'float:times:': function(a, b) {
-      return a * b;
-    },
-
-    'float:div:': function(a, b) {
-      return a / b;
-    },
-
-    'float:modulus:': function(a, b) {
-      return a % b;
-    },
-
-    'float:equals?:': function(a, b) {
-      if (isNumber(b)) {
-        return a.valueOf() === b.valueOf();
-      } else if (BigNum.isBigNum(b)) {
-        return a.valueOf() === b.toNumber();
-      } else {
-        return false;
-      }
-    },
-
-    'float:not-equals?:': function(a, b) {
-      if (BigNum.isBigNum(b)) {
-        return a.valueOf() !== b.toNumber();
-      } else if (isNumber(b)) {
-        return a.valueOf() !== b.valueOf();
-      } else {
-        return false;
-      }
-    },
-
-    'float:greater?:': function(a, b) {
-      return a > b;
-    },
-
-    'float:greater-or-equal?:': function(a, b) {
-      return a >= b;
-    },
-
-    'float:less-than?:': function(a, b) {
-      return a < b;
-    },
-
-    'float:less-than-or-equal?:': function(a, b) {
-      return a <= b;
-    },
-
-    'float:bit-shift-right:': function(a, b) {
-      return a >> b;
-    },
-
-    'float:bit-shift-left:': function(a, b) {
-      return a << b;
-    },
-
-    'float:unsigned-bit-shift-right:': function(a, b) {
-      return a >>> b;
-    },
-
-    'float:bit-or:': function(a, b) {
-      return a | b;
-    },
-
-    'float:bit-and:': function(a, b) {
-      return a & b;
-    },
-
-    'float:bit-xor:': function(a, b) {
-      return a ^ b;
-    },
-
-    'float/absolute:': function(a) {
-      return Math.abs(a);
-    },
-
-    'float/arccosine:': function(a) {
-      return Math.acos(a);
-    },
-
-    'float/arcsine:': function(a) {
-      return Math.asin(a);
-    },
-
-    'float/arctangent:': function(a) {
-      return Math.atan(a);
-    },
-
-    'float:arctangent:': function(a, b) {
-      return Math.atan2(a, b);
-    },
-
-    'float/cosine:': function(a) {
-      return Math.cos(a);
-    },
-
-    'float/exp:': function(a) {
-      return Math.exp(a);
-    },
-
-    'float/log:': function(a) {
-      return Math.log(a);
-    },
-
-    'float:power:': function(a, b) {
-      return Math.pow(a, b);
-    },
-
-    'float/sine:': function(a) {
-      return Math.sin(a);
-    },
-
-    'float/square-root:': function(a) {
-      return Math.sqrt(a);
-    },
-
-    'float/tangent:': function(a) {
-      return Math.tan(a);
-    },
-
-    'float/ceil:': function(a) {
-      return Math.ceil(a);
-    },
-
-    'float/floor:': function(a) {
-      return Math.floor(a);
-    },
-
-    'float/round:': function(a) {
-      return Math.round(a);
-    },
-
-    // Big Ints
-    'int/to-string:': function(a) {
-      return a.toString();
-    },
-
-    'int/to-number:': function(a) {
-      return a.toNumber();
-    },
-
-    'int/plus:and:': function(a, b) {
-      return a.add(b);
-    },
-
-    'int/sub:and:': function(a, b) {
-      return a.sub(b);
-    },
-
-    'int/mul:and:': function(a, b) {
-      return a.mul(b);
-    },
-
-    'int/div:and:': function(a, b) {
-      return a.div(b);
-    },
-
-    'int/abs:': function(a) {
-      return a.abs();
-    },
-
-    'int/neg:': function(a) {
-      return a.neg();
-    },
-
-    'int/cmp:and:': function(a, b) {
-      return a.cmp(b);
-    },
-
-    'int/gt:and:': function(a, b) {
-      return a.gt(b);
-    },
-
-    'int/ge:and:': function(a, b) {
-      return a.ge(b);
-    },
-
-    'int/eq:and:': function(a, b) {
-      return a.eq(b);
-    },
-
-    'int/lt:and:': function(a, b) {
-      return a.lt(b);
-    },
-
-    'int/le:and:': function(a, b) {
-      return a.le(b);
-    },
-
-    'int/band:and:': function(a, b) {
-      return a.and(b);
-    },
-
-    'int/bor:and:': function(a, b) {
-      return a.or(b);
-    },
-
-    'int/bxor:and:': function(a, b) {
-      return a.xor(b);
-    },
-
-    'int/mod:and:': function(a, b) {
-      return a.mod(b);
-    },
-
-    'int/pow:by:': function(a, b) {
-      return a.pow(b);
-    },
-
-    'int/sqrt:': function(a) {
-      return a.sqrt();
-    },
-
-    'int/shift-left:by:': function(a, b) {
-      return a.shiftLeft(b);
-    },
-
-    'int/shift-right:by:': function(a, b) {
-      return a.shiftRight(b);
-    },
-
-    'int/bit-length:': function(a) {
-      return a.bitLength();
-    },
-
-    // Strings
-    'string:repeat:': function(a, b) {
-      return Array(b + 1).join(a);
-    },
-
-    'string/length:': function(a) {
-      return a.length;
-    },
-
-    'string/from-char-code:': function(a) {
-      return String.fromCharCode(a);
-    },
-
-    'string:at:': function(a, b) {
-      return a.charAt(b - 1);
-    },
-
-    'string:code-at:': function(a, b) {
-      return a.charCodeAt(b - 1);
-    },
-
-    'string:concat:': function(a, b) {
-      return a + b;
-    },
-
-    'string:index-of:': function(a, b) {
-      return a.indexOf(b) + 1;
-    },
-
-    'string:last-index-of:': function(a, b) {
-      return a.lastIndexOf(b) + 1;
-    },
-
-    'string:slice-from:': function(a, b) {
-      return a.slice(b + 1);
-    },
-
-    'string:slice-from:to:': function(a, b, c) {
-      return a.slice(a, b, c);
-    },
-
-    'string/lower-case:': function(a) {
-      return a.toLowerCase();
-    },
-
-    'string/upper-case:': function(a) {
-      return a.toUpperCase();
-    },
-
-    'string/trim:': function(a) {
-      return a.trim();
-    },
-
-    'string:each:': function(a, f) {
-      for (var i = 0; i < a.length; ++i)
-        f(a.charAt(i));
-    },
-
-    'string:equals?:': function(a, b) {
-      if (!isString(a) || !isString(b)) {
-        return false;
-      } else {
-        return a.valueOf() === b.valueOf();
-      }
-    },
-
-    'string:split:': function(a, b) {
-      return a.split(b);
-    },
-
-    // Arrays
-    'array/new': function() {
-      return [];
-    },
-
-    'array/new:with:': function(a, b) {
-      var xs = [];
-      for (var i = 0; i < a; ++i) xs[i] = b;
-      return xs;
-    },
-
-    'array/length:': function(a) {
-      return a.length;
-    },
-
-    'array:concat:': function(a, b) {
-      return a.concat(b);
-    },
-
-    'array:at:': function(a, b) {
-      return a[b - 1];
-    },
-
-    'array:at:put:': function(a, b, c) {
-      a[b - 1] = c;
-    },
-
-    'array:reduce:from:': function(a, f, i) {
-      var r = i;
-      for (var j = 0; j < a.length; ++j) r = f(r, a[j]);
-      return r;
-    },
-
-    'array:reduce-right:from:': function(a, f, i) {
-      var r = i;
-      for (var j = a.length; --j;) r = f(r, a[j]);
-      return r;
-    },
-
-    'array:each:': function(a, f) {
-      for (var i = 0; i < a.length; ++i)
-        f(a[i]);
-    },
-
-    'array:map:': function(a, f) {
-      var result = [];
-      for (var i = 0; i < a.length; ++i)
-        result[i] = f(a[i]);
-      return result;
-    },
-
-    'array:filter:': function(a, f) {
-      var result = [];
-      for (var i = 0; i < a.length; ++i)
-        if (f(a[i]))  result.push(a[i]);
-      return result;
-    },
-
-    'array:index-of:': function(a, b) {
-      return a.indexOf(b) + 1;
-    },
-
-    'array:last-index-of:': function(a, b) {
-      return a.lastIndexOf(b) + 1;
-    },
-
-    'array:join:': function(a, b) {
-      return a.join(b);
-    },
-
-    'array:push:': function(a, b) {
-      a.push(b);
-    },
-
-    'array/shallow-copy:': function(a) {
-      return a.slice();
-    },
-
-    'array/pop:': function(a) {
-      return a.pop();
-    },
-
-    'array/shift:': function(a) {
-      return a.shift();
-    },
-
-    'array:unshift:': function(a, b) {
-      return a.unshift(b);
-    },
-
-    'array/reverse:': function(a) {
-      return a.reverse();
-    },
-
-    'array:sort:': function(a, f) {
-      return a.sort(f);
-    },
-
-    'array:remove-at:': function(a, b) {
-      a.splice(b, 1);
-    },
-
-    // Errors
-    'throw:': function(e) {
-      throw e;
-    },
-
-    'error:reason:': function(name, reason) {
-      var e = new Error(reason);
-      e.name = name;
-      return e;
-    },
-
-    // Parsing
-    'parse/float:': function(a) {
-      return parseFloat(a);
-    },
-
-    'parse/int:radix:': function(a, b) {
-      return parseInt(a, b);
-    },
-
-    // JSON
-    'json/parse:': function(a) { // TODO: handle errors
-      return JSON.parse(a);
-    },
-
-    'json/stringify:': function(a) {
-      return JSON.stringify(a);
-    },
-
-    // Functions
-    'function:in-context:call-with-argument:': function(a, b, c) {
-      assert_function(a);
-      return a.call(b, c);
-    },
-
-    'function:in-context:apply-arguments:': function(a, b, c) {
-      assert_function(a); assert_array(c);
-      return a.apply(b, c);
-    },
-
-    'function/invoke0:': function(f) {
-      assert_arity(f, 0);
-      return f();
-    },
-
-    'function/invoke1:a:': function(f, a) {
-      assert_arity(f, 1);
-      return f(a);
-    },
-
-    'function/invoke2:a:b:': function(f, a, b) {
-      assert_arity(f, 2);
-      return f(a, b);
-    },
-
-    'function/invoke3:a:b:c:': function(f, a, b, c) {
-      assert_arity(f, 3);
-      return f(a, b, c);
-    },
-
-    'function/invoke4:a:b:c:d:': function(f, a, b, c, d) {
-      assert_arity(f, 4);
-      return f(a, b, c, d);
-    },
-
-    'function/invoke5:a:b:c:d:e:': function(f, a, b, c, d, e) {
-      assert_arity(f, 5);
-      return f(a, b, c, d, e);
-    },
-
-    'function/invoke*:with:': function(f, xs) {
-      assert_arity(f, xs.length);
-      return f.apply(null, xs);
-    },
-
-    'function/arity:': function(a) {
-      assert_function(a);
-      return a.length;
-    },
-
-    'function/name:': function(a) {
-      return '<function ' + nameOf(this).slice(1, -1) + '>';
-    },
-
-    // foreign
-    'symbol:': function(name) {
-      return Symbol(name);
-    },
-
-    'foreign/invoke*:in:with:': function(f, c, xs) {
-      return f.apply(c, xs);
-    },
-
-    'foreign/convert:as:': function(f, c) {
-      f[$export] = c;
-    },
-
-    'foreign/export:': function(o) {
-      if (o[$export]) {
-        return o[$export](o);
-      } else {
-        return wrap(o, $methods);
-      }
-    },
-
-    'foreign/match:with:': function(o, p) {
-      if (o[$import]) {
-        return o[$import]();
-      } else {
-        var type = o == null?         'unit'
-                 : isBooleanP(o)?     'boolean'
-                 : isPrimitiveP(o)?   'primitive'
-                 : Array.isArray(o)?  'array'
-                 : /* otherwise */    'object';
-        return $send(p, type, $methods, []);
-      }
-    },
-
-    // Assertions
-    'assert/function:has-arity:': assert_arity,
-    'assert/number?:': assert_number,
-    'assert/function?:': assert_function,
-    'assert/string?:': assert_string,
-    'assert/array?:': assert_array,
-    'assert/object:has-key:': assert_exists,
-    'assert/number:is-at-least:and-at-most:': assert_bounds,
-
-    // Global prototypes / Utilities
-    'meta/for:at:': function(object, name) {
-      return $meta.get(object, name);
-    },
-
-    'meta/for:at:put:': function(object, name, value) {
-      $meta.set(object, name, value);
-    },
-
-    'defer:': function(f) {
-      process.nextTick(f);
-    },
-
-    'timer/delay:by:': function(f, s) {
-      return setTimeout(f, s);
-    },
-
-    'timer/cancel:': function(x) {
-      clearTimeout(x);
-    },
-
-    'debugger': function(){
-      debugger;
-    },
-
-    'require:': function(path) {
-      return require(path);
-    },
-
-    // File System
-    'path/join:to:': function(a, b) {
-      return path.join(a, b);
-    },
-    'path/extension:': function(a) {
-      return path.extname(a);
-    },
-    'path/normalise:': function(a) {
-      return path.normalize(a);
-    },
-    'path/absolute?:': function(a) {
-      return path.isAbsolute(a);
-    },
-    'fs/exists?:notify:': function(p, c) {
-      fs.exists(p, c);
-    },
-    'fs/rename:to:on-success:on-failure:': function(a, b, f, g) {
-      fs.rename(a, b, function(err, res) {
-        if (err) g(err); else f(res);
-      });
-    },
-    'fs/change:owner:group:on-success:on-failure:': function(a, b, c, f, g) {
-      fs.chown(a, b, c, function(err, res) {
-        if (err) g(err); else f(res);
-      });
-    },
-    'fs/change:mode:on-success:on-failure:': function(a, b, f, g) {
-      fs.chmod(a, b, function(err, res) {
-        if (err) g(err); else f(res);
-      });
-    }
-  }, null);
-
-  // -- Module loading -------------------------------------------------
-  function loadModule(name) {
-    if (moduleCache[name]) {
-      moduleCache[name] = require(name)(Siren, Primitives);
-    }
-    return moduleCache[name];
-  }
-
-  // -- Global configuration -------------------------------------------
-  // Special internal functions available to all modules
-  var Siren = Object.create(Base);
-  extend(Siren, {
-    '$methods'      : $methods,
-    '$send'         : $send,
-    '$extend'       : $extendObject,
-    '$make'         : $makeObject,
-    '$fn'           : $makeFunction,
-    '$makeModule'   : $makeModule,
-    '$int'          : BigNum,
-    '$negint'       : function(a){ return BigNum(a).neg() },
-    '$return'       : $return,
-    '$handleReturn' : $handleReturn
+  return [object, mapping];
+}
+
+function $makeObject(record, prototype) {
+  var result = Object.create(prototype);
+  result[defaultPerspective] = $extendObject(result, record);
+  $context.merge([result[defaultPerspective]]);
+  return result;
+}
+
+function $makeInternalObject(record) {
+  keys(record).forEach(function(k) {
+    record[k] = $makeFunction(record[k]);
   });
 
-  $methods.merge($extendObject(Siren, {
-    'Root': function(){ return Base }
-  }));
+  return $makeObject(record, Siren_Object);
+}
 
-  // Define global objects that are reachable in the prelude
-  // Modules are expected to update the globals as necessary
-  require('./00-Core')(Siren, Primitives);
-  require('./01-Meta')(Siren, Primitives);
-  require('./02-JS-Alien')(Siren, Primitives);
-  require('./03-Reflection')(Siren, Primitives);
-  require('./04-Result')(Siren, Primitives);
-  require('./05-Block')(Siren, Primitives);
-  require('./06-Boolean')(Siren, Primitives);
-  require('./07-Text')(Siren, Primitives);
-  require('./08-Tuple')(Siren, Primitives);
-  require('./09-Numeric')(Siren, Primitives);
-  require('./10-Range')(Siren, Primitives);
-  require('./11-Reference')(Siren, Primitives);
+function $_extend(object, record) {
+  keys(record).forEach(function(k) {
+    var o = {};
+    o[k] = $makeFunction(record[k], {
+      name: new _Text(k),
+      arguments: new _Tuple(parseArgs(record[k]).slice(1).map($text)),
+      documentation: new _Text(''),
+      source: '<native>',
+      filename: '<native>'
+    });
+    $context.merge([$extendObject(object, o)]);
+  });
+  return object;
+}
 
-  return Siren;
-}();
+function $makeFunction(fn, meta) {
+  meta = meta || {};
+  if (meta.name)  fn.displayName = meta.name;
+  var result;
+  switch (fn.length) {
+    case 0:
+    result = new _Method0(fn);
+    break;
+
+    case 1:
+    result = new _Method1(fn);
+    break;
+
+    case 2:
+    result = new _Method2(fn);
+    break;
+
+    case 3:
+    result = new _Method3(fn);
+    break;
+
+    default:
+    result = new _MethodN(fn);
+  }
+  $meta.set(result, meta);
+  return result;
+}
+
+function $makeBlock(fn, meta) {
+  meta = meta || {};
+  if (meta.name)  fn.displayName = meta.name;
+  var result;
+  switch (fn.length) {
+    case 0:
+    result = new _Block0(fn);
+    break;
+
+    case 1:
+    result = new _Block1(fn);
+    break;
+
+    case 2:
+    result = new _Block2(fn);
+    break;
+
+    case 3:
+    result = new _Block3(fn);
+    break;
+
+    default:
+    result = new _BlockN(fn);
+  }
+  $meta.set(result, meta);
+  return result;
+}
+
+function $makeModule(jsModule, require, runtime) {
+  var module = Object.create(Siren_Module);
+  module.filename = jsModule.filename;
+  module.require = require;
+  module.runtime = runtime;
+  module.context = runtime.$context.clone();
+  return module;
+}
+
+function $int(n) {
+  return new _Integer(BigNum(n));
+}
+
+function $negInt(n) {
+  return new _Integer(BigNum(n).neg());
+}
+
+function $float(n) {
+  return new _Float(n);
+}
+
+function $text(s) {
+  return new _Text(s);
+}
+
+function $tuple(xs) {
+  return new _Tuple(xs);
+}
+
+var Siren = {
+  // Global stuff
+  '$context': $context,
+  '$global': Siren_Root,
+  '$object': Siren_Object,
+
+  // Internal functions
+  '$negint': $negInt,
+  '$int': $int,
+  '$float': $float,
+  '$text': $text,
+  '$tuple': $tuple,
+  '$makeModule': $makeModule,
+  '$makeFunction': $makeFunction,
+  '$makeBlock': $makeBlock,
+  '$makeObject': $makeObject
+};
+
+
+// -- Primitives for the runtime ---------------------------------------
+$_extend(Siren_Root, {
+  'vm'             : function(){ return Primitives; },
+  'Root'           : function(){ return Siren_Root; },
+  'Module'         : function(){ return Siren_Module; },
+  'Importer'       : function(){ return Siren_Importer; },
+  'Context'        : function(){ return Siren_Context; },
+  'Perspective'    : function(){ return Siren_Perspective; },
+  'Selector'       : function(){ return Siren_Selector; },
+  'Message'        : function(){ return Siren_Message; },
+
+  'Brand'           : function(){ return Siren_Brand; },
+  'Object-Branding' : function(){ return Siren_ObjectBranding; },
+
+  'Block'          : function(){ return Siren_Block; },
+  'Nullary-Block'  : function(){ return Siren_Block0; },
+  'Unary-Block'    : function(){ return Siren_Block1; },
+  'Binary-Block'   : function(){ return Siren_Block2; },
+  'Ternary-Block'  : function(){ return Siren_Block3; },
+  'N-Ary-Block'    : function(){ return Siren_BlockN; },
+
+  'Method'         : function(){ return Siren_Method; },
+  'Nullary-Method' : function(){ return Siren_Method0; },
+  'Unary-Method'   : function(){ return Siren_Method1; },
+  'Binary-Method'  : function(){ return Siren_Method2; },
+  'Ternary-Method' : function(){ return Siren_Method3; },
+  'N-Ary-Method'   : function(){ return Siren_MethodN; },
+
+  'Object'         : function(){ return Siren_Object; },
+  'Text'           : function(){ return Siren_Text; },
+  'Numeric'        : function(){ return Siren_Numeric; },
+  'Integer'        : function(){ return Siren_Integer; },
+  'Float-64bits'   : function(){ return Siren_Float; },
+  'Tuple'          : function(){ return Siren_Tuple; }
+});
+
+$_extend(Siren_Object, {
+  'does-not-understand:': function(self, message) {
+    assert_message(message);
+    var reason = safeDescribe(self) + " does not understand " +
+          message.name + ".\n\n" +
+          "It was given the arguments: [" +
+          message.args.map(safeDescribe).join(',') +
+          "], but is unable to perform any computation.\n\n" +
+          "Possible causes for this are:\n\n" +
+          " - Mistyping the message name;\n" +
+          " - Sending the message to the wrong object;\n" +
+          " - Not importing the correct traits in the current scope.";
+    var e = new Error(reason);
+    e.name = "<Message Send Failure>";
+    throw e;
+  },
+
+  'perform:in:': function(self, message, context) {
+    assert_message(message);
+    assert_context(context);
+    return self.sendN(context, message.name, message.args);
+  },
+
+  'refined-by:': function(self, object) {
+    return $makeObject(objectToRecord(object, $context), self);
+  },
+
+  'refined-by:in:': function(self, object, context) {
+    return $makeObject(objectToRecord(object, context), self);
+  },
+
+  'extended-by:in:': function(self, object, context) {
+    var p = $extendObject(self, objectToRecord(object, context));
+    return new _Perspective(p[0], p[1]);
+  },
+
+  'extended-by:': function(self, object) {
+    return self.send2($context, 'extended-by:in:', object, $context);
+  },
+
+  'describe': function(self) {
+    return new _Text('<Object>');
+  }
+});
+
+$_extend(Siren_Selector, {
+  'describe': function(self) {
+    return new _Text('<Selector: ' + self.symbol.toString() + '>');
+  },
+
+  'with-description:': function(self, description) {
+    assert_text(description);
+    return new _Selector(description);
+  },
+
+  '===': function(self, that) {
+    assert_selector(that);
+    return self.symbol === that.symbol;
+  },
+
+  'description': function(self) {
+    return self.symbol.toString();
+  }
+});
+
+$_extend(Siren_Message, {
+  'describe': function(self) {
+    return new _Text('<Message: ' + self.name + '>');
+  },
+
+  'name:arguments:': function(self, name, args) {
+    assert_text(name);
+    assert_tuple(args);
+    return new _Message(name.string, args.array);
+  },
+
+  'send-to:in:': function(self, object, context) {
+    return object.sendN(context, self.name, self.args);
+  },
+
+  'name': function(self) {
+    return new _Text(self.name);
+  },
+
+  'arguments': function(self) {
+    return new _Tuple(self.args);
+  }
+});
+
+$_extend(Siren_Context, {
+  'describe': function(self) {
+    return new _Text('<Context>');
+  },
+
+  'empty': function(self) {
+    return new Context(null);
+  },
+
+  'with:': function(self, perspective) {
+    assert_perspective(perspective);
+    return self.clone().merge([[perspective.object, perspective.mappings]]);
+  }
+});
+
+$_extend(Siren_Perspective, {
+  'describe': function(self) {
+    return new _Text('<Perspective on: ' + safeDescribe(self.object) + '>');
+  },
+
+  'target': function(self) {
+    return this.object;
+  },
+
+  ',': function(self, perspective) {
+    assert_perspective(perspective);
+    var result = Object.create(self);
+    result.mappings = {};
+    extend(result.mappings, self.mappings);
+    extend(result.mappings, perspective.mappings);
+  }
+});
+
+$_extend(Siren_Module, {
+  'describe': function(self) {
+    return new _Text('<Module at: ' + self.filename + '>');
+  },
+  'filename': function(self) {
+    return new _Text(self.filename);
+  },
+  'context': function(self) {
+    return self.context;
+  },
+  'import': function(self) {
+    return new _Importer(self);
+  }
+});
+
+$_extend(Siren_Importer, {
+  'describe': function(self) {
+    return new _Text('<Importer in ' + safeDescribe(self.module) + '>');
+  },
+
+  'siren:with-arguments:': function(self, module_id, _arguments) {
+    assert_text(module_id);
+    assert_tuple(_arguments);
+    return self.require(module_id.string).apply([Siren].concat(_arguments.array));
+  }
+});
+
+$_extend(Siren_Block, {
+  'apply:': function(self, _arguments) {
+    return self.call.apply(_arguments);
+  }
+});
+
+$_extend(Siren_Block0, {
+  'value': function(self) {
+    return self.call();
+  }
+});
+
+$_extend(Siren_Block1, {
+  'call:': function(self, arg1) {
+    return self.call(arg1);
+  }
+});
+
+$_extend(Siren_Block2, {
+  'call:with:': function(self, arg1, arg2) {
+    return self.call(arg1, arg2);
+  }
+});
+
+$_extend(Siren_Block3, {
+  'call:with:with:': function(self, arg1, arg2, arg3) {
+    return self.call(arg1, arg2, arg3);
+  }
+});
+
+$_extend(Siren_Method, {
+  'in:apply:': function(self, target, _arguments) {
+    return self.call.apply(target, [target].concat(_arguments));
+  }
+});
+
+$_extend(Siren_Method0, {
+  'in:': function(self, target) {
+    return self.call.call(target, target);
+  }
+});
+
+$_extend(Siren_Method1, {
+  'in:call:': function(self, target, arg1) {
+    return self.call.call(target, target, arg1);
+  }
+});
+
+$_extend(Siren_Method2, {
+  'in:call:with:': function(self, target, arg1, arg2) {
+    return self.call.call(target, target, arg1, arg2);
+  }
+});
+
+$_extend(Siren_Method3, {
+  'in:call:with:with:': function(self, target, arg1, arg2, arg3) {
+    return self.call.call(target, target, arg1, arg2, arg3);
+  }
+});
+
+$_extend(Siren_Text, {
+  'describe': function(self) {
+    return self;
+  }
+});
+
+
+var Primitives = $makeInternalObject({
+  'describe': function() {
+    return new _Text('<VM Primitives>');
+  },
+
+  // ---- Assertions
+  'assert/text:': function(_, a) {
+    assert_text(a);
+  },
+
+  'assert/selector:': function(_, a) {
+    if (a.symbol == null)
+      throw new TypeError("Expected a selector.");
+  },
+
+  'assert/number:between:and:': function(_, a, b, c) {
+    if (a.number < b.number || a.number > c.number)
+      throw new RangeError('Expected ' + (+a) + ' between ' + (+b) + ' and ' + (+c));
+  },
+
+  'assert/numeric:': function(_, a) {
+    if (a.number == null)
+      throw new TypeError("Expected a number.");
+  },
+
+  'assert/tuple:': function(_, a) {
+    if (!Array.isArray(a.array))
+      throw new TypeError('Expected a tuple.');
+  },
+
+  'assert/fail:': function(_, a) {
+    throw new Error(a.string);
+  },
+
+  // ---- Reifying primitive types
+  'text:': function(_, text) {
+    return $text(text);
+  },
+
+  'integer:': function(_, value) {
+    return $int(value);
+  },
+
+  'negative-integer:': function(_, value) {
+    return $negInt(value);
+  },
+
+  'float:': function(_, value) {
+    return $float(Number(value));
+  },
+
+  'tuple:': function(_, value) {
+    return new _Tuple(value);
+  },
+
+  'method:': function(_, f) {
+    return $makeFunction(f);
+  },
+
+  // ---- Primitive operations / syntax
+  'true': function(){ return true; },
+  'false': function(){ return false; },
+
+  'failed?:': function(_, a) {
+    return a == null;
+  },
+
+  'refeq:and:': function(_, a, b) {
+    return a === b;
+  },
+
+  'object:at:': function(_, object, key) {
+    assert_text(key);
+    return object[key.string];
+  },
+
+  'object:at:put:': function(_, object, key, value) {
+    assert_text(key);
+    object[key.string] = value;
+  },
+
+  'extend:with:': function(_, object, record) {
+    $context.merge([$extendObject(object, objectToRecord(record, $context))]);
+  },
+
+  'while:do:': function(_, predicate, block) {
+    while(predicate.call()) {
+      block.call();
+    }
+  },
+
+  'if:then:else:': function(_, test, consequent, alternate) {
+    if (test) {
+      return consequent;
+    } else {
+      return alternate;
+    }
+  },
+
+  'throw:': function(_, error) {
+    throw error;
+  },
+
+  'error:message:': function(_, name, message) {
+    assert_text(name);
+    assert_text(message);
+    var e = new Error(message.string);
+    e.name = name.string;
+    return e;
+  },
+
+  'try:catch:': function(_, block, recover) {
+    try {
+      return block.call();
+    } catch (e) {
+      return recover.call(e);
+    }
+  },
+
+  // ---- Branding
+  'branding/brand:is:': function(_, a, b) {
+    return a === b || isPrototypeOf.call(b, a);
+  },
+
+  'branding/object:has:': function(_, object, brand) {
+    var xs = object[brands] || new Set();
+    var iter = xs.values();
+    var res;
+    while (res = iter.next(), !res.done) {
+      var x = res.value;
+      if (brand === x || isPrototypeOf.call(brand, x)) {
+        return true;
+      }
+    }
+    return false;
+  },
+
+  'branding/object:attach:': function(_, object, brand) {
+    var xs = object[brands];
+    if (!xs)
+      xs = object[brands] = new Set();
+    xs.add(brand);
+  },
+
+  'branding/object:remove:': function(_, object, brand) {
+    var xs = object[brands];
+    if (xs)  xs.delete(brand);
+  },
+
+  // ---- Text
+  'text:equals:': function(_, a, b) {
+    return a.string === b.string;
+  },
+
+  'text:concat:': function(_, a, b) {
+    return a.string + b.string;
+  },
+
+  'text:starts-with:': function(_, a, b) {
+    return a.string.indexOf(b.string) === 0;
+  },
+
+  'text:ends-with:': function(_, a, b) {
+    return a.string.lastIndexOf(b.string) === a.string.length - b.string.length;
+  },
+
+  'text:contains:': function(_, a, b) {
+    return a.string.indexOf(b) != -1;
+  },
+
+  'text/length:': function(_, a) {
+    return a.string.length;
+  },
+
+  'text:split:': function(_, a, b) {
+    return new _Tuple(a.string.split(b.string).map($text));
+  },
+
+  'text/slice:from:to:': function(_, a, b, c) {
+    return a.string.slice(Number(b.number) - 1, Number(c.number) - 1);
+  },
+
+  'text:at:': function(_, a, b) {
+    return a.charAt(Number(b) - 1);
+  },
+
+  'text/char-code:': function(_, a) {
+    return a.charCodeAt(0);
+  },
+
+  'text/from-code:': function(_, a) {
+    return String.fromCharCode(a.number);
+  },
+
+  // ---- Numeric
+  'integer:equals:': function(_, a, b) {
+    return a.number.eq(b.number);
+  },
+
+  'integer/compare:to:less-than:equal:greater-than:': function(_, n, m, lt, eq, gt) {
+    var vn = n.number, vm = m.number;
+    var cmp = vn.cmp(vm);
+    return cmp < 0?  lt
+    :      cmp > 0?  gt
+    :      /* _ */   eq;
+  },
+
+  'integer:less-than:': function(_, n, m) {
+    return n.number.lt(m.number);
+  },
+
+  'integer:greater-than:': function(_, n, m) {
+    return n.number.gt(m.number);
+  },
+
+  'integer:plus:': function(_, n, m) {
+    var vn = n.number, vm = m.number;
+    if (typeof vm === "number" && !Number.isInteger(vm)) {
+      return $float(vn.toNumber() + vm);
+    } else {
+      return $int(vn.add(vm));
+    }
+  },
+
+  'integer:times:': function(_, n, m) {
+    var vn = n.number, vm = m.number;
+    if (typeof vm === "number" && !Number.isInteger(vm)) {
+      return $float(vn.toNumber() * vm);
+    } else {
+      return $int(vm.mul(vm));
+    }
+  },
+
+  'integer:minus:': function(_, n, m) {
+    var vn = n.number, vm = m.number;
+    if (typeof vm === "number" && !Number.isInteger(vm)) {
+      return $float(vn.toNumber() - vm);
+    } else {
+      return $int(vm.sub(vm));
+    }
+  },
+
+  'integer:float-division:': function(_, n, m) {
+    return $float(n.number / m.number);
+  },
+
+  'integer:divide:': function(_, n, m) {
+    var vn = n.number, vm = m.number;
+    if (Number(vm) === 0) throw new Error("Division by 0");
+    return $int(vn.div(vm));
+  },
+
+  'integer/absolute:': function(_, n) {
+    return $int(n.number.abs());
+  },
+
+  'integer:power:': function(_, n, m) {
+    var vn = n.number, vm = m.number;
+    if (typeof vm === "number" && !Number.isInteger(vm)) {
+      return $float(Math.pow(vn.toNumber(), vm));
+    } else {
+      return $int(vn.pow(vm));
+    }
+  },
+
+  'integer:modulo:': function(_, n, m) {
+    var vn = n.number, vm = m.number;
+    if (Number(vm) === 0) throw new Error("Division by 0");
+    return $int(vn.mod(vm));
+  },
+
+  'integer->float:': function(_, n) {
+    return $float(n.number.toNumber());
+  },
+
+  'float->integer:': function(_, n) {
+    return $int(n.number);
+  },
+
+  'integer->string:': function(_, n) {
+    return n.number.toString();
+  },
+
+  'float->string:': function(_, n) {
+    return String(n.number);
+  },
+
+  'float:equals:': function(_, n, m) {
+    return n.number === Number(m.number);
+  },
+
+  'float:not-equals:': function(_, n, m) {
+    return n.number !== Number(m.number);
+  },
+
+  'float:compare:to:less-than:equal:greater-than:': function(_, n, m, lt, eq, gt) {
+    var vn = n.number, vm = Number(m.number);
+    return vn < vm?     lt
+    :      vn > vm?     gt
+    :      vm === vm?   eq
+    :      /* _ */      false;
+  },
+
+  'float:less-than:': function(_, n, m) {
+    return n.number < Number(m.number);
+  },
+
+  'float:greater-than:': function(_, n, m) {
+    return n.number > Number(m.number);
+  },
+
+  'float:plus:': function(_, n, m) {
+    var vn = n.number, vm = m.number;
+    if (BigNum.isBigNum(vm) && Number.isInteger(vn)) {
+      return $int(BigNum(vn).add(vm));
+    } else {
+      return $float(vn + Number(vm));
+    }
+  },
+
+  'float:minus:': function(_, n, m) {
+    var vn = n.number, vm = m.number;
+    if (BigNum.isBigNum(vm) && Number.isInteger(vn)) {
+      return $int(BigNum(vn).sub(vm));
+    } else {
+      return $float(vn - Number(vm));
+    }
+  },
+
+  'float:times:': function(_, n, m) {
+    var vn = n.number, vm = m.number;
+    if (BigNum.isBigNum(vm) && Number.isInteger(vn)) {
+      return $int(BigNum(vn).mul(vm));
+    } else {
+      return $float(vn * Number(vm));
+    }
+  },
+
+  'float:power:': function(_, n, m) {
+    var vn = n.number, vm = m.number;
+    if (BigNum.isBigNum(vm) && Number.isInteger(vn)) {
+      return $int(BigNum(vn).pow(vm));
+    } else {
+      return $float(Math.pow(vn, Number(vm)));
+    }
+  },
+
+  'float:absolute:': function(_, n) {
+    return $float(Math.abs(n));
+  },
+
+  'float:division:': function(_, n, m) {
+    return $float(n.number / Number(m.number));
+  },
+
+  'float:integer-division:': function(_, n, m) {
+    if (Number(m.number) === 0)  throw new Error("Division by zero.");
+    return $int(BigNum(n.number).div(m));
+  },
+
+  'float:modulo:': function(_, n, m) {
+    if (Number(m.number) === 0)  throw new Error("Division by zero.");
+    return $int(BigNum(n.number).mod(m));
+  },
+
+  'float/is-integer:': function(_, n) {
+    return Number.isInteger(n.number);
+  },
+
+  // ---- Tuples
+  'tuple:at:': function(_, a, k) {
+    return a.array[Number(k.number) - 1];
+  },
+
+  'tuple:concat:': function(_, a, b) {
+    return new _Tuple(a.array.concat(b.array));
+  },
+
+  'tuple/size:': function(_, a) {
+    return $int(a.array.length);
+  },
+
+  'tuple:map:': function(_, a, f) {
+    var arr = a.array;
+    var r = [];
+    for (var i = 0; i < arr.length; ++i) r[i] = f.call(arr[i]);
+    return new _Tuple(r);
+  },
+
+  'tuple:chain:': function(_, a, f) {
+    var arr = a.array;
+    var r = [];
+    for (var i = 0; i < arr.length; ++i) {
+      var t = f.call(arr[i]);
+      if (!Array.isArray(t.array)) {
+        throw new TypeError("Expected a tuple.");
+      }
+      r.push.apply(r, t.array);
+    }
+    return r;
+  },
+
+  'tuple:filter:': function(_, a, f) {
+    var arr = a.array;
+    var r = [];
+    for (var i = 0; i < arr.length; ++i) {
+      var v = arr[i];
+      if (f.call(v))  r.push(v);
+    }
+    return r;
+  },
+
+  'tuple:fold:from:': function(_, a, f, b) {
+    var arr = a.array;
+    for (var i = 0; i < arr.length; ++i)
+      b = f.call(b, arr[i]);
+    return b;
+  },
+
+  'tuple:fold-right:from:': function(_, a, f, b) {
+    var arr = a.array;
+    for (var i = arr.length - 1; i > 0; i--)
+      b = f.call(b, arr[i]);
+    return b;
+  },
+
+  'tuple/reverse:': function(_, a) {
+    return new _Tuple(a.array.slice().reverse());
+  },
+
+  'tuple:sort:': function(_, a, f) {
+    return new _Tuple(a.array.sort(function(a, b) {
+      return Number(f.call(a, b).number);
+    }));
+  },
+
+  'tuple:push:': function(_, a, b) {
+    a.array.push(b);
+  },
+
+  // ---- Reflection
+  'global-context': function(_) {
+    return $context;
+  },
+
+  'reflect/methods:context:': function(_, object, context) {
+    var methods = [];
+    var c = context;
+    while (c != null) {
+      var box = c.get(object) || {};
+      var names = keys(box);
+      for (var i = 0; i < names.length; ++i) {
+        var name = names[i];
+        methods.push(new _Tuple([new _Text(name)], object[box[name]]));
+      }
+      c = c.parent;
+    }
+    return new _Tuple(methods);
+  },
+
+  'reflect/methods-selector:on:in:': function(_, name, object, context) {
+    var symbol = context.lookup(object, name);
+    if (symbol) {
+      return new _Selector(symbol);
+    } else {
+      return null;
+    }
+  },
+
+  'reflect/method-for-selector:on:': function(_, name, object) {
+    return object[name.symbol];
+  },
+
+  'reflect/parent:': function(_, object) {
+    return prototypeOf(object);
+  },
+
+  'meta:at:': function(_, object, name) {
+    return $meta.get(object, name.string);
+  },
+
+  'meta:at:put:': function(_, object, name, value) {
+    $meta.set(object, name.string, value);
+  },
+
+  // ---- JS operations
+  'js/to-string:': function(_, a) {
+    return showJs(a);
+  },
+
+  'js/type:switch:': function(_, a, pattern) {
+    if (a == null)
+      return pattern.send0($context, 'null');
+
+    if (isNumber(a))
+      return pattern.send0($context, 'number');
+
+    if (isString(a))
+      return pattern.send0($context, 'string');
+
+    if (isBoolean(a))
+      return pattern.send0($context, 'boolean');
+
+    if (Array.isArray(a))
+      return pattern.send0($context, 'array');
+
+    if (BigNum.isBigNum(a))
+      return pattern.send0($context, 'big-num');
+
+    if (isPrototypeOf.call(Siren_Object, a))
+      return pattern.send0($context, 'siren');
+
+    if (a instanceof Symbol)
+      return new _Selector(a);
+
+    return pattern.send0($context, 'object');
+  },
+
+  'js/global': function(_) {
+    return typeof window !== 'undefined'?  window
+    :      /* otherwise */                 global;
+  },
+
+  'js/new:': function(_, a) {
+    return new a();
+  },
+
+  'js/new:with-arguments:': function(_, Ctor, xs) {
+    var a = Object.create(Ctor.prototype);
+    var b = Ctor.apply(a, xs);
+    return Object(b) === b? b : a;
+  },
+
+  'js:invoke:with-arguments:': function(_, a, b, c) {
+    return a[b].apply(a, c);
+  },
+
+  'js:apply:': function(_, a, b) {
+    if (!Array.isArray(b))
+      throw new TypeError("Expected argument array.");
+    return a.apply(a, b);
+  },
+
+  'js:at:': function(_, a, b) {
+    return a[b];
+  },
+
+  'js:has:': function(_, a, b) {
+    return b in a;
+  },
+
+  'js/null': function(_) {
+    return null;
+  },
+
+  'js/unwrap-selector:': function(_, a) {
+    return a.symbol;
+  },
+
+  'unwrap-number:': function(_, a) {
+    return a.number;
+  },
+
+  'unwrap-tuple:': function(_, a) {
+    return a.array;
+  },
+
+  'unwrap-block:': function(_, a) {
+    return a.call;
+  },
+
+  'unwrap-method:': function(_, a) {
+    return a.call;
+  },
+
+  'unwrap-text:': function(_, a) {
+    return a.string;
+  },
+
+  // ---- Debugging
+  'debug/show:tag:': function(_, a, b) {
+    assert_text(b);
+    try {
+      console.log(b.string, a.send0($context, 'describe').string);
+    } catch(e) {
+      console.log(b.string, showJs(a));
+    }
+  }
+}) ;
+
+// -- The Siren part of the runtime ------------------------------------
+require('./Core')(Siren, Primitives);
+require('./Traits')(Siren, Primitives);
+require('./Reflection')(Siren, Primitives);
+require('./Basic-Types')(Siren, Primitives);
+require('./Text')(Siren, Primitives);
+require('./Numeric')(Siren, Primitives);
+require('./Collections')(Siren, Primitives);
+require('./Debug')(Siren, Primitives);
+require('./JS')(Siren, Primitives);
+
+// -- Exports ----------------------------------------------------------
+module.exports = Siren;

@@ -20,3 +20,4 @@ runtime/*.js
 runtime/**/*.js
 !runtime/index.js
 .tern-port
+_other/
