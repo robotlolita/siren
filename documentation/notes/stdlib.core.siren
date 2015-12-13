@@ -203,3 +203,131 @@ let Exception = Object {
 let Stack-Trace = Object {
   ???
 }
+
+# -- Basic types -------------------------------------------------------
+let Boolean (True | False) = {
+  def _ && Boolean -> Boolean
+  def _ || Boolean -> Boolean
+  def _ not -> Boolean
+  def _ then: Block else: Block -> Any
+  def _ otherwise: Block -> Unit
+  def _ then: Block -> Unit
+}
+
+let Result = {
+  def _ ok: Any -> Result
+  def _ failure: Any -> Result
+}
+
+let Result (Failure | Ok) = {
+  def _ map: Block -> Result
+  def _ chain: Block -> Result
+  def _ match: {Ok|Failure} -> Result
+  def _ recover: Block -> Result
+  def _ as-tuple -> Tuple
+  def _ === Result
+  def _ then: Block else: Block
+  def _ get!
+  def _ get-or-default: Any
+}
+
+let Reference = {
+  def _ new: Any
+  def _ new
+
+  def _ value
+  def _ set!: Any
+  def _ === Reference
+}
+
+
+# -- Text --------------------------------------------------------------
+let Character = {
+  def _ from-code: Integer -> Character
+  def _ code -> Integer
+  def _ as-text -> Text
+}.
+
+let Character-View = {
+  def _ start -> Integer
+  def _ end -> Integer
+  def _ as-text -> Text
+  def _ at: Integer -> Character
+  def _ slice-from: Integer to: Integer -> Character-View
+}
+
+let Text = {
+  def _ characters -> Character-View
+  def _, Text -> Text
+  def _ empty? -> Boolean
+  def _ === Text -> Boolean
+  def _ starts-with?: Text -> Boolean
+  def _ ends-with?: Text -> Boolean
+  def _ contains?: Text -> Boolean
+}.
+
+
+# -- Numeric -----------------------------------------------------------
+let Numeric = {
+  # Equality
+  def _ === _
+  def _ =/= _
+
+  def _ integral?
+  def _ fractional?
+
+  # Ordered
+  def _ compared-to: _
+  def _ < _
+  def _ > _
+  def _ <= _
+  def _ >= _
+
+  def _ + _
+  def _ zero
+  def _ negated
+  def _ - _
+  def _ * _
+  def _ one
+  def _ absolute
+
+  def _ / _ -> Float
+  def _ divided-by: _ -> Integer
+  def _ modulo: _ ->
+}
+
+# A perspective for bitwise manipulation of numbers (always int32)
+let Bitwise = {
+  def _ bit-shift-right: _
+  def _ bit-shift-left: _
+  def _ unsigned-bit-shift-right: _
+  def _ bit-and: _
+  def _ bit-or: _
+  def _ bit-xor: _
+}
+
+# A Perspective for mathematics with floating point numbers
+let Float-Maths = {
+  def _ square-root
+  def _ round
+  def _ ceil
+  def _ floor
+  def _ upper-bound
+  def _ lower-bound
+  def _ nan
+  def _ negative-infinity
+  def _ positive-infinity
+  def _ nan?
+  def _ finite?
+
+  def _ arc-cosine
+  def _ arc-sine
+  def _ arc-tangent
+  def _ arc-tangent: _
+  def _ cosine
+  def _ sine
+  def _ tangent
+  def _ exp
+  def _ log
+}
+
