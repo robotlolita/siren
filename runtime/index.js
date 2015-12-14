@@ -70,6 +70,9 @@ function safeDescribe(o) {
   }
 }
 
+function separateThousands(n, separator) {
+  return String(n).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, '$1' + separator);
+}
 
 // -- Assertions -------------------------------------------------------
 function assert_arity(f, n) {
@@ -1194,11 +1197,14 @@ var Primitives = $makeInternalObject({
   },
 
   'integer->string:': function(_, n) {
-    return n.number.toString();
+    return separateThousands(n.number.toString(), ',');
   },
 
   'float->string:': function(_, n) {
-    return String(n.number);
+    var components = String(n.number).split('.');
+    var integer    = components[0] || 0;
+    var fractional = components[1] || 0;
+    return separateThousands(integer, ',') + '.' + fractional;
   },
 
   'float:equals:': function(_, n, m) {
