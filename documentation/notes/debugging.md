@@ -74,7 +74,7 @@ Debug inspect: 1.
 
 You can further inspect the messages of an object:
 
-```
+```ruby
 Debug inspect: 1 message: "===".
 # => (in Integer : Tests and Comparisons)
 #    def self === n
