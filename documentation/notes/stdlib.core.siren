@@ -264,6 +264,7 @@ let Text = {
   def _ starts-with?: Text -> Boolean
   def _ ends-with?: Text -> Boolean
   def _ contains?: Text -> Boolean
+  def _ size
 }.
 
 
@@ -331,3 +332,70 @@ let Float-Maths = {
   def _ log
 }
 
+# -- Collections -------------------------------------------------------
+let Association = {
+  def_ key
+  def_ value
+}.
+
+let Tuple = {
+  def _ first
+  def _ first!
+  def _ last
+  def _ last!
+  def _ at: Integer
+  def _, Tuple
+  def _ empty
+  def _ size
+  def _ map: _
+  def _ chain: _
+  def _ filter: _
+  def _ every?: _
+  def _ some?: _
+  def _ from: _ fold-with: _
+  def _ from: _ fold-right-with: _
+  def _ reverse
+  def _ sorted-by: _
+  def _ sorted
+}
+
+
+# -- Reflection --------------------------------------------------------
+let Object-Mirror = {
+  def _ reflectee -> Object # the object we're mirroring
+  def _ reflectee-context -> Context # the context in which we're reflecting
+
+  def _ qualified-name -> Text
+  def _ meta -> Meta-Mirror
+  def _ methods -> Method Tuple
+  def _ responds-to?: Text -> Boolean
+  def _ method-for-name: Text -> Method Ok | No-Such-Method Failure
+  def _ method-for-selector: Selector -> Method Ok | No-Such-Method Failure
+  def _ parent -> Object Ok | No-Parent Failure
+}
+
+# All of these return Result instances
+let Meta-Mirror = {
+  def _ at: Text -> Any
+  def _ at: Text put!: Any
+
+  def _ name -> Text
+  def _ name!: Text
+  def _ arguments -> Text Tuple
+  def _ arguments!: Text Tuple
+  def _ source -> Source-Location
+  def _ source!: Source-Location
+  def _ category -> Text
+  def _ category!: Text
+  def _ tags -> Text Tuple
+  def _ tags!: Text Tuple
+  def _ documentation -> Text
+  def _ documentation!: Text
+  def _ examples -> Block Tuple
+  def _ examples!: Block Tuple
+}
+
+# -- FFI ---------------------------------------------------------------
+let JS-Alien = {
+  
+}
