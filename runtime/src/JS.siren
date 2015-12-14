@@ -76,7 +76,7 @@ let JS-Alien = {
   }
 
   def self describe
-    "<JS Alien>".
+    Debug-Text, "<JS Alien>".
 
   def self global
     self alienate: vm js/global.
@@ -110,7 +110,7 @@ let JS-Alien = {
 
 let JS-Object = JS-Alien {
   def self describe
-    "<JS Alien: ", (vm text: (vm js/to-string: self expatriate-to-JS)), ">".
+    Debug-Text, "<JS Alien: ", (vm text: (vm js/to-string: self expatriate-to-JS)), ">".
 
   def self does-not-understand: message
     let names = vm text: message name split: ":".

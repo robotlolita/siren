@@ -63,7 +63,7 @@ function parseArgs(fn) {
 function safeDescribe(o) {
   try {
     var s = o.send0($context, 'describe');
-    assert_text(s);
+    assert_textual(s);
     return s.string;
   } catch (e) {
     return '<unrepresentable object>';
@@ -91,6 +91,11 @@ function assert_tuple(a) {
 function assert_text(a) {
   if (!(a instanceof _Text))
     throw new TypeError('Expected Text.');
+}
+
+function assert_textual(a) {
+  if (typeof a.string !== "string")
+    throw new TypeError('Expected a textual value.');
 }
 
 function assert_message(m) {
@@ -145,6 +150,7 @@ var Siren_MethodN = Object.create(Siren_Method);
 
 
 var Siren_Text = Object.create(Siren_Object);
+var Siren_DebugText = Object.create(Siren_Object);
 var Siren_Numeric = Object.create(Siren_Object);
 var Siren_Integer = Object.create(Siren_Numeric);
 var Siren_Float = Object.create(Siren_Numeric);
@@ -424,6 +430,13 @@ function _Importer(mod) {
 _Importer.prototype = Siren_Importer;
 
 
+function _DebugText(text) {
+  this.string = text;
+}
+_DebugText.prototype = Siren_DebugText;
+_DebugText.prototype.string = "";
+_DebugText.prototype.toString = function(){ return this.string; };
+
 // -- Internal methods -------------------------------------------------
 
 // Recovering messages
@@ -679,7 +692,8 @@ $_extend(Siren_Root, {
   'Numeric'        : function(){ return Siren_Numeric; },
   'Integer'        : function(){ return Siren_Integer; },
   'Float-64bits'   : function(){ return Siren_Float; },
-  'Tuple'          : function(){ return Siren_Tuple; }
+  'Tuple'          : function(){ return Siren_Tuple; },
+  'Debug-Text'     : function(){ return Siren_DebugText; }
 });
 
 $_extend(Siren_Object, {
@@ -723,13 +737,13 @@ $_extend(Siren_Object, {
   },
 
   'describe': function(self) {
-    return new _Text('<Object>');
+    return new _DebugText('<Object>');
   }
 });
 
 $_extend(Siren_Selector, {
   'describe': function(self) {
-    return new _Text('<Selector: ' + self.symbol.toString() + '>');
+    return new _DebugText('<Selector: ' + self.symbol.toString() + '>');
   },
 
   'with-description:': function(self, description) {
@@ -749,7 +763,7 @@ $_extend(Siren_Selector, {
 
 $_extend(Siren_Message, {
   'describe': function(self) {
-    return new _Text('<Message: ' + self.name + '>');
+    return new _DebugText('<Message: ' + self.name + '>');
   },
 
   'name:arguments:': function(self, name, args) {
@@ -773,7 +787,7 @@ $_extend(Siren_Message, {
 
 $_extend(Siren_Context, {
   'describe': function(self) {
-    return new _Text('<Context>');
+    return new _DebugText('<Context>');
   },
 
   'empty': function(self) {
@@ -788,7 +802,7 @@ $_extend(Siren_Context, {
 
 $_extend(Siren_Perspective, {
   'describe': function(self) {
-    return new _Text('<Perspective on: ' + safeDescribe(self.object) + '>');
+    return new _DebugText('<Perspective on: ' + safeDescribe(self.object) + '>');
   },
 
   'target': function(self) {
@@ -806,7 +820,7 @@ $_extend(Siren_Perspective, {
 
 $_extend(Siren_Module, {
   'describe': function(self) {
-    return new _Text('<Module at: ' + self.filename + '>');
+    return new _DebugText('<Module at: ' + self.filename + '>');
   },
   'filename': function(self) {
     return new _Text(self.filename);
@@ -821,7 +835,7 @@ $_extend(Siren_Module, {
 
 $_extend(Siren_Importer, {
   'describe': function(self) {
-    return new _Text('<Importer in ' + safeDescribe(self.module) + '>');
+    return new _DebugText('<Importer in ' + safeDescribe(self.module) + '>');
   },
 
   'siren:with-arguments:': function(self, module_id, _arguments) {
@@ -893,14 +907,16 @@ $_extend(Siren_Method3, {
 
 $_extend(Siren_Text, {
   'describe': function(self) {
-    return self;
+    var text = self.string.replace(/(\\)/g, '\\$1')
+                          .replace(/(")/g, '\\$1');
+    return new _DebugText('"' + text + '"');
   }
 });
 
 
 var Primitives = $makeInternalObject({
   'describe': function() {
-    return new _Text('<VM Primitives>');
+    return new _DebugText('<VM Primitives>');
   },
 
   // ---- Assertions
@@ -1478,6 +1494,16 @@ var Primitives = $makeInternalObject({
   },
 
   // ---- Debugging
+  'debug/text:concat:': function(_, a, b) {
+    assert_textual(b);
+    return new _DebugText(a.string + b.string);
+  },
+
+  'debug/text:equals:': function(_, a, b) {
+    assert_textual(b);
+    return a.string === b.string;
+  },
+
   'debug/show:tag:': function(_, a, b) {
     assert_text(b);
     try {

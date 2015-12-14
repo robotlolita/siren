@@ -16,6 +16,9 @@ vm extend: Root with: {
 }.
 
 let Mirror = {
+  def self describe
+    Debug-Text, "<Mirror>".
+
   def_ traits {
     def_ Object-Mirror = Object-Mirror.
     def_ Meta-Mirror = Meta-Mirror.
@@ -33,7 +36,7 @@ let Mirror = {
 
 let Object-Mirror = Mirror {
   def self describe
-    "<Object-Mirror on: ", self reflectee describe, " context: ", self reflectee-context describe, ">".
+    Debug-Text, "<Object-Mirror on: ", self reflectee describe, " context: ", self reflectee-context describe, ">".
 
   def self meta
     self traits Meta-Mirror {
@@ -83,7 +86,7 @@ let Meta-Mirror = {
   }
 
   def self describe
-    "<Meta-Mirror on: ", self reflectee describe, ">".
+    Debug-Text, "<Meta-Mirror on: ", self reflectee describe, ">".
 
   def self at: name
     vm assert/text: name.
@@ -157,6 +160,7 @@ let Meta-Mirror = {
 
 let Source-Location = {
   def self describe
+    Debug-Text,
     "<Source-Location(", self start describe, ", ", self end describe, "): ", self filename describe, ">".
 
   def self source: code

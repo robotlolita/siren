@@ -64,6 +64,11 @@ let Character-View = {
     def_ Character = Character-Trait.
   }
 
+  def self decribe
+    Debug-Text,
+    "<Character-View(", self start describe, ", " self end describe, "): ", self as-text describe, ">".
+
+
   def self as-text
     let text = vm object: self at: "text".
     vm text: (vm text/slice: text from: self start to: self end).
@@ -86,12 +91,18 @@ let Character-View = {
 }.
 
 let Character = {
+  def self describe
+    Debug-Text, "<Character>".
+
   def _ from-code: code
     vm assert/numeric: code.
     vm text: (vm text/from-code: code).
 }.
 
 let Character-Trait = Character {
+  def self describe
+    Debug-Text, "<Character: ", self-as-text describe, ">"
+
   def self code
     vm integer: (vm text/char-code: (vm object: self at: "character")).
 

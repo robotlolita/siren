@@ -14,7 +14,7 @@ module | vm | where
 # -- Associations ------------------------------------------------------
 let Association = {
   def self describe
-    "<Association: ", self key describe, " => ", self value describe, ">".
+    Debug-Text, "<Association: ", self key describe, " => ", self value describe, ">".
 }.
 
 vm extend: Object with: {
@@ -32,9 +32,9 @@ vm extend: traits with: {
 # -- Tuples ------------------------------------------------------------
 vm extend: Tuple with: {
   def self describe
-    let concat = { acc x | acc empty? then: { x describe }
+    let concat = { acc x | acc === "" then: { x describe }
                                       else: { acc, ". ", x describe }}.
-    "[", (self from: "" fold-with: concat), "]".
+    Debug-Text, "[", (self from: "" fold-with: concat), "]".
 
   def self at: offset
     vm assert/numeric: offset.
@@ -109,7 +109,7 @@ vm extend: Tuple with: {
 # -- Ranges ------------------------------------------------------------
 let Range = {
   def self describe
-    "<Range from: ", self start describe, " to: ", self end describe, ">".
+    Debug-Text, "<Range from: ", self start describe, " to: ", self end describe, ">".
 
   def self as-tuple
     let result = [].

@@ -42,6 +42,7 @@ vm extend: Root with: {
 
 vm extend: Brand with: {
   def self describe
+    Debug-Text,
     "<Brand: ", self description, ">".
 
   def self description
@@ -63,6 +64,7 @@ vm extend: Brand with: {
 
 vm extend: Object-Branding with: {
   def self describe
+    Debug-Text,
     "<Branding for: ", self object describe, ">".
 
   def self has?: brand
@@ -83,6 +85,7 @@ vm extend: Object-Branding with: {
 # -- Unit --------------------------------------------------------------
 let Unit = {
   def self describe
+    Debug-Text,
     "<Unit>".
 
   def self refined-by: _ in: _

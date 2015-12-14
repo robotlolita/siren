@@ -12,12 +12,12 @@
 module | vm | where
 
 let Division-By-Zero = Exception {
-  def_ describe = "<Exception: division by zero>".
+  def_ describe = Debug-Text, "<Exception: division by zero>".
   def_ name = "<Division by zero>".
 }.
 
 vm extend: Numeric with: {
-  def_ describe = "<Numeric>".
+  def_ describe = Debug-Text, "<Numeric>".
 
   def_ exceptions {
     def_ Division-By-Zero = Division-By-Zero
@@ -26,7 +26,7 @@ vm extend: Numeric with: {
 
 vm extend: Integer with: {
   def self describe
-    "<Integer: ", (vm text: (vm integer->string: self)), ">".
+    Debug-Text, "<Integer: ", (vm text: (vm integer->string: self)), ">".
 
   def self as-float
     vm integer->float: self.
@@ -116,7 +116,7 @@ vm extend: Integer with: {
 
 vm extend: Float-64bits with: {
   def self describe
-    "<Float(64): ", (vm text: (vm float->string: self)), ">".
+    Debug-Text, "<Float(64): ", (vm text: (vm float->string: self)), ">".
 
   def self as-integer
     vm float->integer: self.

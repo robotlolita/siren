@@ -16,22 +16,34 @@ vm extend: traits with: {
 }.
 
 let Ordering = {
+  def self describe
+    Debug-Text, "<Ordering>".
+
   def_ less-than    = Less-Than.
   def_ greater-than = Greater-Than.
   def_ equal        = Equal.
 }.
 
 let Less-Than = {
+  def self describe
+    Debug-Text, "<Ordering: Less-Than>".
+
   def self match: pattern
     pattern less-than.
 }.
 
 let Greater-Than = {
+  def self describe
+    Debug-Text, "<Ordering: Greater-Than>".
+
   def self match: pattern
     pattern greater-than.
 }.
 
 let Equal = {
+  def self describe
+    Debug-Text, "<Ordering: Equal>".
+
   def self match: pattern
     pattern equal.
 }.

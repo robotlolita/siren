@@ -19,14 +19,14 @@ vm extend: Root with: {
 }.
 
 let Boolean = {
-  def_ describe = "<Boolean>".
+  def_ describe = Debug-Text, "<Boolean>".
   def_ True = True.
   def_ False = False.
 }.
 
 let True = Boolean {
   def self describe
-    "<True>".
+    Debug-Text, "<True>".
 
   def self && that
     that.
@@ -50,7 +50,7 @@ let True = Boolean {
 
 let False = Boolean {
   def self describe
-    "<False>".
+    Debug-Text, "<False>".
 
   def self && that
     self.
@@ -79,7 +79,7 @@ vm extend: Root with: {
 }.
 
 let Result = {
-  def_ describe = "<Result>".
+  def_ describe = Debug-Text, "<Result>".
 
   def_ traits {
     def_ Ok = Ok.
@@ -95,7 +95,7 @@ let Result = {
 
 let Ok = Result {
   def self describe
-    "<Result ok: ", self value describe, ">".
+    Debug-Text, "<Result ok: ", self value describe, ">".
 
   def self map: transformation
     let new-value = transformation call: self value.
@@ -134,7 +134,7 @@ let Ok = Result {
 
 let Failure = Result {
   def self describe
-    "<Result failure: ", self value describe, ">".
+    Debug-Text, "<Result failure: ", self value describe, ">".
 
   def self map: transformation
     self.
@@ -175,7 +175,7 @@ vm extend: Root with: {
 
 let Reference = {
   def_ describe
-    "<Reference>"
+    Debug-Text, "<Reference>"
     
   def_ traits {
     def_ Mutable-Reference = Mutable-Reference.
@@ -189,7 +189,7 @@ let Reference = {
 
 let Mutable-Reference = {
   def self describe
-    "<Reference: ", self value, ">".
+    Debug-Text, "<Reference: ", self value, ">".
 
   def self value
     vm object: self at: "value".
