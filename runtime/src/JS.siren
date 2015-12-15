@@ -97,7 +97,7 @@ let JS-Alien = {
 
       def_ big-num  = vm integer: object.
       def_ number   = vm float: object.
-      def_ string   = vm text: string.
+      def_ string   = vm text: object.
       def_ boolean  = vm if: object then: True else: False.
       def_ null     = Unit.
       def_ array    = vm tuple: object.
