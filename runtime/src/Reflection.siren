@@ -40,7 +40,7 @@ let Object-Mirror = Mirror {
 
   def self meta
     self traits Meta-Mirror {
-      def_ reflectee = object.
+      def_ reflectee = self reflectee.
     }.
 
   def self methods
@@ -65,7 +65,7 @@ let Object-Mirror = Mirror {
     vm assert/selector: selector.
     let result = vm reflect/method: selector on: self reflectee.
     vm if: (vm failed?: result)
-       then: { Result failure: "No such method: ", selector describe }
+       then: { Result failure: "No such method: ", selector description }
        else: { Result ok: result };
        value.
 
@@ -92,7 +92,7 @@ let Meta-Mirror = {
     vm assert/text: name.
     let result = vm meta: self reflectee at: name.
     vm if: (vm failed?: result)
-       then: { Result failure: "No meta-data ", name, " for ", self reflectee describe }
+       then: { Result failure: "No meta-data ", name }
        else: { Result ok: result };
        value.
 
