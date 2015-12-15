@@ -1,0 +1,421 @@
+#-----------------------------------------------------------------------
+# 
+# This source file is part of the Siren project.
+#
+# Copyright (C) 2013-2015 Quildreen Motta.
+# Licensed under the MIT licence.
+#
+# See LICENCE for licence information.
+# See CONTRIBUTORS for the list of contributors to the project.
+#
+#-----------------------------------------------------------------------
+module | vm | where
+
+vm extend: Root with: {
+  def_ Task   = Task.
+  def_ Future = Future.
+}.
+
+let Cancelled-Task = Exception {
+  def_ describe = Debug-Text, "<Exception: Cancelled Task>".
+  def_ name = "Cancelled Task".
+}.
+
+let Task = {
+  def_ traits {
+    def_ Task-Trait = Task-Trait.
+    def_ Task-Execution = Task-Execution.
+    def_ Parallel-Task-Completer = Parallel-Task-Completer.
+    def_ Execution-State = Execution-State.
+  }
+
+  def_ exceptions {
+    def_ Cancelled-Task = Cancelled-Task.
+  }
+
+  def self describe
+    Debug-Text, "<Task>".
+
+  def self of: value
+    self success: value.
+
+  def self success: value
+    self traits Task-Trait {
+      def_ fork: resolver = resolver success: value.
+      def_ cleanup: state = self.
+    }
+
+  def self success
+    self success: Unit.
+
+  def self failed: reason
+    self traits Task-Trait {
+      def_ fork: resolver = resolver failure: value.
+      def_ cleanup: state = self.
+    }
+
+  def self failed
+    self failed: Unit.
+}.
+
+let Task-Trait = Task {
+  def self map: transform
+    self {
+      def inner fork: resolver
+        self fork: { def_ success: v = resolver success: (transform call: v).
+                     def_ failure: v = resolver failure: v }.
+    }
+
+  def self chain: transform
+    self {
+      def inner fork: resolver
+        self fork: { def_ success: v = (transform call: v) fork: resolver.
+                     def_ failure: v = resolver failure: v }.
+    }
+
+  def self swap
+    self {
+      def inner fork: resolver
+        self fork: { def_ success: v = resolver failure: v.
+                     def_ failure: v = resolver success: v }.
+    }
+
+  def self match: pattern
+    self {
+      def inner fork: resolver
+        self fork: { def_ success: v = resolver success: (pattern success: v).
+                     def_ failure: v = resolver failure: (pattern failure: v) }.
+    }
+
+  def self recover: handler
+    self {
+      def inner fork: resolver
+        self fork: { def_ success: v = resolver success: v.
+                     def_ failure: v = (handler call: v) fork: resolver }.
+    }
+
+  def self || other-task
+    # Returns whichiever task completes first.
+    self {
+      def inner cleanup: state
+        state left cleanup!.
+        state right cleanup!.
+
+      def inner fork: resolver
+        let completed = Reference new: False.
+
+        let listener = {
+          def_ target: target other: other succeed: value
+            completed value otherwise: {
+              completed set!: True.
+              resolver success: value.
+              vm defer: { target cleanup!. other cancel! }.
+            }
+
+          def_ target: target other: other fail: reason
+            completed value otherwise: {
+              completed set!: True.
+              resolver failure: reason.
+              vm defer: { target cleanup!. other cancel! }.
+            }.
+
+          def_ target: target other: other
+            self {
+              def_ cancelled
+                listener target: target other: other fail: self exceptions Cancelled-Exception.
+
+              def_ success: value
+                listener target: target other: other succeed: value.
+
+              def_ failure: reason
+                listener target: target other: other fail: reason.
+            }
+        }.
+
+
+        let left  = self run!.
+        let right = other-task run!.
+
+        left future listen!: (listener target: left other: right).
+        right future listern!: (listener target: right other: left).
+
+        { def_ left = left.  def_ right = right }
+    }
+
+
+  def self, other-task
+    self {
+      def inner cleanup: state
+        state left cleanup!.
+        state right cleanup!.
+
+      def inner fork: resolver
+        let completer = self traits Parallel-Task-Completer new.
+
+        let listener = {
+          def l cancelled
+            l failure: self exceptions Cancelled-Exception.
+
+          def l failure: reason
+            completer cancel!.
+            vm defer: { other cancel! }.
+            resolver failure: reason.
+        }.
+
+        let left  = self run!.
+        let right = self run!.
+
+        left future listen!: listener {
+          def_ other = right.
+          def_ success: value
+            completer set-left!: value then: { xs | resolver success: xs }.
+        }.
+
+        right future listen!: listener {
+          def_ other = left.
+          def_ success: value
+            completer set-right!: value then: { xs | resolver success: xs }.
+        }.
+
+        { def_ left = left.  def_ right = right }.
+    }
+
+
+  def self run!
+    self traits Task-Execution new: self.
+}.
+
+let Parallel-Task-Completer = {
+  def self describe
+    Debug-Text, "<Parallel-Task-Completer>".
+
+  def self new
+    self {
+      @value def_ pending = Reference new: 2.
+      @value def_ left    = Reference new: Unit.
+      @value def_ right   = Reference new: Unit.
+    }
+
+  def self run-if-pending!: block
+    pending value > 0 then: {
+      pending set!: pending value predecessor.
+      block!.
+    }
+
+  def self cancel!
+    self pending set!: 0.
+    self left set!: Unit.
+    self right set!: Unit.
+
+  def self set-left!: value then: block
+    self run-if-pending!: {
+      self left set!: value.
+      pending === 0 then: { block call: [self left value. self right value] }.
+    }
+
+  def self set-right!: value then: block
+    self run-if-pending!: {
+      self right set!: value.
+      pending === 0 then: { block call: [self left value. self right value] }.
+    }
+}.
+
+let Execution-State = {
+  def_ describe = Debug-Text, "<Execution-State>".
+
+  def_ pending   = Pending.
+  def_ resolved  = Resolved.
+  def_ rejected  = Rejected.
+  def_ cancelled = Cancelled.
+
+  def_ pending?   = False.
+  def_ resolved?  = False.
+  def_ rejected?  = False.
+  def_ cancelled? = False.
+}.
+
+let Pending = Execution-State {
+  def_ describe = Debug-Text, "<Execution state: pending>".
+
+  def_ match: pattern = pattern pending.
+}.
+
+let Resolved = Execution-State {
+  def_ describe = Debug-Text, "<Execution state: resolved>".
+
+  def_ match: pattern = pattern resolved.
+}.
+
+let Rejected = Execution-State {
+  def_ describe = Debug-Text, "<Execution state: rejected>".
+
+  def_ match: pattern = pattern rejected.
+}.
+
+let Cancelled = Execution-State {
+  def_ describe = Debug-Text, "<Execution state: cancelled>".
+
+  def_ match: pattern = pattern cancelled.
+}.
+
+let Task-Execution = {
+  def self describe
+    Debug-Text, "<Task-Execution>".
+    
+  def self new: task
+    let result = self {
+       def_ describe
+         Debug-Text,
+         "<Task execution state: ", state value describe, " value: ", value value describe, ">".
+
+       def_ future = future.
+       def_ task   = task.
+
+       def_ cleanup!
+         vm defer: { task cleanup: resources }.
+
+       def_ cancel!
+         state value pending? then: {
+           result cleanup!.
+           state set!: Execution-State cancelled.
+           cancel-future call: future.
+         }.
+    }.
+    let future = Future new.
+    let state  = Reference new: Execution-State pending.
+    let value  = Reference new: Unit.
+
+    let resources = task fork: {
+      def inner success: data
+        state value pending? then: {
+          state set!: Execution-State resolved.
+          value set!: data.
+          fulfil-future call: future with: data.
+          result cleanup!.
+        }
+
+      def inner failure: reason
+        state value pending? then: {
+          state set!: Execution-State rejected.
+          value set!: reason.
+          reject-future call: future with: reason.
+          result cleanup!.
+        }
+    }.
+
+    result.
+}.
+
+let invoke-pending = { future block |
+  let pending = vm object: future at: "pending".
+  vm object: future at: "pending" put: [].
+  pending each: block.
+}.
+
+let cancel-future = { future |
+  vm object: future at: "state" put: Execution-State cancelled.
+  vm object: future at: "value" put: Unit.
+}.
+
+let fulfil-future = { future value |
+  vm object: future at: "state" put: Execution-State resolved.
+  vm object: future at: "value" put: value.
+  invoke-pending call: future with: { p | p success: value }.
+}.
+
+let reject-future = { future value |
+  vm object: future at: "state" put: Execution-State rejected.
+  vm object: future at: "value" put: value.
+  invoke-pending call: future with: { p | p failure: value }.
+}.
+
+let Future = {
+  def_ traits {
+    def_ Future-Result = Future-Result.
+  }
+
+  def self describe
+    Debug-Text, "<Future>".
+
+  def self new
+    let result = self traits Future-Result { }.
+    vm object: result at: "state" put: Execution-State pending.
+    vm object: result at: "value" put: Unit.
+    vm object: result at: "pending" put: [].
+    result.
+
+  def self success: value
+    let result = self new.
+    vm object: result at: "state" put: Execution-State resolved.
+    vm object: result at: "value" put: value.
+    result.
+
+  def self failure: reason
+    let result = self new.
+    vm object: result at: "state" put: Execution-State rejected.
+    vm object: result at: "value" put: reason.
+    result.
+}.
+
+let Future-Result = Future {
+  def self describe
+    let state = vm object: self at: "state".
+    let value = vm object: self at: "value".
+    Debug-Text, state match: {
+      def_ pending   = "<Future (pending)>".
+      def_ cancelled = "<Future (cancelled)>".
+      def_ resolved  = "<Future success: ", value describe, ">".
+      def_ rejected  = "<Future failure: ", value describe, ">".
+    }.
+
+  def self listen!: pattern
+    let state = vm object: self at: "state".
+    let value = vm object: self at: "value".
+    let pending = vm object: self at: "pending".
+    state match: {
+      def_ pending   = vm tuple: pending push: pattern.
+      def_ cancelled = pattern cancelled.
+      def_ resolved  = pattern success: value.
+      def_ rejected  = pattern failure: value.
+    }.
+    self.
+
+  def self chain: transformation
+    let result = self new.
+    self listen!: {
+      def_ cancelled
+        cancel-future call: result.
+
+      def_ rejected: reason
+        reject-future call: result with: reason.
+
+      def_ success: value
+        (transformation call: value) listen!: {
+          def_ cancelled = cancel-future call: result.
+          def_ rejected: reason = reject-future call: result with: reason.
+          def_ success: value = fulfil-future call: result with: value.
+        }
+    }.
+    result.
+    
+  def self map: transformation
+    self chain: { value | self success: (transformation call: value) }.
+
+  def self recover: handler
+    let result = self new.
+    self listen!: {
+      def_ cancelled
+        cancel-future call: result.
+
+      def_ success: value
+        fulfil-future call: result with: value.
+
+      def_ rejected: reason
+        (transformation call: reason) listern!: {
+          def_ cancelled = cancel-future call: result.
+          def_ resolved: value = fulfil-future call: result with: value.
+          def_ rejected: reason = reject-future call: result with: reason.
+        }
+    }.
+    result.
+}

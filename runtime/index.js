@@ -984,6 +984,12 @@ var Primitives = $makeInternalObject({
     return a == null;
   },
 
+  'defer:': function(_, f) {
+    setImmediate(function() {
+      f.call();
+    });
+  },
+
   'refeq:and:': function(_, a, b) {
     return a === b;
   },
