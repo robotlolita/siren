@@ -231,7 +231,17 @@ function generateApply(bind, apExpr) {
                   generate(bind, expr.args));
 
   if (holes.length > 0) {
-    return fn(expr.meta, null, generate(bind, holes), [js.Return({}, call)]);
+    return S.makeBlock(
+      expr.meta,
+      fn(expr.meta, null, generate(bind, holes), [js.Return({}, call)]),
+      {
+        name: '(partial application: ' + expr.meta.source + ')',
+        args: [],
+        source: expr.meta.source,
+        start: expr.meta.start,
+        end: expr.meta.end
+      }
+    );
   } else {
     return call;
   }

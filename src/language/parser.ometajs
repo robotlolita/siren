@@ -118,9 +118,12 @@ ometa SirenParser {
   expr = useExpr
        | pipeExpr,
 
-  pipeExpr = pipeExpr:a ws ";" ws identifier:i ~':'        -> Expr.Apply({}, i, a, [])
-           | pipeExpr:a ws ";" ws symbols:s ws unaryExpr:b -> Expr.Apply({}, s, a, [b])
-           | pipeExpr:a ws ";" (ws keywordApp)+:as         -> keywordApply({}, a, as)
+  pipeExpr = pos:sp pipeExpr:a ws ";" ws identifier:i ~':' pos:ep
+             -> Expr.Apply(src(sp, ep), i, a, [])
+           | pos:sp pipeExpr:a ws ";" ws symbols:s ws unaryExpr:b pos:ep
+             -> Expr.Apply(src(sp, ep), s, a, [b])
+           | pos:sp pipeExpr:a ws ";" (ws keywordApp)+:as pos:ep
+             -> keywordApply(src(sp, ep), a, as)
            | appExpr,
 
   appExpr = keywordExpr
@@ -128,17 +131,22 @@ ometa SirenParser {
 
   keywordApp  = keyword:k ws binaryExpr:v -> [k, v],
 
-  keywordExpr = binaryExpr:a (ws keywordApp)+:as          -> keywordApply({}, a, as),
-  binaryExpr  = binaryExpr:a ws symbols:s ws unaryExpr:b  -> Expr.Apply({}, s, a, [b])
+  keywordExpr = pos:sp binaryExpr:a (ws keywordApp)+:as pos:ep
+                -> keywordApply(src(sp, ep), a, as),
+  binaryExpr  = pos:sp binaryExpr:a ws symbols:s ws unaryExpr:b pos:ep
+                -> Expr.Apply(src(sp, ep), s, a, [b])
               | unaryExpr,
-  unaryExpr   = unaryExpr:a ws identifier:i ~':'      -> Expr.Apply({}, i, a, [])
-              | unaryExpr:a ws record:v               -> Expr.Clone({}, a, v)
+  unaryExpr   = pos:sp unaryExpr:a ws identifier:i ~':' pos:ep
+                -> Expr.Apply(src(sp, ep), i, a, [])
+              | unaryExpr:a ws record:v
+                -> Expr.Clone({}, a, v)
               | primaryExpr,
   primaryExpr = '_'                                -> Expr.Hole({})
               | doExpr
               | value
               | identifier:a ~':'                  -> Expr.Free({}, a)
-              | keywordApp:a (ws keywordApp)*:as   -> keywordApply({}, Expr.GlobalObject({}), [a].concat(as))
+              | pos:sp keywordApp:a (ws keywordApp)*:as pos:ep
+                -> keywordApply(src(sp, ep), Expr.GlobalObject({}), [a].concat(as))
               | '(' ws expr:a ws ')'               -> a,
 
   exprList = expr:a (ws '.' ws exprList)?:as -> [a].concat(as || [])
