@@ -178,3 +178,31 @@ let Source-Location = {
   def self filename: name
     self { def_ filename = name }.
 }.
+
+vm extend: Root with: {
+  def_ name: name { object |
+    Mirror reflect: object; meta; name: name.
+    object.
+  }
+
+  def_ category: category { object |
+    Mirror reflect: object; meta; category: category.
+    object.
+  }
+
+  def_ tags: tags { object |
+    Mirror reflect: object; meta; tags: tags.
+    object.
+  }
+
+  def_ documentation: docs { object |
+    Mirror reflect: object; meta; documentation: docs.
+    object.
+  }
+
+  def_ examples: examples { object |
+    Mirror reflect: object; meta; examples: examples.
+    object.
+  }
+}.
+
