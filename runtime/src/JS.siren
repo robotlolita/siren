@@ -9,6 +9,7 @@
 # See CONTRIBUTORS for the list of contributors to the project.
 #
 #-----------------------------------------------------------------------
+$siren/1
 module | vm | where
   # The JS-Alien library allows seamless interaction between JS and
   # Siren code. It does so by converting the objects back and fort

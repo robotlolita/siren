@@ -218,6 +218,7 @@ ometa SirenParser {
 
   replExpr = ws stmtList:xs ws eof -> Expr.Seq({}, xs),
 
-  program = ws module:m ws eof    -> m
-          | ws pos:sp stmtList:xs pos:ep ws eof -> Expr.Module(src(sp, ep), [], Expr.Record({}, []), xs)
+  program = ws "$siren/1" ws
+          ( ws module:m ws eof    -> m
+          | ws pos:sp stmtList:xs pos:ep ws eof -> Expr.Module(src(sp, ep), [], Expr.Record({}, []), xs))
 }
