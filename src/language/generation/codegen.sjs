@@ -321,12 +321,32 @@ function generateDo(bind, meta, xs) {
 
   function map(m, r, i, e) {
     return send(m, r, selector({}, str('map:')),
-                [fexpr(e.meta, [i], e)])
+                [S.makeBlock(
+                  e.meta,
+                  fexpr(e.meta, [i], e),
+                  {
+                    name: '(Do map: ' + i.name + ')',
+                    args: [i.name],
+                    source: e.meta.source,
+                    start: e.meta.start,
+                    end: e.meta.end
+                  }
+                )])
   }
 
   function chain(m, r, i, e) {
     return send(m, r, selector({}, str('chain:')),
-                [fexpr(e.meta, [i], e)])
+                [S.makeBlock(
+                  e.meta,
+                  fexpr(e.meta, [i], e),
+                  {
+                    name: '(Do map: ' + i.name + ')',
+                    args: [i.name],
+                    source: e.meta.source,
+                    start: e.meta.start,
+                    end: e.meta.end
+                  }
+                )])
   }
 }
 
