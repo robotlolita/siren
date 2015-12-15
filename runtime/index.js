@@ -664,6 +664,9 @@ var Siren = {
 
 // -- Primitives for the runtime ---------------------------------------
 $_extend(Siren_Root, {
+  'describe': function() {
+    return new _DebugText('<Root>');
+  },
   'vm'             : function(){ return Primitives; },
   'Root'           : function(){ return Siren_Root; },
   'Module'         : function(){ return Siren_Module; },
@@ -760,7 +763,7 @@ $_extend(Siren_Selector, {
   },
 
   'description': function(self) {
-    return self.symbol.toString();
+    return new _Text(self.symbol.toString());
   }
 });
 
@@ -1386,7 +1389,7 @@ var Primitives = $makeInternalObject({
     return new _Tuple(methods);
   },
 
-  'reflect/methods-selector:on:in:': function(_, name, object, context) {
+  'reflect/method-selector:on:in:': function(_, name, object, context) {
     var symbol = context.lookup(object, name);
     if (symbol) {
       return new _Selector(symbol);
