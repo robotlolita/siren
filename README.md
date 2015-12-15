@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/robotlolita/siren/master/logo-with-text.svg" align="left" alt="Siren">
+<img src="https://raw.githubusercontent.com/robotlolita/siren/master/logo-with-text.png" align="left" alt="Siren">
 
 Siren is an experimental prototype-based object-oriented language. It
 differs from existing languages in that it uses a single delegation slot
