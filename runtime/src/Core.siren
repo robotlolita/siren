@@ -25,6 +25,7 @@ vm extend: Nullary-Block with: {
 }.
 
 
+
 # -- Branding ----------------------------------------------------------
 let Branding = {
   def self traits {

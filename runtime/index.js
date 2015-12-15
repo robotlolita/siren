@@ -200,6 +200,11 @@ Meta.prototype.set = function(object, name, value) {
   this.data.set(object, metas);
 };
 
+Meta.prototype.update = function(object, meta) {
+  var oldMeta = this.data.get(object) || {};
+  this.data.set(object, extend(oldMeta, meta));
+};
+
 
 // -- Context for perspectives -----------------------------------------
 
@@ -560,7 +565,7 @@ function $_extend(object, record) {
 
 function $makeFunction(fn, meta) {
   meta = meta || {};
-  if (meta.name)  fn.displayName = meta.name;
+  if (meta.name)  fn.displayName = meta.name.string;
   var result;
   switch (fn.length) {
     case 0:
@@ -582,13 +587,13 @@ function $makeFunction(fn, meta) {
     default:
     result = new _MethodN(fn);
   }
-  $meta.set(result, meta);
+  $meta.update(result, meta);
   return result;
 }
 
 function $makeBlock(fn, meta) {
   meta = meta || {};
-  if (meta.name)  fn.displayName = meta.name;
+  if (meta.name)  fn.displayName = meta.name.string;
   var result;
   switch (fn.length) {
     case 0:
@@ -610,7 +615,7 @@ function $makeBlock(fn, meta) {
     default:
     result = new _BlockN(fn);
   }
-  $meta.set(result, meta);
+  $meta.update(result, meta);
   return result;
 }
 
@@ -852,6 +857,10 @@ $_extend(Siren_Importer, {
 });
 
 $_extend(Siren_Block, {
+  'describe': function(self) {
+    return new _DebugText('<Block arity: ' + self.call.length + '>');
+  },
+
   'apply:': function(self, _arguments) {
     return self.call.apply(_arguments);
   }
@@ -882,6 +891,10 @@ $_extend(Siren_Block3, {
 });
 
 $_extend(Siren_Method, {
+  'describe': function(self) {
+    return new _DebugText('<Unbound-Method arity: ' + self.call.length + '>');
+  },
+
   'in:apply:': function(self, target, _arguments) {
     return self.call.apply(target, [target].concat(_arguments));
   }
@@ -1382,7 +1395,7 @@ var Primitives = $makeInternalObject({
       var names = keys(box);
       for (var i = 0; i < names.length; ++i) {
         var name = names[i];
-        methods.push(new _Tuple([new _Text(name)], object[box[name]]));
+        methods.push(new _Tuple([new _Text(name), object[box[name]]]));
       }
       c = c.parent;
     }

@@ -54,7 +54,8 @@ let Object-Mirror = Mirror {
                       in: self reflectee-context.
     vm if: (vm failed?: selector)
        then: { Result failure: "No such method: ", name }
-       else: { Result ok: selector }.
+       else: { Result ok: selector };
+       value.
 
   def self method-for-name: name do {
     selector <- self selector-from-name: name.
@@ -63,7 +64,7 @@ let Object-Mirror = Mirror {
 
   def self method-for-selector: selector
     vm assert/selector: selector.
-    let result = vm reflect/method: selector on: self reflectee.
+    let result = vm reflect/method-for-selector: selector on: self reflectee.
     vm if: (vm failed?: result)
        then: { Result failure: "No such method: ", selector description }
        else: { Result ok: result };
@@ -73,7 +74,7 @@ let Object-Mirror = Mirror {
     (self method-for-name: name) then: { True } else: { False }.
 
   def self parent
-    let result = vm reflect/parent: self.
+    let result = vm reflect/parent: self reflectee.
     vm if: (vm failed?: result)
        then: { Result failure: "No parent." }
        else: { Result ok: result };
