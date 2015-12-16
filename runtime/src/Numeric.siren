@@ -32,6 +32,9 @@ vm extend: Integer with: {
   def self as-float
     vm integer->float: self.
 
+  def self as-string
+    vm text: (vm integer->string: self).
+
   def self as-integer
     self.
 
@@ -121,6 +124,9 @@ vm extend: Float-64bits with: {
 
   def self as-integer
     vm float->integer: self.
+
+  def self as-string
+    vm text: (vm float->string: self).
 
   def self as-float
     self.
