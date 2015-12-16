@@ -26,6 +26,12 @@ vm extend: Nullary-Block with: {
 }.
 
 
+# -- Modules -----------------------------------------------------------
+vm extend: Importer with: {
+  def self siren: id
+    self siren: id with-arguments: [].
+}.
+
 
 # -- Branding ----------------------------------------------------------
 let Branding = {
