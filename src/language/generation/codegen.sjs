@@ -210,16 +210,20 @@ function makeBlock(bind, meta, args, body) {
 
 function generateModule(bind, meta, args, exports, body) {
   var hasExports = exports.value.length > 0;
+  if (hasExports) {
+    var returnValue = [
+      js.Return({}, S.makeObject({}, generatePlainRecord(bind, exports), id('_Module')))
+    ];
+  } else {
+    var returnValue = [js.Return({}, id('_Module'))];
+  }
+
   return set(meta, mem({}, id('module'), id('exports')),
              fn({}, null, generate(bind, [Expr.Id(meta, '$Siren')] +++ safeArgs(bind, args)),
                 [js.ExprStmt({}, str('use strict'))]
                 +++ cloneMethods({})
                 +++ generate(bind, body)
-                +++ ( hasExports?
-                      [js.Return({}, S.makeObject({},
-                                                  [generatePlainRecord(bind, exports)],
-                                                  id('_Module')))],
-                    : /* otherwise */  [js.Return({}, id('_Module'))])))
+                +++ returnValue));
 }
 
 function generateApply(bind, apExpr) {
