@@ -858,7 +858,8 @@ $_extend(Siren_Importer, {
   'siren:with-arguments:': function(self, module_id, _arguments) {
     assert_text(module_id);
     assert_tuple(_arguments);
-    return self.require(module_id.string).apply([Siren].concat(_arguments.array));
+    return self.require(module_id.string)
+               .apply(null, [Siren].concat(_arguments.array));
   }
 });
 
