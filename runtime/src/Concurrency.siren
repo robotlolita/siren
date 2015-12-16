@@ -57,6 +57,15 @@ let Task = {
 
   def self failed
     self failed: Unit.
+
+  def self new: computation cleanup: cleanup
+    self traits Task-Trait {
+      def_ fork: resolver = computation call: resolver.
+      def_ cleanup: state = cleanup call: state.
+    }
+
+  def self new: computation
+    self new: computation cleanup: { _ | Unit }.
 }.
 
 let Task-Trait = Task {
@@ -362,11 +371,11 @@ let Future-Result = Future {
   def self describe
     let state = vm object: self at: "state".
     let value = vm object: self at: "value".
-    Debug-Text, state match: {
-      def_ pending   = "<Future (pending)>".
-      def_ cancelled = "<Future (cancelled)>".
-      def_ resolved  = "<Future success: ", value describe, ">".
-      def_ rejected  = "<Future failure: ", value describe, ">".
+    state match: {
+      def_ pending   = Debug-Text, "<Future (pending)>".
+      def_ cancelled = Debug-Text, "<Future (cancelled)>".
+      def_ resolved  = Debug-Text, "<Future success: ", value describe, ">".
+      def_ rejected  = Debug-Text, "<Future failure: ", value describe, ">".
     }.
 
   def self listen!: pattern

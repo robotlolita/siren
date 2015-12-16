@@ -1545,6 +1545,14 @@ var Primitives = $makeInternalObject({
     } catch(e) {
       console.log(b.string, showJs(a));
     }
+  },
+
+  // ---- Console
+  'console/write:': function(_, text) {
+    process.stdout.write(text.string);
+  },
+  'console/error:': function(_, text) {
+    process.stderr.write(text.string);
   }
 });
 
@@ -1558,6 +1566,8 @@ require('./Numeric')(Siren, Primitives);
 require('./Collections')(Siren, Primitives);
 require('./Debug')(Siren, Primitives);
 require('./JS')(Siren, Primitives);
+require('./Concurrency')(Siren, Primitives);
+require('./Console')(Siren, Primitives);
 
 // -- Exports ----------------------------------------------------------
 module.exports = Siren;
