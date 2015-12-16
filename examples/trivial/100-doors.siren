@@ -1,4 +1,6 @@
-Console log: """
+$siren/1
+
+Console write-line!: """
 You have 100 doors in a row that are all initially closed.
 
 You make 100 passes by the doors. The first time through,
@@ -7,108 +9,106 @@ you open it; if it is open, you close it). The second time you
 only visit every 2nd door (door #2, #4, #6, ...).
 The third time, every 3rd door (door #3, #6, #9, ...),
 etc, until you only visit the 100th door.
-""";
+""".
 
 
-(* So, first, we need to have a Door, in order to be able to talk about them. A
-   door is something that can be either open or closed, and also has an
-   associated index. *)
+# So, first, we need to have a Door, in order to be able to talk about them. A
+# door is something that can be either open or closed, and also has an
+# associated index.
 let Door = {
-  def new: index
-    (* Constructs a new Door. New objects are constructed just by cloning
-       existing objects, and giving them new behaviours. In this case we're
-       cloning the target of this message and giving it an `index` behaviour,
-       which will answer where that door is located at. 
-     *)
-    this { def index = index }
+  def self new: index
+    # Constructs a new Door. New objects are constructed just by cloning
+    # existing objects, and giving them new behaviours. In this case we're
+    # cloning the target of this message and giving it an `index` behaviour,
+    # which will answer where that door is located at. 
+    self { def_ index = index }.
 
 
-  (* Conventionally, Siren uses a suffix `?` for predicates *)
-  def open?
-    (* Whether the door is open. *)
-    False
+  # Conventionally, Siren uses a suffix `?` for predicates
+  def self open?
+    # Whether the door is open.
+    False.
 
-  def closed?
-    (* Whether the door is closed. *)
-    False
-};
+  def self closed?
+    # Whether the door is closed.
+    False.
+}.
 
-(* Now that we have our base door, we can define the states it can be in.
-   Our door can be either in the Open or Closed state, and each of these
-   states have different representations. They also respond differently to
-   the `open?` and `closed?` messages. 
- *)
+# Now that we have our base door, we can define the states it can be in.
+# Our door can be either in the Open or Closed state, and each of these
+# states have different representations. They also respond differently to
+# the `open?` and `closed?` messages. 
 let Open-Door = Door {
-  def as-string
-    (* A textual representation of this door. *)
-    "Door " + this index as-string + " is open."
+  def self description
+    # A textual representation of this door.
+    "Door ", self index as-string, " is open.".
 
-  def as-emoji
-    (* An emoji representation of this door. *)
-    "_"
+  def self as-emoji
+    # An emoji representation of this door.
+    "_".
   
   def open?
-    (* Open doors are, of course, open. *)
-    True
+    # Open doors are, of course, open.
+    True.
 
-  (* We don't need to re-define `new:` and `closed?`, since they're inherited
-     from the base `Door` object. *)
-};
+  # We don't need to re-define `new:` and `closed?`, since they're inherited
+  # from the base `Door` object.
+}.
 
 let Closed-Door = Door {
-  def as-string
-    (* A textual representation of this door. *)
-    "Door " + this index as-string + " is closed."
+  def self description
+    # A textual representation of this door.
+    "Door ", self index as-string, " is closed.".
 
-  def as-emoji
-    (* An emoji representation of this door. *)
-    "🚪"
+  def self as-emoji
+    # An emoji representation of this door.
+    "🚪".
   
-  def closed?
-    (* Closed doors are, of course, closed. *)
-    True
-};
+  def self closed?
+    # Closed doors are, of course, closed.
+    True.
+}.
 
 
-(* At last, we can define the problem. It asks us three questions:
-
-   - Which state the doors are in?
-   - Which ones are closed?
-   - Which ones are open?
-
-   So we're going to define behaviours that respond to those questions
-   accordingly. *)
+# At last, we can define the problem. It asks us three questions:
+# 
+# - Which state the doors are in?
+# - Which ones are closed?
+# - Which ones are open?
+# 
+# So we're going to define behaviours that respond to those questions
+# accordingly.
 let Doors = {
-  @lazy        (* This is a pure function so we can memoise its result *)
-  def state
-    (* Returns an array of Doors with the correct states. *)
-    (1 ... 100)  (* A range that goes from 1 to 100, inclusive *)
-      as-array   (* Converted to an array *)
+  @lazy        # This is a pure function so we can memoise its result
+  def self state
+    # Returns an array of Doors with the correct states.
+    (1 to: 100)  # A range that goes from 1 to 100, inclusive
+      as-array   # Converted to an array
       map: { i | (i square-root === i square-root round) then: { Open-Door new: i }
                                                          else: { Closed-Door new: i } }
-                 (* Then transformed such that each index holds a door's state *)
+                 # Then transformed such that each index holds a door's state
 
-  def open
-    (* Returns an array of the indexes where doors are open. *)
-    this state filter: _ open?    (* We only want the doors that are Open *)
-            >> map: _ index       (* And while we're at it, only their indexes *)
+  def self open
+    # Returns an array of the indexes where doors are open.
+    self state filter: _ open?;    # We only want the doors that are Open
+                map: _ index       # And while we're at it, only their indexes
 
-  def closed
-    (* Returns an array of the indexes where the doors are closed. *)
-    this state filter: _ closed? (* We only want the doors that are Closed *)
-            >> map: _ index      (* And while we're at it, only their indexes *)
-};
+  def self closed
+    # Returns an array of the indexes where the doors are closed.
+    self state filter: _ closed?; # We only want the doors that are Closed
+                map: _ index      # And while we're at it, only their indexes
+}.
 
-(* Finally, we can start answering the questions posed to us: *)
-Console log: "\n";
-Console log: "What state are the doors in after the last pass?";
-Console log: (Doors state map: _ as-emoji >> join: "");
+# Finally, we can start answering the questions posed to us:
+Console write-line!: "\n".
+Console write-line!: "What state are the doors in after the last pass?".
+Console write-line!: (Doors state map: _ as-emoji; join: "").
 
 
-Console log: "\n";
-Console log: "Which are open?";
-Console log: (Doors open join: ", ");
+Console write-line!: "\n".
+Console write-line!: "Which are open?".
+Console write-line!: (Doors open join: ", ").
 
-Console log: "\n";
-Console log: "Which are closed?";
-Console log: (Doors closed join: ", ")
+Console write-line!: "\n".
+Console write-line!: "Which are closed?".
+Console write-line!: (Doors closed join: ", ")
