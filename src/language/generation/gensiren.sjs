@@ -37,6 +37,15 @@ function fnMeta(meta) {
     +++ maybeProp('end-offset', meta.end != null? integer({}, '+', String(meta.end)) : undefined))
 }
 
+function genObject(meta) {
+  return js.Obj(
+    {},
+    Object.keys(meta).map(function(key) {
+      return js.Property({}, js.Str({}, key), meta[key], 'init');
+    })
+  );
+}
+
 
 // -- Public interface -------------------------------------------------
 exports.rt = rt;
@@ -109,4 +118,9 @@ function makeBlock(m, fn, meta) {
 exports.makeObject = makeObject;
 function makeObject(m, o, p) {
   return rtCall(m, '$makeObject', [o, p]);
+}
+
+exports.withMeta = withMeta;
+function withMeta(m, o, meta) {
+  return rtCall(m, '$withMeta', [o, genObject(meta)]);
 }

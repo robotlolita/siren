@@ -628,6 +628,11 @@ function $makeModule(jsModule, require, runtime) {
   return module;
 }
 
+function $withMeta(value, meta) {
+  $meta.update(value, meta || {});
+  return value;
+}
+
 function $int(n) {
   return new _Integer(BigNum(n));
 }
@@ -663,7 +668,8 @@ var Siren = {
   '$makeModule': $makeModule,
   '$makeFunction': $makeFunction,
   '$makeBlock': $makeBlock,
-  '$makeObject': $makeObject
+  '$makeObject': $makeObject,
+  '$withMeta': $withMeta
 };
 
 

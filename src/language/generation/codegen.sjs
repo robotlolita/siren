@@ -431,7 +431,15 @@ function generate(bind, x) {
       S.makeObject(meta, generatePlainRecord(bind, Expr.Record(meta, xs)), S.object({})),
 
     Expr.Let(meta, Expr.Id(_, name), value) =>
-      letb(meta, id(safeId(name)), generate(bind, value)),
+      letb(
+        meta,
+        id(safeId(name)),
+        S.withMeta(
+          {},
+          generate(bind, value),
+          { name: S.text({}, name) }
+        )
+      ),
 
     n @ Expr.Apply(meta, sel, target, args) =>
       generateApply(bind, n),
