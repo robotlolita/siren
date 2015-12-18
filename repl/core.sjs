@@ -29,8 +29,10 @@ var result = colours.cyan;
 
 // -- Helpers ----------------------------------------------------------
 function showError(e, options) {
-  console.log(error(e));
-  if (options.verbose) console.log(faded(e.stack));
+  if (e) {
+    console.log(error(e));
+    if (options.verbose) console.log(faded(e.stack));
+  }
 }
 
 function maybeLog(runtime, options, a) {
