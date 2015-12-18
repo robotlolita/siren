@@ -754,7 +754,8 @@ $_extend(Siren_Object, {
   },
 
   'describe': function(self) {
-    return new _DebugText('<Object>');
+    var name = $meta.get(self, 'name');
+    return new _DebugText('<' + (name || 'Anonymous Object') + '>');
   }
 });
 
