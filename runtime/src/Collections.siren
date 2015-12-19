@@ -69,6 +69,10 @@ vm extend: Tuple with: {
   def self length
     vm tuple/size: self.
 
+  def self each: block
+    vm tuple: self each: block.
+    self.
+
   def self map: transformation
     vm tuple: self map: transformation.
 

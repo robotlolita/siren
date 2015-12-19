@@ -130,7 +130,7 @@ let Ok = Result {
     self value.
 
   def self get-or-default: default-value
-    default-value.
+    self value.
 }.
 
 let Failure = Result {
@@ -144,7 +144,7 @@ let Failure = Result {
     self.
 
   def self match: pattern
-    self failure: self value.
+    pattern failure: self value.
 
   def self recover: handler
     handler call: self value.

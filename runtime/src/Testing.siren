@@ -1,0 +1,191 @@
+#-----------------------------------------------------------------------
+# 
+# This source file is part of the Siren project.
+#
+# Copyright (C) 2013-2015 Quildreen Motta.
+# Licensed under the MIT licence.
+#
+# See LICENCE for licence information.
+# See CONTRIBUTORS for the list of contributors to the project.
+#
+#-----------------------------------------------------------------------
+$siren/1
+module | vm | where
+
+vm extend: Root with: {
+  def_ Testing = Testing.
+}.
+
+let Testing = {
+  def_ perspectives {
+    def_ assertions = Assertions-Perspective.
+  }
+
+  def_ traits {
+    def_ Object-Testing = Object-Testing.
+  }
+
+  def self Assertions = Assertions.
+
+  def self for: object
+    self traits Object-Testing { def_ target = object }.
+}.
+
+let Object-Testing = {
+  def self write-heading!: name
+    Console write-line!: "----------------------------------------------".
+    Console write-line!: "Running tests for: ", name.
+    Console write-line!: "".
+    
+  def self write-method-heading!: method
+    let meta = Mirror reflect: method; meta.
+    Console write-line!: "- ", (meta name get-or-default: "(anonymous method)").
+
+  def self run!
+    let mirror = Mirror reflect: self target.
+    self write-heading!: (mirror meta name get-or-default: "(anonymous object)").
+
+    mirror methods each: { pair |
+      self write-method-heading!: pair value.
+      let method-meta = Mirror reflect: pair value; meta.
+
+      method-meta examples get-or-default: []; each: { example |
+        let code = method-meta source code get-or-default: "(Source code unavailable)".
+        example value match: {
+          def_ ok: _
+            Console write-line!: "  ✔ ", code.
+
+          def_ failure: error
+            Console write-line!: "  ✘ ", code.
+            Debug show: error explain tag: "[reason] ".
+            Console write-line!: "".
+        }.
+      }.
+    }.
+    self.
+}.
+
+# -- Divergences -------------------------------------------------------
+# Tests expect divergences, and assertions result in divergences.
+let Divergence = {
+  def self || divergence
+    unimplemented.
+
+  def self && divergence
+    unimplemented.
+}.
+
+let Equality-Divergence = Divergence {
+  def_ traits {
+    def_ Inverse = Inequality-Divergence.
+  }
+
+  def self describe
+    Debug-Text, 
+    "<Equality-Divergence: ", self left describe, " === ", self right describe, ">".
+
+  def self left: left-value right: right-value
+    self {
+      def_ left  = left-value.
+      def_ right = right-value.
+    }
+
+  def self explain
+    Debug-Text,
+    "Expected ", self left describe, " to equal ", self right describe.
+
+  def self not
+    self traits Inverse left: self right right: self left.
+}.
+
+let Inequality-Divergence = Equality-Divergence {
+  def_ traits {
+    def_ Inverse = Equality-Divergence.
+  }
+
+  def self describe
+    Debug-Text, 
+    "<Inequality-Divergence: ", self left describe, " === ", self right describe, ">".
+
+  def self explain
+    Debug-Text,
+    "Expected ", self left describe, " to not equal ", self right describe.
+}.
+
+let Reference-Equality-Divergence = Equality-Divergence {
+  def_ traits {
+    def_ Inverse = Reference-Inequality-Divergence.
+  }
+
+  def self describe
+    Debug-Text, 
+    "<Reference-Equality-Divergence: ", self left describe, " === ", self right describe, ">".
+
+  def self explain
+    Debug-Text,
+    "Expected ", self left describe, " to be ", self right describe.
+}.
+
+let Reference-Inequality-Divergence = Reference-Equality-Divergence {
+  def_ traits {
+    def_ Inverse = Reference-Equality-Divergence.
+  }
+
+  def self describe
+    Debug-Text, 
+    "<Reference-Inequality-Divergence: ", self left describe, " === ", self right describe, ">".
+
+  def self explain
+    Debug-Text,
+    "Expected ", self left describe, " to not be ", self right describe.
+}.
+
+
+# -- Assertions --------------------------------------------------------
+let Assertions = {
+  def_ traits {
+    def_ Object-Assertions = Object-Assertions.
+    def_ Equality-Divergence = Equality-Divergence.
+    def_ Inequality-Divergence = Inequality-Divergence.
+    def_ Reference-Equality-Divergence = Reference-Equality-Divergence.
+    def_ Reference-Inequality-Divergence = Reference-Inequality-Divergence.
+    def_ Divergence = Divergence.
+  }
+
+  def self for: object
+    self traits Object-Assertions { def_ target = object }.
+}.
+
+let Object-Assertions = Assertions {
+  def self assert: test divergence: divergence
+    test then: { Result ok: divergence }
+         else: { Result failure: divergence }
+    
+
+  def self equal: other
+    self assert: self target === other
+         divergence: self traits Equality-Divergence {
+                       @value def_ left = self target.
+                       def_ right = other
+                     }.
+
+  def self is: other
+    self assert: (Mirror reflect: self target; is: other)
+         divergence: self traits Reference-Equality-Divergence {
+                       @value def_ left = self target.
+                       def_ right = other
+                     }.
+}.
+
+vm extend: Object with: {
+  def self ==> that
+    Assertions for: self; equal: that.
+
+  def self =/=> that
+    (self ==> that) not.
+}.
+
+let Assertions-Perspective = Object extended-by: {
+  def self should
+    Assertions for: self.
+}.

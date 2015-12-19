@@ -123,10 +123,10 @@ let Meta-Mirror = {
 
   def self source
     self traits Source-Location {
-      @value def_ code      = self at: "source".
-      @value def_ start     = self at: "start-offset".
-      @value def_ end       = self at: "end-offset".
-      @value def_ filename  = self at: "filename".
+      def_ code      = self at: "source".
+      def_ start     = self at: "start-offset".
+      def_ end       = self at: "end-offset".
+      def_ filename  = self at: "filename".
     }.
 
   def self source: source
@@ -207,6 +207,13 @@ vm extend: Root with: {
 
   def_ examples: examples { object |
     Mirror reflect: object; meta; examples: examples.
+    object.
+  }
+
+  def_ example: example { object |
+    let meta = Mirror reflect: object; meta.
+    let examples = meta examples get-or-default: [].
+    meta examples: examples, [example].
     object.
   }
 }.

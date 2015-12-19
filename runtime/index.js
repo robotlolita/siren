@@ -186,7 +186,11 @@ function Meta() {
 //
 // @type: (Siren.Object, String) -> Siren.Object | null
 Meta.prototype.get = function(object, name) {
-  return (this.data.get(object) || {})[name];
+  if (name == null) {
+    return null;
+  } else {
+    return (this.data.get(object) || {})[name];
+  }
 };
 
 // #### method: set(object, name, value)
@@ -195,9 +199,11 @@ Meta.prototype.get = function(object, name) {
 //
 // @type: (Siren.Object, String, Siren.Object) -> null
 Meta.prototype.set = function(object, name, value) {
-  var metas = this.data.get(object) || {};
-  metas[name] = value;
-  this.data.set(object, metas);
+  if (name != null) {
+    var metas = this.data.get(object) || {};
+    metas[name] = value;
+    this.data.set(object, metas);
+  }
 };
 
 Meta.prototype.update = function(object, meta) {
@@ -630,8 +636,10 @@ function $makeModule(jsModule, require, runtime) {
 }
 
 function $withMeta(value, meta) {
-  $meta.update(value, meta || {});
-  return value;
+  if (value != null && isPrototypeOf.call(Siren_Object, value)) {
+    $meta.update(value, meta || {});
+    return value;
+  }
 }
 
 function $int(n) {
@@ -1333,6 +1341,11 @@ var Primitives = $makeInternalObject({
     return $int(a.array.length);
   },
 
+  'tuple:each:': function(_, a, f) {
+    var arr = a.array;
+    for (var i = 0; i < arr.length; ++i)  f.call(arr[i]);
+  },
+
   'tuple:map:': function(_, a, f) {
     var arr = a.array;
     var r = [];
@@ -1571,6 +1584,7 @@ require('./Debug')(Siren, Primitives);
 require('./JS')(Siren, Primitives);
 require('./Concurrency')(Siren, Primitives);
 require('./Console')(Siren, Primitives);
+require('./Testing')(Siren, Primitives);
 
 // -- Exports ----------------------------------------------------------
 module.exports = Siren;
