@@ -49,7 +49,7 @@ function resolve(scope, node) {
       : /* otherwise */       Expr.Global(m1, Expr.Id(m2, name)),
 
     Expr.Module(m, args, expt, xs) =>
-      (scope +++ ['Module'] +++ unpack(args) +++ collect(xs))
+      (scope +++ ['Module', 'Context'] +++ unpack(args) +++ collect(xs))
       |> λ(newScope) ->
            Expr.Module(m, args, resolve(newScope, expt), resolve(newScope, xs)),
 

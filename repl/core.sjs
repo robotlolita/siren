@@ -85,7 +85,7 @@ function replContext(runtime) {
     setTimeout: setTimeout,
     clearTimeout: clearTimeout,
     '$Siren': runtime,
-    '$methods': mod.context,
+    '_Context': mod.context,
     '_Module': mod,
     __dirname: process.cwd()
   });
@@ -162,7 +162,7 @@ function repl(options) {
   var runtime = makeRuntime();
   var context = replContext(runtime);
 
-  loopEvaluation( ['Module']
+  loopEvaluation( ['Module', 'Context']
                 , runtime
                 , context
                 , readline.createInterface({ input: process.stdin

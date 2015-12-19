@@ -70,19 +70,19 @@ function set(meta, id, expr) {
 function send(meta, obj, sel, args) {
   switch (args.length) {
     case 0:
-    return methCall(meta, obj, id('send0'), [id('$methods'), sel]);
+    return methCall(meta, obj, id('send0'), [id('_Context'), sel]);
 
     case 1:
-    return methCall(meta, obj, id('send1'), [id('$methods'), sel, args[0]]);
+    return methCall(meta, obj, id('send1'), [id('_Context'), sel, args[0]]);
 
     case 2:
-    return methCall(meta, obj, id('send2'), [id('$methods'), sel, args[0], args[1]]);
+    return methCall(meta, obj, id('send2'), [id('_Context'), sel, args[0], args[1]]);
 
     case 3:
-    return methCall(meta, obj, id('send3'), [id('$methods'), sel, args[0], args[1], args[2]]);
+    return methCall(meta, obj, id('send3'), [id('_Context'), sel, args[0], args[1], args[2]]);
 
     default:
-    return methCall(meta, obj, id('sendN'), [id('$methods'), sel, js.ArrayExpr({}, args)])
+    return methCall(meta, obj, id('sendN'), [id('_Context'), sel, js.ArrayExpr({}, args)])
   }
 }
 
@@ -120,7 +120,7 @@ function cloneMethods(meta, parent) {
   parent = parent || S.globalContext({});
   return [
     letb(meta, id('_Module'), S.makeModule({})),
-    letb(meta, id('$methods'), dot({}, ['_Module', 'context']))
+    letb(meta, id('_Context'), dot({}, ['_Module', 'context']))
   ]
 }
 
@@ -460,15 +460,15 @@ function generate(bind, x) {
 
     Expr.Use(meta, traits, xs) =>
       js.Call(meta,
-              fn({}, null, [id('$methods')],
+              fn({}, null, [id('_Context')],
                  generate(bind, xs)),
-              [send({}, id('$methods'), selector({}, str('with:')), [generate(bind, traits)])]),
+              [send({}, id('_Context'), selector({}, str('with:')), [generate(bind, traits)])]),
 
     Expr.Using(meta, traits) =>
       letb(
         meta,
-        id('$methods'),
-        send({}, id('$methods'), selector({}, str('with:')), [generate(bind, traits)])
+        id('_Context'),
+        send({}, id('_Context'), selector({}, str('with:')), [generate(bind, traits)])
       ),
 
     Expr.Var(meta, Expr.Id(_, sel)) =>
