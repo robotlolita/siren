@@ -47,6 +47,9 @@ let True = Boolean {
   def self then: consequent
     consequent value.
     Unit.
+
+  def self === that
+    self && that.
 }.
 
 let False = Boolean {
@@ -71,6 +74,9 @@ let False = Boolean {
 
   def self then: consequent
     Unit.
+
+  def self === that
+    (self || that) not.
 }.
 
 
