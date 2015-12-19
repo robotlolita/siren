@@ -80,6 +80,10 @@ let Object-Mirror = Mirror {
        then: { Result failure: "No parent." }
        else: { Result ok: result };
        value.
+
+  def self is: object
+    vm if: vm refeq: self reflectee and: object
+       then: True else: False.
 }.
 
 let Meta-Mirror = {
