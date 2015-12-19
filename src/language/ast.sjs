@@ -16,6 +16,7 @@ var { Base } = require('adt-simple');
 // ## adt: Expr
 union Expr {
   Empty,
+  Raw          { tree: Object },
   GlobalObject { meta: Object },
   Hole         { meta: Object },
   Module       { meta: Object, args: Array, exports: Record, body: Array },

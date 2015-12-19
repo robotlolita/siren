@@ -143,34 +143,35 @@ function idToStr {
   a              => raise(new TypeError("No match: " + show(a)))
 }
 
-function findDecoratedLambda(node) {
+function wrapDecoratedLambda(node, fn) {
   return match node {
-    Expr.Apply(_, _, _, [n]) =>
-      findDecoratedLambda(n),
+    Expr.Apply(a, b, c, [n]) =>
+      Expr.Apply(a, b, c, [wrapDecoratedLambda(n, fn)]),
 
-    n @ Expr.Lambda => n
+    n @ Expr.Lambda => fn(n)
   }
 }
 
 function generateProperty(bind, pair) {
   var _id = pair[0];
   var _fn = pair[1];
-  var _l  = findDecoratedLambda(_fn);
   return js.Property(
     pair[0].meta,
     idToStr(generate(bind, _id)),
-    S.makeFunction(
-      _fn.meta,
-      generate(bind, _fn),
-      {
-        name: _id.name,
-        docs: _l.meta.docs || '',
-        args: _l.args.map(λ[#.name]),
-        source: _l.source,
-        start: _l.start,
-        end: _l.end
-      }
-    ),
+    generate(bind, wrapDecoratedLambda(_fn, function(node) {
+      return Expr.Raw(S.makeFunction(
+        _fn.meta,
+        generate(bind, node),
+        {
+          name: _id.name,
+          docs: node.meta.docs || '',
+          args: node.args.map(λ[#.name]),
+          source: node.source,
+          start: node.start,
+          end: node.end
+        }
+      ))
+    })),
     "init"
   )
 }
@@ -481,6 +482,9 @@ function generate(bind, x) {
 
     Expr.Seq(meta, body) =>
       js.Prog(meta, generate(bind, body).map(toStatement)),
+
+    Expr.Raw(tree) =>
+      tree,
 
     x @ Array => x.map(λ[generate(bind, #)]),
 
