@@ -105,10 +105,10 @@ ometa SirenParser {
   moduleArgs = '|' ws argName:a (ws argName)*:as ws '|' -> [a].concat(as),
   exportStmt = kw('exposing') ws record:a -> a,
 
-  useExpr = kw('use') ws exprList:xs ws kw('in') ws '{' ws stmtList:ys ws '}'
-          -> Expr.Use({}, xs, ys),
+  useExpr = kw('use') ws expr:x ws kw('in') ws '{' ws stmtList:ys ws '}'
+          -> Expr.Use({}, x, ys),
 
-  usingStmt = kw('using') ws exprList:xs -> Expr.Using({}, xs),
+  usingStmt = kw('using') ws expr:x -> Expr.Using({}, x),
 
   // Expressions
   stmt = letStmt

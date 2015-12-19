@@ -461,12 +461,15 @@ function generate(bind, x) {
     Expr.Use(meta, traits, xs) =>
       js.Call(meta,
               fn({}, null, [id('$methods')],
-                 [methCall(meta, id('$methods'), id('merge'), generate(bind, traits))]
-                 +++ generate(bind, xs)),
-              [methCall({}, id('$methods'), id('clone'), [])]),
+                 generate(bind, xs)),
+              [send({}, id('$methods'), selector({}, str('with:')), [generate(bind, traits)])]),
 
     Expr.Using(meta, traits) =>
-      methCall(meta, id('$methods'), id('merge'), generate(bind, traits)),
+      letb(
+        meta,
+        id('$methods'),
+        send({}, id('$methods'), selector({}, str('with:')), [generate(bind, traits)])
+      ),
 
     Expr.Var(meta, Expr.Id(_, sel)) =>
       js.Id(meta, safeId(sel)),

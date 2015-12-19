@@ -37,8 +37,8 @@ union Expr {
   Apply  { meta: Object, selector: Id, target: Expr, args: Array },
   Clone  { meta: Object, source: Expr, bindings: Record },
   Return { meta: Object, value: Expr },
-  Use    { meta: Object, traits: Array, exprs: Array },
-  Using  { meta: Object, traits: Array },
+  Use    { meta: Object, traits: Expr, exprs: Array },
+  Using  { meta: Object, traits: Expr },
   Var    { meta: Object, selector: Id },
   Global { meta: Object, selector: Id },
   Do     { meta: Object, actions: Array }

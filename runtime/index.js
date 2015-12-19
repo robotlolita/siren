@@ -279,6 +279,7 @@ Context.prototype.merge = function(pairs) {
     extend(box, mappings);
     this.set(object, box);
   }
+  return this;
 };
 
 // #### method: clone()
