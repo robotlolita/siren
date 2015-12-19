@@ -31,7 +31,7 @@ $ bin/isiren
 Type :quit to exit (or ^D).
 
 > 1 + 1
-=> 2
+=> <Integer: 2>
 ```
 
 You can run individual files with the same binary. There are examples in the
