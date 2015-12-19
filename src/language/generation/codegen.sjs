@@ -165,7 +165,7 @@ function generateProperty(bind, pair) {
         {
           name: _id.name,
           docs: node.meta.docs || '',
-          args: node.args.map(λ[#.name]),
+          args: [node.self.name] +++ node.args.map(λ[#.name]),
           source: node.source,
           start: node.start,
           end: node.end
