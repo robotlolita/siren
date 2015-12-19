@@ -20,6 +20,8 @@ let Mirror = {
   def self describe
     Debug-Text, "<Mirror>".
 
+  def_ Stability = Stability.
+
   def_ traits {
     def_ Object-Mirror = Object-Mirror.
     def_ Meta-Mirror = Meta-Mirror.
@@ -89,6 +91,7 @@ let Object-Mirror = Mirror {
 let Meta-Mirror = {
   def_ traits {
     def_ Source-Location = Source-Location.
+    def_ See-Also = See-Also.
   }
 
   def self describe
@@ -129,11 +132,18 @@ let Meta-Mirror = {
       def_ filename  = self at: "filename".
     }.
 
-  def self source: source
-    source code map: { code | self at: "source" put: code }.
-    source start map: { n | self at: "start-offset" put: n }.
-    source end map: { n | self at: "end-offset" put: n }.
-    source filename map: { name | self at: "filename" put: name }.
+  def self start: start end: end filename: filename code: code
+    let location = self traits Source-Location {
+      def_ code      = code.
+      def_ start     = start.
+      def_ end       = end.
+      def_ filename  = filename.
+    }.
+    self at: "source" put: code.
+    self at: "start-offset" put: start.
+    self at: "end-offset" put: end.
+    self at: "filename" put: filename.
+    location.
 
   def self category
     self at: "category".
@@ -162,6 +172,122 @@ let Meta-Mirror = {
   def self examples: examples
     vm assert/tuple: examples.
     self at: "examples" put: examples.
+
+  def self authors
+    self at: "authors".
+
+  def self authors: authors
+    vm assert/tuple: authors.
+    self at: "authors" put: authors.
+
+  def self licence
+    self at: "licence".
+
+  def self licence: licence
+    self at: "licence" put: licence.
+
+  def self deprecated
+    self at: "deprecated".
+
+  def self deprecated: reason
+    vm assert/text: reason.
+    self at: "deprecated" put: reason.
+    self stability: Stability deprecated.
+
+  def self since
+    self at: "since".
+
+  def self since: version
+    self at: "since" put: version.
+
+  def self platforms
+    self at: "platforms".
+
+  def self platforms: platforms
+    vm assert/tuple: platforms.
+    self at: "platforms" put: platforms.
+
+  def self repository
+    self at: "repository".
+
+  def self repository: repository
+    self at: "repository" put: repository.
+
+  def self see-also
+    self at: "see-also".
+
+  def self see-also: items
+    vm assert/tuple: items.
+    self at: "see-also" put: items.
+
+  def self see-also: object reason: reason
+    do { 
+      items <- self see-also.
+      return self see-also: items, self traits See-Also {
+        def_ reference = object.
+        def_ reason = reason.
+      }
+    }.
+    self.
+
+  def self stability
+    self at: "stability".
+
+  def self stability: stability
+    self at: "stability" put: stability.
+
+  def self portability
+    self at: "portability".
+
+  def self portability: portability
+    self at: "portability" put: portability.
+
+  def self complexity
+    self at: "complexity".
+
+  def self complexity: complexity
+    self at: "complexity" put: complexity.
+}.
+
+let See-Also = {
+
+}.
+
+let Stability = {
+  def_ traits {
+    def_ Stability-Trait {
+      def self describe
+        Debug-Text, "<Stability: ", self index as-string, " - ", self name, ">".
+
+      def self explain
+        "Stability: ", self index as-string, " - ", self name, "\n\n", self description
+    }
+  }
+
+
+  def self deprecated = self traits Stability-Trait {
+    def self index = 0.
+    def self name = "Deprecated".
+    def self description = "This feature is known to be problematic and will either be entirely removed from the system, or completely redesigned. You should not rely on it."
+  }
+
+  def self experimental = self traits Stability-Trait {
+    def self index = 1.
+    def self name = "Experimental".
+    def self description = "This feature is experimental and likely to change (or be removed) in the future.".
+  }
+
+  def self stable = self traits Stability-Trait {
+    def self index = 2.
+    def self name = "Stable".
+    def self description = "This feature is stable and its API is unlikely to change (unless it's necessary for security, or other important reasons). You should expect backwards compatibility with the system, and a well-defined and automated (if possible) migration path if it changes.".
+  }
+
+  def self locked = self traits Stability-Trait {
+    def self index = 3.
+    def self name = "Locked".
+    def self description = "This API will not change, however security and other bug fixes will still be applied to this feature."
+  }
 }.
 
 let Source-Location = {
@@ -216,5 +342,55 @@ vm extend: Root with: {
     meta examples: examples, [example].
     object.
   }
+
+  def_ complexity: complexity { object |
+    Mirror reflect: object; meta; complexity: complexity.
+    object.
+  }.
+
+  def_ portability: portability { object |
+    Mirror reflect: object; meta; portability: portability.
+    object.
+  }.
+
+  def_ stability: stability { object |
+    Mirror reflect: object; meta; stability: stability.
+    object.
+  }.
+
+  def_ see-also: reference reason: reason { object |
+    Mirror reflect: reference; meta; see-also: reference reason: reason.
+    object.
+  }.
+
+  def_ repository: repository { object |
+    Mirror reflect: object; meta; repository: repository.
+    object.
+  }
+
+  def_ platforms: platforms { object |
+    Mirror reflect: object; meta; platforms: platforms.
+    object.
+  }.
+
+  def_ since: version { object |
+    Mirror reflect: object; meta; since: version.
+    object.
+  }.
+
+  def_ deprecated: reason { object |
+    Mirror reflect: object; meta; deprecated: reason.
+    object.
+  }.
+
+  def_ licence: licence { object |
+    Mirror reflect: object; meta; licence: licence.
+    object.
+  }.
+
+  def_ authors: authors { object |
+    Mirror reflect: object; meta; authors: authors.
+    object.
+  }.
 }.
 
