@@ -27,8 +27,11 @@ let Testing = {
 
   def self Assertions = Assertions.
 
-  def self for: object
-    self traits Object-Testing { def_ target = object }.
+  def self for: object in: context
+    self traits Object-Testing {
+      def_ target = object.
+      def_ target-context = context.
+    }.
 }.
 
 let Object-Testing = {
@@ -42,7 +45,7 @@ let Object-Testing = {
     Console write-line!: "- ", (meta name get-or-default: "(anonymous method)").
 
   def self run!
-    let mirror = Mirror reflect: self target.
+    let mirror = Mirror reflect: self target in: self target-context.
     self write-heading!: (mirror meta name get-or-default: "(anonymous object)").
 
     mirror methods each: { pair |
@@ -51,7 +54,7 @@ let Object-Testing = {
       let method-meta = Mirror reflect: method; meta.
 
       method-meta examples get-or-default: []; each: { example |
-        let code = method-meta source code get-or-default: "(Source code unavailable)".
+        let code = Mirror reflect: example; source; code; get-or-default: "(Source code unavailable)".
         example value match: {
           def_ ok: _
             Console write-line!: "  ✔ ", code.
