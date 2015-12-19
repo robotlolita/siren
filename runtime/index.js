@@ -211,6 +211,11 @@ Meta.prototype.update = function(object, meta) {
   this.data.set(object, extend(oldMeta, meta));
 };
 
+Meta.prototype.updateIfNotExists = function(object, meta) {
+  var oldMeta = this.data.get(object) || {};
+  this.data.set(object, extend(meta, oldMeta));
+};
+
 
 // -- Context for perspectives -----------------------------------------
 
@@ -637,7 +642,7 @@ function $makeModule(jsModule, require, runtime) {
 
 function $withMeta(value, meta) {
   if (value != null && isPrototypeOf.call(Siren_Object, value)) {
-    $meta.update(value, meta || {});
+    $meta.updateIfNotExists(value, meta || {});
     return value;
   }
 }
