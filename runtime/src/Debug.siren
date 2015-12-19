@@ -26,6 +26,9 @@ vm extend: Debug-Text with: {
 
   def self, text
     vm debug/text: self concat: text.
+
+  def self empty?
+    self === (Debug-Text, "").
 }.
 
 let Debug = {
@@ -38,4 +41,84 @@ let Debug = {
   def self show: object tag: tag
     vm debug/show: object tag: tag.
     self.
+
+  def self inspect: object
+    self inspect: object context: vm global-context.
+
+  def self inspect: object context: context
+    let mirror = Mirror reflect: object context: context.
+    let name = mirror meta name get-or-default: "(Anonymous object)".
+    Console write!: name, " {\n".
+    mirror methods each: { pair |
+      let method = pair value.
+      let method-meta = Mirror reflect: method; meta.
+      method-meta signature chain: { s | Console write-line!: "  ", s }.
+    }.
+    Console write-line!: "}".
+    mirror parent chain: { parent |
+      Console write!: "\nInheriting from ".
+      self inspect: parent context: context.
+    }.
+    self.
+
+  def self inspect: object message: message
+    self inspect: object message: message context: vm global-context.
+
+  def self inspect: object message: message context: context
+    let mirror = Mirror reflect: object context: context.
+    let maybe-method = mirror method-for-name: message.
+    maybe-method chain: { method |
+      let meta = Mirror reflect: method context: context; meta.
+      meta signature chain: { signature |
+        Console write-line!: signature.
+        let docs = meta documentation get-or-default: "".
+        Console write-line!: (docs split-at: "\n"; map: "  ", _; joined-by: "\n").
+        Console write-line!: "".
+        self describe-examples: meta examples.
+        self describe-location: meta source.
+        self describe-simple: "Complexity" value: meta complexity.
+        self describe-simple: "Since" value: meta since.
+        self describe-simple: "Category" value: meta category.
+        self describe-simple: "Platforms" value: meta platforms.
+        self describe-simple: "Licence" value: meta licence.
+        self describe-simple: "Repository" value: meta repository.
+        self describe-simple: "Portability" value: meta portability.
+        Console write-line!: "".
+        self describe-stability: meta stability.
+      }.
+    }.
+    self.
+
+  def self describe-stability: maybe-stability do {
+    stability <- maybe-stability.
+    return Console write-line!: stability explain.
+  }.
+
+  def self describe-examples: maybe-examples
+    maybe-examples chain: { examples |
+      examples length > 0 then: {
+        Console write-line!: "Examples:".
+        examples each: { example |
+          let mirror = Mirror reflect: example; meta.
+          mirror source code chain: { source |
+            Console write-line!: "  ", source.
+          }
+        }.
+        Console write-line!: "".
+      }.
+    }.
+
+  def self describe-simple: tag value: maybe-value do {
+    value <- maybe-value.
+    return Console write-line!: tag, ": ", value as-text.
+  }.
+
+  def self describe-location: source do {
+    start <- source start.
+    end   <- source end.
+    file  <- source filename.
+    return Console write-line!: "From: ", file, " at ", start as-text, " .. ", end as-text.
+  }.
+
+    
 }.

@@ -17,9 +17,16 @@ vm extend: Text with: {
     def_ Character-View = Character-View.
   }
 
+  def self as-text
+    self.
+
+  def self repeat: times
+    times <= 0 then: { "" }
+               else: { self, self repeat: times predecessor }.
+
   def self, text
-    vm assert/text: text.
-    vm text: (vm text: self concat: text).
+    vm assert/textual: text.
+    vm text: self concat-reify: text.
 
   def self === text
     vm assert/text: text.
@@ -58,6 +65,10 @@ vm extend: Text with: {
     }.
     vm object: result at: "text" put: self.
     result.
+
+  def self split-at: separator
+    vm assert/text: separator.
+    vm text: self split: separator.
 }.
 
 let Character-View = {

@@ -565,7 +565,7 @@ function $_extend(object, record) {
     var o = {};
     o[k] = $makeFunction(record[k], {
       name: new _Text(k),
-      arguments: new _Tuple(parseArgs(record[k]).slice(1).map($text)),
+      arguments: new _Tuple(parseArgs(record[k]).map($text)),
       documentation: new _Text(''),
       source: '<native>',
       filename: '<native>'
@@ -641,10 +641,10 @@ function $makeModule(jsModule, require, runtime) {
 }
 
 function $withMeta(value, meta) {
-  if (value != null && isPrototypeOf.call(Siren_Object, value)) {
+  if (value != null && (value === Siren_Object || isPrototypeOf.call(Siren_Object, value))) {
     $meta.updateIfNotExists(value, meta || {});
-    return value;
   }
+  return value;
 }
 
 function $int(n) {
@@ -972,12 +972,17 @@ var Primitives = $makeInternalObject({
 
   'assert/number:between:and:': function(_, a, b, c) {
     if (a.number < b.number || a.number > c.number)
-      throw new RangeError('Expected ' + (+a) + ' between ' + (+b) + ' and ' + (+c));
+      throw new RangeError('Expected ' + (+a.number) + ' between ' + (+b.number) + ' and ' + (+c.number));
   },
 
   'assert/numeric:': function(_, a) {
     if (a.number == null)
       throw new TypeError("Expected a number.");
+  },
+
+  'assert/textual:': function(_, a) {
+    if (typeof a.string !== 'string')
+      throw new TypeError("Expected a Text or Debug-Text.");
   },
 
   'assert/tuple:': function(_, a) {
@@ -1117,6 +1122,13 @@ var Primitives = $makeInternalObject({
 
   'text:concat:': function(_, a, b) {
     return a.string + b.string;
+  },
+
+  'text:concat-reify:': function(_, a, b) {
+    if (a instanceof _DebugText || b instanceof _DebugText)
+      return new _DebugText(a.string + b.string);
+    else
+      return new _Text(a.string + b.string);
   },
 
   'text:starts-with:': function(_, a, b) {
@@ -1368,7 +1380,7 @@ var Primitives = $makeInternalObject({
       }
       r.push.apply(r, t.array);
     }
-    return r;
+    return new _Tuple(r);
   },
 
   'tuple:filter:': function(_, a, f) {
@@ -1378,7 +1390,7 @@ var Primitives = $makeInternalObject({
       var v = arr[i];
       if (f.call(v))  r.push(v);
     }
-    return r;
+    return new _Tuple(r);
   },
 
   'tuple:fold:from:': function(_, a, f, b) {
@@ -1576,6 +1588,35 @@ var Primitives = $makeInternalObject({
     process.stderr.write(text.string);
   }
 });
+
+// -- Meta data --------------------------------------------------------
+$meta.set(Siren_Object, 'name', $text('Object'));
+$meta.set(Siren_Root, 'name', $text('Root'));
+$meta.set(Siren_Importer, 'name', $text('Importer'));
+$meta.set(Siren_Context, 'name', $text('Context'));
+$meta.set(Siren_Perspective, 'name', $text('Perspective'));
+$meta.set(Siren_Selector, 'name', $text('Selector'));
+$meta.set(Siren_Message, 'name', $text('Message'));
+$meta.set(Siren_Brand, 'name', $text('Brand'));
+$meta.set(Siren_ObjectBranding, 'name', $text('Object-Branding'));
+$meta.set(Siren_Block, 'name', $text('Block'));
+$meta.set(Siren_Block0, 'name', $text('Nullary-Block'));
+$meta.set(Siren_Block1, 'name', $text('Unary-Block'));
+$meta.set(Siren_Block2, 'name', $text('Binary-Block'));
+$meta.set(Siren_Block3, 'name', $text('Ternary-Block'));
+$meta.set(Siren_BlockN, 'name', $text('N-Ary-Block'));
+$meta.set(Siren_Method, 'name', $text('Method'));
+$meta.set(Siren_Method0, 'name', $text('Nullary-Method'));
+$meta.set(Siren_Method1, 'name', $text('Unary-Method'));
+$meta.set(Siren_Method2, 'name', $text('Binary-Method'));
+$meta.set(Siren_Method3, 'name', $text('Ternary-Method'));
+$meta.set(Siren_MethodN, 'name', $text('N-Ary-Method'));
+$meta.set(Siren_Text, 'name', $text('Text'));
+$meta.set(Siren_DebugText, 'name', $text('Debug-Text'));
+$meta.set(Siren_Numeric, 'name', $text('Numeric'));
+$meta.set(Siren_Integer, 'name', $text('Integer'));
+$meta.set(Siren_Float, 'name', $text('Float-64bits'));
+$meta.set(Siren_Tuple, 'name', $text('Tuple'));
 
 // -- The Siren part of the runtime ------------------------------------
 require('./Reflection')(Siren, Primitives);

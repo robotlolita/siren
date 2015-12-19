@@ -37,20 +37,30 @@ vm extend: Tuple with: {
                                       else: { acc, ". ", x describe }}.
     Debug-Text, "[", (self from: "" fold-with: concat), "]".
 
+  def self as-text
+    "[", (self map: _ as-text; joined-by: ", "), "]"
+
   def self at: offset
+    (offset < 1) || (offset > self length) then: {
+      Result failure: "Expected ", offset describe, " to be between 1 and ", self length as-text.
+    } else: {
+      Result ok: (vm tuple: self at: offset).
+    }
+
+  def self at!: offset
     vm assert/numeric: offset.
     vm assert/number: offset between: 1 and: self length.
     vm tuple: self at: offset.
 
   def self first
-    self empty? not then: { Result ok: (self at: 1) }
+    self empty? not then: { Result ok: (self at!: 1) }
                     else: { Result failure: "Can't take the first of an empty tuple." }.
 
   def self first!
     self first get!
 
   def self last
-    self empty? not then: { Result ok: (self at: self length) }
+    self empty? not then: { Result ok: (self at!: self length) }
                     else: { Result failure: "Can't take the last of an empty tuple." }.
 
   def self last!
@@ -62,7 +72,26 @@ vm extend: Tuple with: {
   def self empty?
     self length === 0.
 
+  def self === other-tuple
+    self length =/= other-tuple length then: {
+      False
+    } else: {
+      self from: [1. True] fold-with: { acc x |
+        let index = acc first!.
+        let result = acc last!.
+        [index successor. result && (x === (other-tuple at!: index))].
+      }; last!.
+    }
+
+  @category: "Building tuples"
+  @complexity: "O(n)"
+  @platforms: ["ECMAScript 5"]
+  @licence: "MIT"
+  @stability: Mirror Stability stable
+  @example: { [], [1. 2]     ==> [1. 2]       }
+  @example: { [1. 2], [3. 4] ==> [1. 2. 3. 4] }
   def self, tuple
+    # Concatenates two tuples.
     vm assert/tuple: tuple.
     vm tuple: self concat: tuple.
 
@@ -107,7 +136,29 @@ vm extend: Tuple with: {
                      }}.
 
   def self sorted
-    self sorted-by: { a b | a compared-to: b }.  
+    self sorted-by: { a b | a compared-to: b }.
+
+  def self joined-by: separator
+    self from: "" fold-with: { acc x |
+      acc empty? then: { acc, x }
+                 else: { acc, separator, x }
+    }.
+
+  def self zip: tuple with: zipper
+    vm assert/tuple: tuple.
+    self length =/= tuple length then: { vm assert/fail: "Cannot zip tuples of different length." }.
+    self from: [1. []] fold-with: { acc x |
+      let index = acc first!.
+      let result = acc last!.
+      [index successor. result, [zipper call: x with: (tuple at!: index)]].
+    }; last!.
+
+  def self flattened
+    self from: [] fold-with: _, _.
+
+  def self interleaved-with: tuple
+    vm assert/tuple: tuple.
+    self zip: tuple with: { a b | [a. b] }; flattened.
 }.
 
 

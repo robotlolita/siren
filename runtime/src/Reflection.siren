@@ -247,6 +247,29 @@ let Meta-Mirror = {
 
   def self complexity: complexity
     self at: "complexity" put: complexity.
+
+  def self signature do {
+    name <- self name.
+    arguments <- self arguments.
+    name-and-args <- return format-signature call: name with: arguments.
+    return "def ", (name-and-args joined-by: " ")
+  }
+}.
+
+let format-signature = { name args |
+  (name contains?: ":") then: {
+    args interleaved-with: (name split-at: ":"; map: _, ":"); filter: _ =/= ":".
+  } else: {
+    args length === 0 then: {
+      [name].
+    } else: { args length === 1 then: {
+      [args first!. name].
+    } else: { args length === 2 then: {
+      [args first!. name. args last!].
+    } else: {
+      ["(Can't format signature)"].
+    }}}
+  }
 }.
 
 let See-Also = {
@@ -339,7 +362,7 @@ vm extend: Root with: {
   def_ example: example { object |
     let meta = Mirror reflect: object; meta.
     let examples = meta examples get-or-default: [].
-    meta examples: examples, [example].
+    meta examples: (vm tuple: examples concat: [example]).
     object.
   }
 
