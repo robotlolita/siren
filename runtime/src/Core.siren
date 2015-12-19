@@ -140,13 +140,13 @@ vm extend: Root with: {
   def_ lazy { fn |
     let computed = Reference new: False.
     let data = Reference new: Unit.
-    let update = { data set!: fn value. computed set!: True }.
-    { computed then: { data value } else: { update value. data value } }.
+    let update = { data set!: (fn in: Unit apply: []). computed set!: True }.
+    { _ | computed then: { data value } else: { update value. data value } }.
   }
 
   def_ value { fn |
-    let data = fn value.
-    { data }.
+    let data = fn in: Unit apply: [].
+    { _ | data }.
   }
 
   def_ brand: brand { object |
