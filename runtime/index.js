@@ -457,6 +457,33 @@ _DebugText.prototype = Siren_DebugText;
 _DebugText.prototype.string = "";
 _DebugText.prototype.toString = function(){ return this.string; };
 
+
+var wrapped = Symbol('wrapped');
+var unwrapCapability = Symbol('unwrap-capability');
+
+function wrap(object) {
+  var alien = Siren_Root.send0($context, 'JS');
+
+  var result = {
+    'send': function(message, args) {
+      var sirenArgs = args.map(function(x){
+        return alien.send1($context, 'alienate:', x);
+      });
+      var sirenResult = object.sendN($context, message, sirenArgs);
+      return alien.send1($context, 'expatriate:', sirenResult);
+    },
+    'unwrap': function(capability) {
+      if (capability === unwrapCapability) {
+        return object;
+      } else {
+        throw new Error("Invalid capability, can't unwrap the object.");
+      }
+    }
+  };
+  result[wrapped] = true;
+  return result;
+}
+
 // -- Internal methods -------------------------------------------------
 
 // Recovering messages
@@ -1490,6 +1517,9 @@ var Primitives = $makeInternalObject({
     if (BigNum.isBigNum(a))
       return pattern.send0($context, 'big-num');
 
+    if (a[wrapped])
+      return pattern.send0($context, 'wrapped');
+
     if (isPrototypeOf.call(Siren_Object, a))
       return pattern.send0($context, 'siren');
 
@@ -1558,6 +1588,14 @@ var Primitives = $makeInternalObject({
 
   'unwrap-text:': function(_, a) {
     return a.string;
+  },
+
+  'wrap-object:': function(_, a) {
+    return wrap(a);
+  },
+
+  'unwrap-object:': function(_, a) {
+    return a.unwrap(unwrapCapability);
   },
 
   // ---- Debugging

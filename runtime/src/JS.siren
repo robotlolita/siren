@@ -96,6 +96,7 @@ let JS-Alien = {
         }.
         object.
 
+      def_ wrapped  = vm unwrap-object: object.
       def_ big-num  = vm integer: object.
       def_ number   = vm float: object.
       def_ string   = vm text: object.
@@ -154,7 +155,7 @@ let JS-Object = JS-Alien {
 }.
 
 vm extend: Object with: {
-  def self expatriate-to-JS = self.
+  def self expatriate-to-JS = vm wrap-object: self.
 }.
 
 vm extend: Integer with: {
