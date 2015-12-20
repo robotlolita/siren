@@ -50,15 +50,53 @@ function decorateLet(letNode, expr) {
 
 function src(start, end) {
   return {
-    start: start.off,
-    end: end.off,
-    source: start.src.slice(start.off, end.off)
+    line: start.line,
+    column: start.column,
+    span: [start.offset, end.offset],
+    source: start.src.slice(start.offset, end.offset)
+  }
+}
+
+function computePosition(source, offset, lastOffset, lastLine) {
+  var column = 1;
+  var lines = 0;
+  lastOffset = lastOffset || 0;
+  lastLine = lastLine || 0;
+  var i = lastOffset;
+  while (i < offset) {
+    var c = source.charAt(i);
+    if ((c === '\n' && source.charAt(i + 1) === '\r') || (c === '\r' && source.charAt(i + 1) === '\n')) {
+      i += 2;
+      column = 1;
+      lines += 1;
+    } else if (c === '\n' || c === '\r') {
+      i += 1;
+      column = 1;
+      lines += 1;
+    } else {
+      column += 1;
+      i += 1;
+    }
+  }
+  return {
+    column: column,
+    line: lastLine + lines + 1
   }
 }
 
 // ## object: SirenParser
 ometa SirenParser {
-  pos     = ?(true) -> ({ src: this._source, off: this._offset }),
+  pos     = ?(true) -> {
+    var position = computePosition(this._source, this._offset, this.__last_offset, this.__last_line_computed);
+    this.__last_line_computed = position.line - 1;
+    this.__last_offset = this._offset;
+    return {
+      src: this._source, offset:
+      this._offset,
+      line: position.line,
+      column: position.column
+    };
+  },
   space   = /\s/,
   ignored = space | comment,
   comment = fromTo('#', '\n'):a -> a.slice(1),

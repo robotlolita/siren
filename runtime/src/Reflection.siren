@@ -129,21 +129,19 @@ let Meta-Mirror = {
       def_ code      = self at: "source".
       def_ start     = self at: "start-offset".
       def_ end       = self at: "end-offset".
+      def_ line      = self at: "line".
+      def_ column    = self at: "column".
       def_ filename  = self at: "filename".
     }.
 
-  def self start: start end: end filename: filename code: code
-    let location = self traits Source-Location {
-      def_ code      = code.
-      def_ start     = start.
-      def_ end       = end.
-      def_ filename  = filename.
-    }.
-    self at: "source" put: code.
-    self at: "start-offset" put: start.
-    self at: "end-offset" put: end.
-    self at: "filename" put: filename.
-    location.
+  def self source: source
+    self at: "source" put: source code.
+    self at: "start-offset" put: source start.
+    self at: "end-offset" put: source end.
+    self at: "line" put: source line.
+    self at: "column" put: source column.
+    self at: "filename" put: source filename.
+    self.
 
   def self category
     self at: "category".
@@ -316,7 +314,7 @@ let Stability = {
 let Source-Location = {
   def self describe
     Debug-Text,
-    "<Source-Location(", self start describe, ", ", self end describe, "): ", self filename describe, ">".
+    "<Source-Location at line ", self line describe, ", column ", self column describe, " in ", self filename describe, ">".
 
   def self source: code
     self { def_ source = code }.

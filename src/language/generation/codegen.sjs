@@ -166,9 +166,10 @@ function generateProperty(bind, pair) {
           name: _id.name,
           docs: node.meta.docs || '',
           args: [node.self.name] +++ node.args.map(λ[#.name]),
-          source: node.source,
-          start: node.start,
-          end: node.end
+          source: node.meta.source,
+          span: node.meta.span,
+          line: node.meta.line,
+          column: node.meta.column
         }
       ))
     })),
@@ -203,8 +204,9 @@ function makeBlock(bind, meta, args, body) {
       name: '(anonymous block' + (args.length? ': ' + args.map(λ[#.name]).join(', ') : '') + ')',
       args: args.map(λ[#.name]),
       source: meta.source,
-      start: meta.start,
-      end: meta.end
+      span: meta.span,
+      line: meta.line,
+      column: meta.column
     }
   )
 }
@@ -243,8 +245,9 @@ function generateApply(bind, apExpr) {
         name: '(partial application: ' + expr.meta.source + ')',
         args: [],
         source: expr.meta.source,
-        start: expr.meta.start,
-        end: expr.meta.end
+        span: expr.meta.span,
+        line: expr.meta.line,
+        column: expr.meta.column
       }
     );
   } else {
@@ -333,8 +336,9 @@ function generateDo(bind, meta, xs) {
                     name: '(Do map: ' + i.name + ')',
                     args: [i.name],
                     source: e.meta.source,
-                    start: e.meta.start,
-                    end: e.meta.end
+                    span: e.meta.span,
+                    line: e.meta.line,
+                    column: e.meta.column
                   }
                 )])
   }
@@ -348,8 +352,9 @@ function generateDo(bind, meta, xs) {
                     name: '(Do map: ' + i.name + ')',
                     args: [i.name],
                     source: e.meta.source,
-                    start: e.meta.start,
-                    end: e.meta.end
+                    span: e.meta.span,
+                    line: e.meta.line,
+                    column: e.meta.column
                   }
                 )])
   }

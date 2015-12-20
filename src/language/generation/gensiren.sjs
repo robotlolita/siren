@@ -33,8 +33,10 @@ function fnMeta(meta) {
     js.Property({}, js.Str({}, 'documentation'), text({}, meta.docs || ''), 'init'),
     js.Property({}, js.Str({}, 'arguments'), tuple({}, meta.args.map(λ[text({}, #)])), 'init'),
   ] +++ maybeProp('source', meta.source? text({}, meta.source) : undefined)
-    +++ maybeProp('start-offset', meta.start != null? integer({}, '+', String(meta.start)) : undefined)
-    +++ maybeProp('end-offset', meta.end != null? integer({}, '+', String(meta.end)) : undefined))
+    +++ maybeProp('line', meta.line != null? integer({}, '+', String(meta.line)) : undefined)
+    +++ maybeProp('column', meta.column != null? integer({}, '+', String(meta.column)) : undefined)
+    +++ maybeProp('start-offset', meta.span? integer({}, '+', String(meta.span[0])) : undefined)
+    +++ maybeProp('end-offset', meta.span? integer({}, '+', String(meta.span[1])) : undefined))
 }
 
 function genObject(meta) {
