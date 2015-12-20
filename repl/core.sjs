@@ -151,7 +151,10 @@ function run(names, runtime, context, rl, program, options) {
 }
 
 function runProgram(runtime, context, js) {
-  return vm.runInContext(js, context, '<repl>');
+  return vm.runInContext(js, context, {
+    filename: '<repl>',
+    displayErrors: false
+  });
 }
 
 
