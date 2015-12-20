@@ -18,6 +18,16 @@ function isValid(a) {
   return reserved.indexOf(a) === -1
 }
 
+function hasHoles(a) {
+  return a.target.isHole || a.args.some(function(b) {
+    return b.isHole;
+  });
+}
+
+function isLiteral(a) {
+  return a.isLambda || a.isBlock || a.isRecord || a.isClone || (a.isApply && hasHoles(a));
+}
+
 function get(k){ return function(o){
   return o[k]
 }}
@@ -33,7 +43,7 @@ function keywordLambda(meta, self, args, body, docs) {
 }
 
 function decorateLet(letNode, expr) {
-  return Expr.Let(expr.meta,
+  return Expr.Let(extend(expr.meta, { literal: letNode.meta.literal }),
                   letNode.name,
                   Expr.Apply(letNode.meta, Expr.Id({}, 'call:'), expr, [letNode.value]))
 }
@@ -97,8 +107,8 @@ ometa SirenParser {
 
 
   // Statements
-  letStmt = '@' expr:a ws letStmt:b             -> decorateLet(b, a)
-          | kw('let') ws identifier:a ~':' ws '=' ws expr:b -> Expr.Let({}, a, b),
+  letStmt = '@' expr:a ws letStmt:b                         -> decorateLet(b, a)
+          | kw('let') ws identifier:a ~':' ws '=' ws expr:b -> Expr.Let({ literal: isLiteral(b) }, a, b),
 
   module     = pos:sp kw('module') ws moduleArgs?:a ws exportStmt?:b ws kw('where') docComment?:doc ws stmtList:cs pos:ep
              -> Expr.Module(extend(src(sp, ep), { doc: doc || '' }), a || [], b || Expr.Record({}, []), cs),

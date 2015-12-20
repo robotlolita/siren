@@ -439,11 +439,10 @@ function generate(bind, x) {
       letb(
         meta,
         id(safeId(name)),
-        S.withMeta(
-          {},
-          generate(bind, value),
-          { name: S.text({}, name) }
-        )
+        meta.literal?  S.withMeta({},
+                                  generate(bind, value),
+                                  { name: S.text({}, name) })
+        :              generate(bind, value)
       ),
 
     n @ Expr.Apply(meta, sel, target, args) =>
