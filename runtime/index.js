@@ -1261,7 +1261,7 @@ var Primitives = $makeInternalObject({
     if (typeof vm === "number" && !Number.isInteger(vm)) {
       return $float(vn.toNumber() - vm);
     } else {
-      return $int(vm.sub(vm));
+      return $int(vn.sub(vm));
     }
   },
 
