@@ -166,12 +166,19 @@ ometa SirenParser {
   expr = useExpr
        | pipeExpr,
 
-  pipeExpr = pos:sp pipeExpr:a ws ";" ws identifier:i ~':' pos:ep
-             -> Expr.Apply(src(sp, ep), i, a, [])
-           | pos:sp pipeExpr:a ws ";" ws symbols:s ws unaryExpr:b pos:ep
-             -> Expr.Apply(src(sp, ep), s, a, [b])
+  pipeExpr = pos:sp pipeExpr:a ws ";" ws identifier:i ~':' pos:ep (ws pos:sp2 identifier:i2 ~':' pos:ep2 -> [i2, sp2, ep2])*:is
+             -> is.reduce(function(e, i) {
+                  return Expr.Apply(src(i[1], i[2]), i[0], e, [])
+                }, Expr.Apply(src(sp, ep), i, a, []))
+
+           | pos:sp pipeExpr:a ws ";" ws symbols:s ws unaryExpr:b pos:ep (ws pos:sp2 symbols:s2 ws unaryExpr:b2 pos:ep2 -> [s2, b2, sp2, ep2])*:bs
+             -> bs.reduce(function(e, b) {
+                  return Expr.Apply(src(b[2], b[3]), b[0], e, [b[1]])
+                }, Expr.Apply(src(sp, ep), s, a, [b]))
+
            | pos:sp pipeExpr:a ws ";" (ws keywordApp)+:as pos:ep
              -> keywordApply(src(sp, ep), a, as)
+
            | appExpr,
 
   appExpr = keywordExpr
