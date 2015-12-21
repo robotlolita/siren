@@ -74,6 +74,14 @@ function separateThousands(n, separator) {
   return String(n).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, '$1' + separator);
 }
 
+function compact(object) {
+  return Object.keys(object).reduce(function(r, k) {
+    var value = object[k];
+    if (value != null)  r[k] = value;
+    return r;
+  }, {});
+}
+
 // -- Assertions -------------------------------------------------------
 function assert_arity(f, n) {
   if (f.length !== n) {
@@ -567,6 +575,14 @@ function $extendObject(object, record) {
     var selector = Symbol(key);
     object[selector] = record[key];
     mapping[key] = selector;
+    $withMeta(record[key], compact({
+      'authors': $meta.get(object, 'authors'),
+      'licence': $meta.get(object, 'licence'),
+      'platforms': $meta.get(object, 'platforms'),
+      'repository': $meta.get(object, 'repository'),
+      'stability': $meta.get(object, 'stability'),
+      'portability': $meta.get(object, 'portability')
+    }));
   }
 
   return [object, mapping];
