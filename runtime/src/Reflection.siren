@@ -86,6 +86,13 @@ let Object-Mirror = Mirror {
   def self is: object
     vm if: vm refeq: self reflectee and: object
        then: True else: False.
+
+  def self belongs-to
+    let result = vm reflect/belongs-to: self reflectee.
+    vm if: (vm failed?: result)
+       then: { Result failure: "Free object." }
+       else: { Result ok: result };
+       value.
 }.
 
 let Meta-Mirror = {

@@ -159,7 +159,6 @@ var Siren_Method2 = Object.create(Siren_Method);
 var Siren_Method3 = Object.create(Siren_Method);
 var Siren_MethodN = Object.create(Siren_Method);
 
-
 var Siren_Text = Object.create(Siren_Object);
 var Siren_DebugText = Object.create(Siren_Object);
 var Siren_Numeric = Object.create(Siren_Object);
@@ -376,31 +375,37 @@ function _BlockN(fn) {
 _BlockN.prototype = Siren_BlockN;
 
 
+Siren_Method.belongsTo = null;
 function _Method0(fn) {
   assert_arity(fn, 0);
+  this.belongsTo = null;
   this.call = fn;
 }
 _Method0.prototype = Siren_Method0;
 
 function _Method1(fn) {
   assert_arity(fn, 1);
+  this.belongsTo = null;
   this.call = fn;
 }
 _Method1.prototype = Siren_Method1;
 
 function _Method2(fn) {
   assert_arity(fn, 2);
+  this.belongsTo = null;
   this.call = fn;
 }
 _Method2.prototype = Siren_Method2;
 
 function _Method3(fn) {
   assert_arity(fn, 3);
+  this.belongsTo = null;
   this.call = fn;
 }
 _Method3.prototype = Siren_Method3;
 
 function _MethodN(fn) {
+  this.belongsTo = null;
   this.call = fn;
 }
 _MethodN.prototype = Siren_MethodN;
@@ -573,9 +578,11 @@ function $extendObject(object, record) {
   for (var i = 0; i < ks.length; ++i) {
     var key = ks[i];
     var selector = Symbol(key);
-    object[selector] = record[key];
+    var method = record[key];
+    object[selector] = method;
     mapping[key] = selector;
-    $withMeta(record[key], compact({
+    method.belongsTo = object;
+    $withMeta(method, compact({
       'authors': $meta.get(object, 'authors'),
       'licence': $meta.get(object, 'licence'),
       'platforms': $meta.get(object, 'platforms'),
@@ -1499,6 +1506,10 @@ var Primitives = $makeInternalObject({
 
   'reflect/parent:': function(_, object) {
     return prototypeOf(object);
+  },
+
+  'reflect/belongs-to:': function(_, object) {
+    return object.belongsTo;
   },
 
   'meta:at:': function(_, object, name) {
