@@ -1252,7 +1252,7 @@ var Primitives = $makeInternalObject({
     if (typeof vm === "number" && !Number.isInteger(vm)) {
       return $float(vn.toNumber() * vm);
     } else {
-      return $int(vm.mul(vm));
+      return $int(vn.mul(vm));
     }
   },
 
