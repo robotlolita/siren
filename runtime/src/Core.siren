@@ -159,4 +159,10 @@ vm extend: Root with: {
     (Branding for: object) attach!: brand.
     object.
   }
+
+  def_ trait: trait { object |
+    let o2 = object refined-by: {}.
+    vm extend: o2 with: trait.
+    o2
+  }
 }
