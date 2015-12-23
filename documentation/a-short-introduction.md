@@ -369,12 +369,16 @@ Given this, Siren divides numbers in two categories:
 > but adding an integer `1` to a floating point `1.1` gives you a floating
 > point `2.1`).
 
-Integer literals in Siren are written without a `.`, whereas floating
-point literals are written with a `.`, even when the number you're
-expressing is integral, like `2.0`.
+Numbers are created using the number literals:
 
-Numeric literals in Siren accept the `_` character, which can be used to
-separate thousands for better readability:
+- Integers: `1`, `10_345`, ...;
+- Octal integers: `0b777`;
+- Hexadecimal integers: `0xFF`;
+- Binary integers: `0b110110`;
+- Floating point numbers: `2.0`, `23_344.455`.
+
+All numeric literals in Siren accept the `_` character, which can be
+used to separate thousands for better readability:
 
 ```ruby
 > 1_234_567
@@ -387,6 +391,37 @@ The `Text` object in Siren is used to represent texts. This is similar
 to what most other languages call `String`, in various ways. In Siren,
 `Text` is an opaque representation of a text, however, not a list of
 characters.
+
+Texts are created either with simple quotes:
+
+```ruby
+> "Hello!"
+# => "Hello"
+```
+
+Or with triple quotes:
+
+```ruby
+> """Hello!"""
+# => "Hello"
+```
+
+The difference between them being that you don't need to escape quotes
+inside texts with triple quotes. Both text literals support line breaks
+inside of them:
+
+```ruby
+> "This
+... is
+... a
+... long
+... text"
+# => "This
+# is
+# a
+# long
+# text"
+```
 
 Texts can be concatenated through the concatenation message (`,`):
 
