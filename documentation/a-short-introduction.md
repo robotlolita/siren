@@ -372,7 +372,7 @@ Given this, Siren divides numbers in two categories:
 Numbers are created using the number literals:
 
 - Integers: `1`, `10_345`, ...;
-- Octal integers: `0b777`;
+- Octal integers: `0o777`;
 - Hexadecimal integers: `0xFF`;
 - Binary integers: `0b110110`;
 - Floating point numbers: `2.0`, `23_344.455`.
