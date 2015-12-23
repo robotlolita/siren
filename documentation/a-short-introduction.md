@@ -469,6 +469,248 @@ looking at, it doesn't copy any text in memory.
 # => <Character: "e">
 ```
 
+### A quick note about Text vs. Debug-Text
+
+Siren differentiates between `Text` and `Debug-Text`. The first is an
+object used to represent text that's supposed to be manipulated by the
+program. `Debug-Text`, on the other hand, is an object used to represent
+text that's going to be displayed in the REPL, to show information to
+the programmer.
+
+You can create a `Debug-Text` by concatenating the object with any other
+text:
+
+```ruby
+> Debug-Text, "Hello"
+# => Hello
+```
+
+Note that, different from `Text`, the `Debug-Text` output is shown to
+the user without being wrapped in quotes. This allows Siren to
+differentiate the representation of the various objects it has in the
+system, without compromising their representation. Since `Debug-Text` is
+only used for this tiny and specific use case, its representation can't
+conflict with any other object.
+
+Also note that once you convert something to a `Debug-Text`, you can't
+convert it back. `Debug-Text` is completely opaque, and can't be
+inspected or viewed, like `Text` can.
+
+
+## Working with objects
+
+We've seen how to work with some common values in programming. But
+underneath, they too are just objects. So, it would make sense to
+understand what objects are, how they come into life, and how to use
+them.
+
+Siren uses objects to model its interactive world. An object is an
+entity that knows how to do work, and each of these pieces of work is
+identified by a "message". One may ask an object to do a particular
+piece of work by sending that object a message. As we've said before,
+something like `2 + 3` is just sending a message to the object `2`, it's
+`2` who decides what `+ 3` means.
+
+To trace a parallel with the real world, imagine that you've asked your
+friend, let's call them Max, to imagine a number. Max, then, without
+telling you, chooses the number `2`. You can't really look inside Max's
+head, but you can ask them to do operations to the number they've
+chosen. So, let's say you ask "Max, add 3 to the number you've
+chosen". Max then proceeds to compute that. You still don't know what's
+the number Max's got. But you can ask "Max, describe the number you have
+right now," to which Max could reply "It's the number 5". But they could
+also reply "It's bigger than 4, but smaller than 6. It's also an
+integral number".
+
+Numbers (and everything else) in Siren works exactly like Max. They have
+some internal values they're looking at, but you can't **see** those
+values. The only thing you can do is ask those objects to operate on and
+describe those values for you.
+
+Let's try to make this exercise more practical by modelling these
+objects in Siren ourselves. For this, we'll consider the simple
+[Fizz Buzz](https://en.wikipedia.org/wiki/Fizz_buzz) game:
+
+> Fizz Buzz is a game to teach children division. It can be played by
+> having them sit in a circle, and designating one of the children as
+> the number "1". Each children gets a number that is the successor of
+> the previous one, and in their turn, they must say the number they've
+> got, with the catch that, if the number is divisible by 3 they must
+> say `Fizz`, instead. If the number is divisible by 5, they must say
+> `Buzz`. And if the number is divisible by both 3 and 5, they must say
+> `Fizz Buzz`.
+
+Now, that's a lot to take in at once, so let's try breaking the problem
+down a little bit to understand it better. For simplicity, let's assume
+we have an infinite number of children:
+
+- Each children represents one number, starting from 1, and increasing
+  by 1 with each children.
+- If a children represents a number that is divisible by 3, they
+  have to say "Fizz".
+- If a children represents a number that is divisible by 5, they
+  have to say "Buzz"
+- Consequently, if a children represents a number that is divisible by
+  both 3 and 5, they'll say "Fizz Buzz".
+- If the number is not divisible by either 3 or 5, they have to say the
+  number.
+
+We can start by modelling what each children can say. They can say
+numbers, which Siren already has, but they can also say `Fizz`, `Buzz`,
+and `Fizz Buzz`, which Siren doesn't have yet. So, the first task is to
+model these possibilities as objects.
+
+To construct an object in Siren, one refines an existing object and adds
+the new messages they need. In order to reduce the amount of work, it
+makes sense to refine an object that has the closest set of messages to
+the one you want. Since neither of the three objects we'll create
+require any special message, we'll refine the base object:
+
+```ruby
+> let Fizz = Object {
+... def self as-text = "Fizz".
+... }
+> let Buzz = Object {
+... def self as-text = "Buzz".
+... }
+> let Fizz-Buzz = Object {
+... def self as-text = Fizz as-text, Buzz as-text.
+... }
+```
+
+An object is a collection of messages. Messages are defined with the
+`def` keyword, and they have much the same syntax we use to invoke those
+messages in the objects, with the difference that where we'd have
+expressions, we have names that will refer to those expressions when the
+message is sent. So, for example, if we do `Fizz as-text`, `self`
+inside that message will be `Fizz`.
+
+> **NOTE**
+> The `=` after the message is optional. Siren supports it so messages
+> that are defined in a single line are easier to read, but usually
+> expressions are placed in an indented block under the message header.
+
+The `let name = value` form gives the value an alias `name`, such that
+saying `name` becomes the same as saying `value`. We can try this
+by writing `Fizz-Buzz`:
+
+```ruby
+> Fizz-Buzz as-text
+# => "FizzBuzz"
+```
+
+> **NOTE**  
+> Since refining the base `Object` is such a common operation, Siren
+> lets you leave it out altogether, such that `{ ... }` is equivalent to
+> `Object { ... }`.
+
+Now that we can have the children say all they need to say in the game,
+we can move on to the players of the game. As previously said, a player
+is a children that represents a number, and they have to say different
+things depending on what the number they represent it.
+
+Players in the game behave in the very same way, and the only difference
+between them is which number they represent. Instead of creating an
+entirely new object by repeating all of the things a player can do in
+each one of them, we can capture the common things in an object, and
+reuse it — just like `Object` was reused by out previous ones. We'll
+call this common object `Fizz-Buzz-Player-Trait`:
+
+```ruby
+> let Fizz-Buzz-Player-Trait = {
+... def self describe = Debug-Text, "<Children ", self number as-text, ">".
+... def self say
+...   (self number divisible-by?: 3) && (self number divisible-by?: 5) then: {
+...     ^ Fizz-Buzz.
+...   }.
+...   (self number divisible-by?: 3) then: {
+...     ^ Fizz.
+...   }.
+...   (self number divisible-by?: 5) then: {
+...     ^ Buzz
+...   }.
+...   self number.
+... }
+```
+
+We've also given the Trait a `describe` message. When the REPL wants to
+show an object to the user, it sends that object a `describe`
+message. The object can then decide how it wants to present itself. The
+base object, `Object`, defines a `describe` message that just outputs
+the name meta-data of the object, so `Fizz describe` would be
+`<Fizz>`. We'd like the player trait to have a more useful description,
+so we included the number they represent.
+
+> **NOTE**  
+> For messages that have multiple expressions, Siren requires
+> them to be separated with a period (`.`). The last expression in a
+> message is automatically returned. Siren also supports blocks (`{
+> expression here }`), which allow one to pass expressions from one
+> message to another. Inside a block, you can use `^ <expression>` to
+> return a value from the message that defined the block.
+
+We can test if our `Fizz-Buzz-Player-Trait` object says the correct
+things by providing it with a number:
+
+```ruby
+> (Fizz-Buzz-Player-Trait { def _ number = 15 }) say
+# => FizzBuzz
+
+> (Fizz-Buzz-Player-Trait { def _ number = 7 }) say
+# => <Integer: 7>
+```
+
+Now that we've got our foundations in place, we can tie all of them up
+in a cohesive `Fizz-Buzz-Game` object, which controls the turns of the
+children who're playing the game. For simplicity, we'll consider numbers
+from 1 to 100.
+
+> **NOTE**  
+> As a convenience, you can avoid the parenthesis in an expression by
+> using the `;` chaining operator. `a + b; c` is equivalent to `(a + b)
+> c`
+
+
+```ruby
+> let Fizz-Buzz-Game = {
+... def self play
+...   1 to: 100; each: { number |
+...     let player = Fizz-Buzz-Player-Trait { def _ number = number }.
+...     Console write!: player say as-text, ", ".
+...   }
+...   Console write-line!: "".
+... }
+```
+
+The definition of `play` is a little bit more complicated than what
+we've seen so far. First it creates a range of numbers, from `1` to
+`100`, inclusive. Then, for each `number` in this range, we create a
+player for that number, and have that player say its number. To show
+this information on the screen we use the `Console` object, whose
+`write!` and `write-line!` messages allow us to display things on the
+screen (they only accept text, so we have to ask the values we've got to
+convert themselves to Text by sending them the `as-text` message).
+
+If you play the game, you'll see the children saying their numbers
+correctly:
+
+```ruby
+> Fizz-Buzz-Game play
+# 1, 2, Fizz, 4, Buzz, Fizz, 7, 8, Fizz, Buzz, 11, Fizz, 13, 14,
+# FizzBuzz, 16, 17, Fizz, 19, Buzz, Fizz, 22, 23, Fizz, Buzz, 26,
+# Fizz, 28, 29, FizzBuzz, 31, 32, Fizz, 34, Buzz, Fizz, 37, 38, Fizz,
+# Buzz, 41, Fizz, 43, 44, FizzBuzz, 46, 47, Fizz, 49, Buzz, Fizz, 52,
+# 53, Fizz, Buzz, 56, Fizz, 58, 59, FizzBuzz, 61, 62, Fizz, 64, Buzz,
+# Fizz, 67, 68, Fizz, Buzz, 71, Fizz, 73, 74, FizzBuzz, 76, 77, Fizz,
+# 79, Buzz, Fizz, 82, 83, Fizz, Buzz, 86, Fizz, 88, 89, FizzBuzz, 91,
+# 92, Fizz, 94, Buzz, Fizz, 97, 98, Fizz, Buzz,
+# => <Future (pending)>
+```
+
+
+
+
+
 
 
 <!--
