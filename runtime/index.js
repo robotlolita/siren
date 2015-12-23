@@ -1206,15 +1206,15 @@ var Primitives = $makeInternalObject({
   },
 
   'text:at:': function(_, a, b) {
-    return a.charAt(Number(b) - 1);
+    return a.string.charAt(Number(b.number) - 1);
   },
 
   'text/char-code:': function(_, a) {
-    return a.charCodeAt(0);
+    return a.string.charCodeAt(0);
   },
 
   'text/from-code:': function(_, a) {
-    return String.fromCharCode(a.number);
+    return String.fromCharCode(Number(a.number));
   },
 
   // ---- Numeric

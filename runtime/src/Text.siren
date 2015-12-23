@@ -83,13 +83,13 @@ let Character-View = {
 
   def self as-text
     let text = vm object: self at: "text".
-    vm text: (vm text/slice: text from: self start to: self end).
+    vm text: (vm text/slice: text from: self start to: self end + 1).
 
   def self at: offset
     vm assert/number: offset between: self start and: self end.
     let result = self traits Character {}.
     let text = vm object: self at: "text".
-    vm object: result at: "character" put: (vm text: text at: self start + offset).
+    vm object: result at: "character" put: (vm text: text at: self start + offset - 1).
     result.
 
   def self slice-from: start to: end
@@ -97,8 +97,8 @@ let Character-View = {
     vm assert/number: end between: self start and: self end.
     end < start then: { vm assert/fail: "End of the range can't be less than the start." }.
     self {
-      def_ start = self start + start.
-      def_ end   = self start + end.
+      def_ start = self start + start - 1.
+      def_ end   = self start + end - 1.
     }.
 }.
 
