@@ -76,9 +76,9 @@ let Character-View = {
     def_ Character = Character-Trait.
   }
 
-  def self decribe
+  def self describe
     Debug-Text,
-    "<Character-View(", self start describe, ", " self end describe, "): ", self as-text describe, ">".
+    "<Character-View(", self start describe, ", ", self end describe, "): ", self as-text describe, ">".
 
 
   def self as-text
