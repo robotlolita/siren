@@ -113,7 +113,7 @@ let Character = {
 
 let Character-Trait = Character {
   def self describe
-    Debug-Text, "<Character: ", self-as-text describe, ">"
+    Debug-Text, "<Character: ", self as-text describe, ">"
 
   def self code
     vm integer: (vm text/char-code: (vm object: self at: "character")).
