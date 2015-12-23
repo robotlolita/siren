@@ -1210,7 +1210,7 @@ var Primitives = $makeInternalObject({
   },
 
   'text/char-code:': function(_, a) {
-    return a.string.charCodeAt(0);
+    return a.charCodeAt(0);
   },
 
   'text/from-code:': function(_, a) {
