@@ -197,12 +197,15 @@ In practice, this means that you don't need to wrap expressions in
 parenthesis when sending a message one level up the precedence chain, so
 if you write:
 
-    10 between: 1 successor + 2 and?: 10 predecessor
+```ruby
+10 between: 1 successor + 2 and?: 10 predecessor
+```
 
 Siren will understand it as if you had written:
 
-    (10) between: (((1) successor) + (2)) and?: ((10) predecessor)
-
+```ruby
+(10) between: (((1) successor) + (2)) and?: ((10) predecessor)
+```
 
 > **WARNING**  
 > Caution has to be taken when entering arithmetic expressions in Siren,
