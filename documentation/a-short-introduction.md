@@ -225,40 +225,6 @@ Siren will understand it as if you had written:
 > Giving you back the integer `18`, instead of the expected result `12`.
 
 
-
-## Arithmetic in Siren
-
-Siren tries to provide good defaults for the programmer, so using
-features that aid in writing correct programs is favoured over features
-that would be faster, but easy to misuse.
-
-Given this, Siren divides numbers in two categories:
-
- -  `Integer`, which represents integral numbers with arbitrary
-    precision. This means that there are no hard limits on the which
-    integral number you can represent in Siren, besides what your computer
-    memory's can store. The expression `2³³³ * 3²²²` can be expressed
-    naturally in Siren, without any loss of information or precision.
-
-        > (2 ** 333) * (3 ** 222)
-        => <Integer: 145,850,225,146,352,389,694,414,219,810,542,047, ...
-                     370,451,305,664,251,912,213,054,467,447,156,375, ...
-                     988,858,444,830,305,342,442,283,842,331,614,428, ... 
-                     525,657,034,353,275,761,934,767,020,548,438,396, ...
-                     350,009,609,121,453,495,482,397,390,098,896,758, ... 
-                     843,735,174,009,204,415,322,390,528>
-
- -   `Float-64bits`, which represents fractional numbers as floating
-     point numbers, up to 64 bits of precision.
-
-> **NOTE**  
-> Siren will try to keep the most precise number for you, and will convert
-> it to less precise numbers if it can't represent things precisely (e.g.:
-> adding an integer `1` to a floating point `2.0` is still an integer `3`,
-> but adding an integer `1` to a floating point `1.1` gives you a floating
-> point `2.1`).
-
-
 ## Inspecting objects
 
 You can expect the usual operators defined on numbers (`+`, `-`, `*`,
@@ -369,6 +335,106 @@ those examples to see what they do:
 ```
 
 And indeed, the result expected by the example is the one we get.
+
+
+## Arithmetic in Siren
+
+Siren tries to provide good defaults for the programmer, so using
+features that aid in writing correct programs is favoured over features
+that would be faster, but easy to misuse.
+
+Given this, Siren divides numbers in two categories:
+
+ -  `Integer`, which represents integral numbers with arbitrary
+    precision. This means that there are no hard limits on the which
+    integral number you can represent in Siren, besides what your computer
+    memory's can store. The expression `2³³³ * 3²²²` can be expressed
+    naturally in Siren, without any loss of information or precision.
+
+        > (2 ** 333) * (3 ** 222)
+        => <Integer: 145,850,225,146,352,389,694,414,219,810,542,047, ...
+                     370,451,305,664,251,912,213,054,467,447,156,375, ...
+                     988,858,444,830,305,342,442,283,842,331,614,428, ... 
+                     525,657,034,353,275,761,934,767,020,548,438,396, ...
+                     350,009,609,121,453,495,482,397,390,098,896,758, ... 
+                     843,735,174,009,204,415,322,390,528>
+
+ -   `Float-64bits`, which represents fractional numbers as floating
+     point numbers, up to 64 bits of precision.
+
+> **NOTE**  
+> Siren will try to keep the most precise number for you, and will convert
+> it to less precise numbers if it can't represent things precisely (e.g.:
+> adding an integer `1` to a floating point `2.0` is still an integer `3`,
+> but adding an integer `1` to a floating point `1.1` gives you a floating
+> point `2.1`).
+
+Integer literals in Siren are written without a `.`, whereas floating
+point literals are written with a `.`, even when the number you're
+expressing is integral, like `2.0`.
+
+Numeric literals in Siren accept the `_` character, which can be used to
+separate thousands for better readability:
+
+```ruby
+> 1_234_567
+# => <Integer: 1,234,567>
+```
+
+## Working with text
+
+The `Text` object in Siren is used to represent texts. This is similar
+to what most other languages call `String`, in various ways. In Siren,
+`Text` is an opaque representation of a text, however, not a list of
+characters.
+
+Texts can be concatenated through the concatenation message (`,`):
+
+```ruby
+> "Hello", " ", "world!"
+# => "Hello world!"
+```
+
+They can also be compared to other texts (with `===`, `=/=`, etc), or
+portions of text (with `contains?:`, `starts-with?:`, `ends-with?:`,
+etc), but you can't directly look at the contents of a text. There's no
+such thing as an "find in which position of the text the character 'X'
+appears". This is by design.
+
+In order to look at the contents of a text object you need to acquire a
+particular *view* to these contents. One of such views is the
+`Character-View` view, which allows one to look at a text as a sequence
+of `Character` objects:
+
+```ruby
+> "Hello" characters
+# => <Character-View(<Integer: 1>, <Integer: 5>): "Hello">
+```
+
+You can restrict a view of characters with the `slice-from:to:` message,
+and look at individual characters with `at:`. Note that unlike most
+programming languages, Siren uses 1-based indexing, so the first
+character is at 1, not 0.
+
+```ruby
+> let chars = "Hello" characters
+> chars at: 1
+# => <Character: "H">
+```
+
+If you refine the view, a different character would be at the
+index 1. Note that restricting a view only changes where the view is
+looking at, it doesn't copy any text in memory.
+
+```ruby
+> let chars-2 = chars slice-from: 2 to: 4
+> chars-2
+# => <Character-View(<Integer: 2>, <Integer: 4>): "ell">
+> chars-2 at: 1
+# => <Character: "e">
+```
+
+
 
 <!--
 Local Variables:
