@@ -285,10 +285,10 @@ let Stability = {
   def_ traits {
     def_ Stability-Trait {
       def self describe
-        Debug-Text, "<Stability: ", self index as-string, " - ", self name, ">".
+        Debug-Text, "<Stability: ", self index as-text, " - ", self name, ">".
 
       def self explain
-        "Stability: ", self index as-string, " - ", self name, "\n\n", self description
+        "Stability: ", self index as-text, " - ", self name, "\n\n", self description
     }
   }
 

@@ -32,7 +32,7 @@ vm extend: Integer with: {
   def self as-float
     vm integer->float: self.
 
-  def self as-string
+  def self as-text
     vm text: (vm integer->string: self).
 
   def self as-integer
@@ -111,8 +111,14 @@ vm extend: Integer with: {
 
   def self modulo: n
     vm assert/numeric: n.
-    (n === 0) then: { Result failure: self exceptions Division-By-Zero }
+    (n === 0) then: { Result failure: self exceptions Division-By-Zero new }
               else: { Result ok: (vm integer: self modulo: n) }.
+
+  def self remainder: n
+    self modulo: n; map: _ absolute.
+
+  def self divisible-by?: n
+    self remainder: n; map: _ === 0; get-or-default: False.
 
   def self successor
     self + 1.
@@ -128,7 +134,7 @@ vm extend: Float-64bits with: {
   def self as-integer
     vm float->integer: self.
 
-  def self as-string
+  def self as-text
     vm text: (vm float->string: self).
 
   def self as-float
@@ -212,6 +218,12 @@ vm extend: Float-64bits with: {
     vm assert/numeric: n.
     (n === 0) then: { Result failure: self exceptions Division-By-Zero new }
               else: { Result ok: (vm float: self modulo: n) }.
+
+  def self remainder: n
+    self modulo: n; map: _ absolute.
+
+  def self divisible-by?: n
+    self remainder: n; map: _ === 0; get-or-default: False.
 
   def self successor
     self + 1.0.
