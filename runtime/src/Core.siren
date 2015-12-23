@@ -101,6 +101,12 @@ let Unit = {
 
   def self refined-by: _
     self.
+
+  def self extended-by: _ in: _
+    self.
+
+  def self extended-by: _
+    self.
 }.
 
 vm extend: Root with: {
