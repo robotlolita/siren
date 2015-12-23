@@ -733,7 +733,9 @@ var Siren = {
   '$makeFunction': $makeFunction,
   '$makeBlock': $makeBlock,
   '$makeObject': $makeObject,
-  '$withMeta': $withMeta
+  '$withMeta': $withMeta,
+  '$return': $return,
+  '$handleReturn': $handleReturn
 };
 
 
