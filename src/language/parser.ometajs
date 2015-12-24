@@ -133,7 +133,7 @@ ometa SirenParser {
   decoratedPattern = pos:sp '@' expr:a ws pattern:p pos:ep
                   -> [p[0], Expr.Apply(src(sp, ep), Expr.Id({}, 'call:'), a, [p[1]])],
 
-  docComment  = (space* comment)+:as ws -> as.join('\n').trim(),
+  docComment  = (space* comment)+:as ws -> as.join('').trim(),
   patternBody = docComment?:a ws ('=' ws)? stmtList:as -> [as, a || ''],
 
   keywordArgs = (ws keyword:k ws argName:n -> [k, n])+,
