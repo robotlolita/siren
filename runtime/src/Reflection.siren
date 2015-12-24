@@ -571,7 +571,7 @@ let Meta-Mirror = {
   @meta category: "Managing meta-data"
   def self stability
     # Attempts to retrieve the stability of the object.
-    self at: "stability".
+    self at: "stability"; recover: { _ | self inherited: "stability" }.
 
   @meta category: "Managing meta-data"
   def self stability: stability
