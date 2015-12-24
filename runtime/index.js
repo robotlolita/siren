@@ -844,7 +844,7 @@ $_extend(Siren_Selector, {
 
   'with-description:': function(self, description) {
     assert_text(description);
-    return new _Selector(description);
+    return new _Selector(Symbol(description.string));
   },
 
   '===': function(self, that) {

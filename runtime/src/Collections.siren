@@ -90,7 +90,7 @@ vm extend: Tuple with: {
   @complexity: "O(n)"
   @platforms: ["ECMAScript 5"]
   @licence: "MIT"
-  @stability: Mirror Stability stable
+  @stability: Stability stable
   @example: { [], [1. 2]     ==> [1. 2]       }
   @example: { [1. 2], [3. 4] ==> [1. 2. 3. 4] }
   def self, tuple

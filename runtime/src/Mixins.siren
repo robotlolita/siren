@@ -27,7 +27,7 @@ vm extend: mixins with: {
   def_ Comparable = Comparable.
 }.
 
-@stability: Mirror Stability stable
+@stability: Stability stable
 @portability: "portable"
 @documentation: """
 The `Comparable` mixin provides relational operators for all objects
@@ -84,7 +84,7 @@ vm extend: mixins with: {
   def_ Arithmetic-Foldable = Arithmetic-Foldable.
 }.
 
-@stability: Mirror Stability stable
+@stability: Stability stable
 @portability: "portable"
 @documentation: """
 The `Foldable` mixin provides a set of functionality that takes a
@@ -110,7 +110,7 @@ let Foldable = {
     self from: 0 fold-with: _ + 1.
 }.
 
-@stability: Mirror Stability stable
+@stability: Stability stable
 @portability: "portable"
 @documentation: """
 The `Arithmetic-Foldable` mixin is like [[Foldable]], and has the same

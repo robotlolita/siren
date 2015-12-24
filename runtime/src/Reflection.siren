@@ -10,48 +10,200 @@
 #
 #-----------------------------------------------------------------------
 $siren/1
+
+# We can use these because module decorators are always the last thing
+# happening in the file.
+@authors:   ["Quildreen Motta"]
+@licence:   "MIT"
+@platforms: ["ECMAScript 2015"]
+@stability: Stability experimental
 module | vm | where
 
-vm extend: Root with: {
-  def_ Mirror = Mirror.
+# The Reflection module defines facilities to inspect objects, and
+# manipulate pieces of meta-data attached to them. It's written in a
+# somewhat round-abouty way because the core facilities for many things
+# in the Siren system are defined by this module itself.
+
+# Allows attaching meta-data to the objects we'll define.
+let meta = {
+  def self at: name put: value { object |
+    vm meta: object at: name put: value.
+    object.
+  }
+
+  def self category: category
+    self at: "category" put: category.
+
+  def self example: example { object |
+    let examples = vm meta: object at: "examples".
+    let xs = vm if: (vm failed?: examples) then: [] else: examples.
+    vm meta: object at: "examples" put: (vm tuple: xs concat: [example]).
+    object.
+  }.
+
+  def self complexity: complexity
+    self at: "complexity" put: complexity.
+
+  def self documentation: docs
+    self at: "documentation" put: docs.
+
+  def self see-also: thing reason: reason { object |
+    let items = vm meta: object at: "see-also".
+    let xs = vm if: (vm failed?: items) then: [] else: items.
+    let x = See-Also {
+      def_ reference = thing.
+      def_ reason    = reason.
+    }.
+    self at: "see-also" put: (vm tuple: xs concat: [x]).
+    object.
+  }
 }.
 
-let Mirror = {
-  def self describe
-    Debug-Text, "<Mirror>".
-
+# ----------------------------------------------------------------------
+vm extend: Root with: {
+  def_ Mirror = Mirror.
   def_ Stability = Stability.
+}.
+
+
+@meta category: "Reflection"
+@meta documentation: """
+Siren uses Mirror-based reflection to support its highly interactive
+system, without affecting the performance, semantics, and safety
+guarantees of the system.
+
+For example, Siren guarantees that for any object `a`, an object `a
+refined-by: e` will be a strict superset of `a`, and one will be able to
+use it anywhere an `a` is expected. For this to work at all, details
+such as the inheritance chain and reference equality can't be used in
+regular code. But debugging, and other development tools, still need
+this information.
+
+To address these concerns, all reflection happens through a single
+object: the [[Mirror]]. A Mirror is something that can reflect on
+an object, within a particular [[Context]], and provide information
+about the internal details of the object.
+
+There are two views one can get of an object:
+
+  - [[traits Object-Mirror]] gives one a view of the internal, semantic
+    details of a particular object. An Object-Mirror allows one to, for
+    example, look at which messages an object understand, and access the
+    internal operation that those messages invoke.
+
+  - [[traits Meta-Mirror]] gives one a view of meta-data associated with
+    one object. Meta-data has no bearing on the behaviour of the program,
+    but provides useful information for the development tools.
+    "documentation" is a piece of meta-data attached to the object, for
+    example.
+
+In order to access this information, one must first acquire an Object-Mirror
+for a particular object. The reflection API expects an object (which can
+be any Siren object), and a [[Context]], which will be used to resolve
+message names to message selectors:
+
+    let mirror = Mirror reflect: Mirror context: Context.
+
+With a mirror, we can start looking at the internal information in the object.
+For example, if we wanted to know which messages the [[Mirror]] object
+responds to directly, we could send the `methods` message to the mirror:
+
+    mirror methods
+    # => [<Association: "describe" => <Unbound-Method arity: 1>>.
+    #     <Association: "traits" => <Unbound-Method arity: 1>>.
+    #     <Association: "reflect:context:" => <Unbound-Method arity: 3>>.
+    #     <Association: "reflect:" => <Unbound-Method arity: 2>>]
+
+We can also access the meta-data of the Mirror object, this is done by sending
+a `meta` message to the mirror, which returns a [[traits Meta-Mirror]] object
+for the object we're looking at:
+
+    mirror meta category.
+    # => <Result ok: "Reflection">
+    mirror meta source.
+    # => <Source-Location in "runtime/src/Reflection.siren">
+
+
+> **NOTE**
+> It's important to note that the Reflection API is provided only for
+> development tools. Meta-data and other information might differ in
+> an optimised build of a program.
+"""
+let Mirror = {
+  @meta category: "Inspecting"
+  def self describe
+    # A textual description of the object.
+    Debug-Text, "<Mirror>".
 
   def_ traits {
     def_ Object-Mirror = Object-Mirror.
-    def_ Meta-Mirror = Meta-Mirror.
+    def_ Meta-Mirror   = Meta-Mirror.
   }
 
+  @meta category: "Constructing"
   def self reflect: object context: context
+    # Constructs a Mirror looking at `object` in the given `context`.
+    #
+    # A [[Context]] is used to tell the mirror how message names should be
+    # resolved to message [[Selector]]s.
     self traits Object-Mirror {
       def_ reflectee = object.
       def_ reflectee-context = context.
     }.
 
+  @meta category: "Constructing"
   def self reflect: object
+    # Constructs a Mirror looking at `object` in the global context.
+    #
+    # A [[Context]] is used to tell the mirror how message names should be
+    # resolved to message [[Selector]]s.
     self reflect: object context: vm global-context
 }.
 
+@meta category: "Reflection"
 let Object-Mirror = Mirror {
+  @meta category: "Inspecting"
   def self describe
-    Debug-Text, "<Object-Mirror on: ", self reflectee describe, " context: ", self reflectee-context describe, ">".
+    # A textual description of the object.
+    Debug-Text,
+    "<Object-Mirror on: ", self reflectee describe,
+             " context: ", self reflectee-context describe, ">".
 
+  @meta category: "Constructing"
   def self meta
+    # A view of the meta-data attached to the object.
     self traits Meta-Mirror {
       def_ reflectee = self reflectee.
       def_ mirror    = self.
     }.
 
+  @meta category: "Extracting information"
+  @meta example: {
+    let m = Mirror reflect: { def _ hello = "Hello" }.
+    m methods =='> "[<Association: \"hello\" => <Unbound-Method arity: 1>>]".
+  }
   def self methods
+    # A list of messages defined directly on the object, for which there are
+    # mappings in the mirror's [[Context]].
+    #
+    # The result is a list of [[Association]]s, with the `key` being the message
+    # name, and the `value` being a [[Method]] object.
     let xs = vm reflect/methods: self reflectee context: self reflectee-context.
     xs map: { pair | pair first! => pair last! }.
 
+
+  @meta category: "Extracting information"
+  @meta example: {
+    let m = Mirror reflect: { def _ hello = "Hello" }.
+    m selector-from-name: "hello"  =='> "<Result ok: <Selector: Symbol(hello)>>".
+    m selector-from-name: "Hell"   =='> "<Result failure: \"No such method: Hell\">".
+  }
   def self selector-from-name: name
+    # Attempts to retrieve the [[Selector]] for the given message name,
+    # according to the mappings specified by the mirror's [[Context]].
+    #
+    # If there's no mapping in the [[Context]] for the given name, this
+    # operation returns a failure.
     vm assert/text: name.
     let selector = vm reflect/method-selector: name
                       on: self reflectee
@@ -61,12 +213,40 @@ let Object-Mirror = Mirror {
        else: { Result ok: selector };
        value.
 
-  def self method-for-name: name do {
-    selector <- self selector-from-name: name.
-    self method-for-selector: selector.
+  @meta category: "Extracting information"
+  @meta example: {
+    let m = Mirror reflect: { def _ hello = "Hello" }.
+    m method-from-name: "hello"  =='> "<Result ok: <Unbound-Method arity: 1>>".
+    m method-from-name: "Hell"   =='> "<Result failure: \"No such method: Hell\">".
   }
+  def self method-from-name: name
+    # Attempts to retrieve the [[Method]] object for the given message name,
+    # according to the mappings specified by the mirror's [[Context]].
+    #
+    # If there's no mapping in the [[Context]] for the given name, this
+    # operation returns a failure.
+    do {
+      selector <- self selector-from-name: name.
+      self method-from-selector: selector.
+    }
 
-  def self method-for-selector: selector
+  @meta category: "Extracting information"
+  @meta example: {
+    let m = Mirror reflect: { def _ hello = "Hello" }.
+    let s  = m selector-from-name: "hello"; get!.
+    let s' = Selector with-description: "hello".
+    m method-from-selector: s   =='> "<Result ok: <Unbound-Method arity: 1>>".
+    m method-from-selector: s'  =='> "<Result failure: \"No such method: Symbol(hello)\">".
+  }
+  def self method-from-selector: selector
+    # Attempts to retrieve the [[Method]] object for a given [[Selector]].
+    #
+    # Note that this operation doesn't take into account the mirror's
+    # [[Context]], it just looks at the object directly and tries to find the
+    # given [[Selector]] there.
+    #
+    # If the [[Selector]] isn't defined in the object, this operation returns a
+    # failure.
     vm assert/selector: selector.
     let result = vm reflect/method-for-selector: selector on: self reflectee.
     vm if: (vm failed?: result)
@@ -74,44 +254,92 @@ let Object-Mirror = Mirror {
        else: { Result ok: result };
        value.
 
-  def self responds-to?: name
-    (self method-for-name: name) then: { True } else: { False }.
-
+  @meta category: "Extracting information"
   def self parent
+    # Attempts to retrieve the parent of the object.
+    #
+    # Returns a failure if the object does not inherit from any other
+    # object. This only happens when the object is the base [[Object]].
     let result = vm reflect/parent: self reflectee.
     vm if: (vm failed?: result)
        then: { Result failure: "No parent." }
        else: { Result ok: result };
        value.
 
-  def self is: object
-    vm if: vm refeq: self reflectee and: object
-       then: True else: False.
-
+  @meta category: "Extracting information"
   def self belongs-to
+    # Attempts to retrieve the object that contains the object being viewed
+    # through this mirror. This only makes sense for [[Method]]s.
     let result = vm reflect/belongs-to: self reflectee.
     vm if: (vm failed?: result)
        then: { Result failure: "Free object." }
        else: { Result ok: result };
        value.
 
+  @meta category: "Extracting information"
   def self at-module
+    # Attempts to retrieve the module in which the object being viewed through
+    # this mirror was defined. Not all objects in Siren get a `module` meta-data
+    # by default, things like numbers, text, and tuples aren't enriched with
+    # meta-data automatically for efficiency (and because it's unlikely that
+    # this data would be queried).
     let result = vm reflect/module: self reflectee.
     vm if: (vm failed?: result)
        then: { Result failure: "No module." }
-       else: { Result ok: result }.
+       else: { Result ok: result };
+       value.
+
+  @meta category: "Comparing and testing"
+  @meta example: {
+    Mirror reflect: { def _ x = 1 }; responds-to?: "x"  ==> True.
+  }
+  @meta example: {
+    Mirror reflect: { def _ x = 1 }; responds-to?: "y"  ==> False.
+  }
+  def self responds-to?: name
+    # Tests if the object this mirror is reflecting on responds to a message
+    # with the given name, in the mirror's [[Context]].
+    (self method-for-name: name) then: { True } else: { False }.
+
+
+  @meta category: "Comparing and testing"
+  @meta example: {
+    Mirror reflect: 1; is: 1  ==> False.
+  }
+  @meta example: {
+    let n = 1.
+    Mirror reflect: n; is: n  ==> True.
+  }
+  def self is: object
+    # Tests if two objects are the **same** object.
+    #
+    # This operation returns [[True]] if both objects have the same
+    # reference. Note that even if you have two objects that are identical, such
+    # as `1` and `1`, this operation will still return [[False]] when comparing
+    # them!
+    vm if: vm refeq: self reflectee and: object
+       then: True else: False.
 }.
 
+@meta category: "Reflection"
 let Meta-Mirror = {
   def_ traits {
     def_ Source-Location = Source-Location.
-    def_ See-Also = See-Also.
+    def_ See-Also        = See-Also.
   }
 
+  @meta category: "Inspecting"
   def self describe
+    # A textual description of this object.
     Debug-Text, "<Meta-Mirror on: ", self reflectee describe, ">".
 
+  @meta category: "Managing meta-data"
   def self inherited: name
+    # Retrieves a piece of meta-data from the parent of the object being viewed
+    # through this mirror.
+    #
+    # This tries to look at the object that contains this one, and failing that
+    # tries to look into the module.
     vm assert/text: name.
     do {
       parent <- self mirror belongs-to.
@@ -121,7 +349,9 @@ let Meta-Mirror = {
       Mirror reflect: mod; meta; at: name.
     }}.
 
+  @meta category: "Managing meta-data"
   def self at: name
+    # Attempts to retrieve a piece of meta-data attached directly to the object.
     vm assert/text: name.
     let result = vm meta: self reflectee at: name.
     vm if: (vm failed?: result)
@@ -129,36 +359,63 @@ let Meta-Mirror = {
        else: { Result ok: result };
        value.
 
+  @meta category: "Managing meta-data"
   def self at: name put: value
+    # Updates a piece of meta-data in the object.
     vm assert/text: name.
     vm meta: self reflectee at: name put: value.
     self.
 
+  @meta category: "Managing meta-data"
   def self name
+    # Attempts to retrieve the name of this object.
     self at: "name".
 
+  @meta category: "Managing meta-data"
   def self name: name
+    # Updates the name of this object.
     vm assert/text: name.
     self at: "name" put: name.
 
+  @meta category: "Managing meta-data"
   def self arguments
+    # Attempts to retrieve the list of arguments this object accepts.
+    #
+    # Only makes sense for [[Method]] and [[Block]] objects, and Siren will
+    # attach this piece of information automatically to those. Objects that
+    # implement the [[Block]] interface might want to update this parameter with
+    # a tuple of the names of the arguments it accepts.
     self at: "arguments".
 
+  @meta category: "Managing meta-data"
   def self arguments: args
+    # Updates the list of arguments this object accepts.
+    #
+    # Only makes sense for [[Method]] and [[Block]] objects, and Siren will
+    # attach this piece of information automatically to those. Objects that
+    # implement the [[Block]] interface might want to update this parameter with
+    # a tuple of the names of the arguments it accepts.
     vm assert/tuple: args.
     self at: "arguments" put: args.
 
+  @meta category: "Managing meta-data"
   def self source
+    # Retrieves information about the place where the object was defined, and
+    # its source code.
     self traits Source-Location {
       def_ code      = self at: "source".
       def_ start     = self at: "start-offset".
       def_ end       = self at: "end-offset".
       def_ line      = self at: "line".
       def_ column    = self at: "column".
-      def_ filename  = Result ok: (self mirror at-module filename).
+      def_ filename  = self mirror at-module map: _ filename
     }.
 
+  @meta category: "Managing meta-data"
   def self source: source
+    # Updates information about the place where the object was defined.
+    #
+    # @TODO: should we allow this at all?
     self at: "source" put: source code.
     self at: "start-offset" put: source start.
     self at: "end-offset" put: source end.
@@ -166,82 +423,142 @@ let Meta-Mirror = {
     self at: "column" put: source column.
     self.
 
+  @meta category: "Managing meta-data"
   def self category
+    # Attempts to retrieve the category of an object.
+    #
+    # Categories are used in Siren to make browing the operations available in
+    # objects less underwhelming, primarily, but can also be used for searching
+    # a particular object.
     self at: "category".
 
+  @meta category: "Managing meta-data"
   def self category: category
+    # Updates the category of an object.
     vm assert/text: category.
     self at: "category" put: category.
 
+  @meta category: "Managing meta-data"
   def self tags
+    # Attempts to retrieve the list of tags attached to an object.
+    #
+    # Tags are small pieces of ad-hoc categorisation that can be used to find
+    # objects in the system.
     self at: "tags".
 
+  @meta category: "Managing meta-data"
   def self tags: tags
+    # Updates the list of tags attached to an object.
     vm assert/tuple: tags.
     self at: "tags" put: tags.
 
+  @meta category: "Managing meta-data"
   def self documentation
+    # Attempts to retrieve the documentation about an object.
     self at: "documentation".
 
+  @meta category: "Managing meta-data"
   def self documentation: docs
+    # Updates the documentation about an object.
     vm assert/text: docs.
     self at: "documentation" put: docs.
 
+  @meta category: "Managing meta-data"
   def self examples
+    # Attempts to retrieve the list of examples attached to an object.
+    #
+    # Examples serve two purposes in Siren. 
     self at: "examples".
 
+  @meta category: "Managing meta-data"
   def self examples: examples
+    # Updates the list of examples attached to the object.
     vm assert/tuple: examples.
     self at: "examples" put: examples.
 
+  @meta category: "Managing meta-data"
   def self authors
+    # Attempts to retrieve the list of authors of the object.
     self at: "authors"; recover: { _ | self inherited: "authors" }.
 
+  @meta category: "Managing meta-data"
   def self authors: authors
+    # Updates the list of authors of the object.
     vm assert/tuple: authors.
     self at: "authors" put: authors.
 
+  @meta category: "Managing meta-data"
   def self licence
+    # Attempts to retrieve the licence of the object.
     self at: "licence"; recover: { _ | self inherited: "licence" }.
 
+  @meta category: "Managing meta-data"
   def self licence: licence
+    # Updates the licence of the object.
     self at: "licence" put: licence.
 
+  @meta category: "Managing meta-data"
   def self deprecated
+    # Attempts to retrieve the reason the object was deprecated, if it was.
     self at: "deprecated".
 
+  @meta category: "Managing meta-data"
   def self deprecated: reason
+    # Defines the object as deprecated for the given reason.
+    #
+    # This will also change the stability of the object. Note that doing
+    # the same thing by sending the [[at:put:]] message will not do
+    # this.
     vm assert/text: reason.
     self at: "deprecated" put: reason.
     self stability: Stability deprecated.
 
+  @meta category: "Managing meta-data"
   def self since
+    # Attempts to retrieve the version of the library in which the
+    # object was added.
     self at: "since".
 
+  @meta category: "Managing meta-data"
   def self since: version
+    # Updates the version of the library in which the object was added.
     self at: "since" put: version.
 
+  @meta category: "Managing meta-data"
   def self platforms
+    # Attempts to retrieve a list of platforms that the object supports.
     self at: "platforms"; recover: { _ | self inherited: "platforms" }.
 
+  @meta category: "Managing meta-data"
   def self platforms: platforms
+    # Updates the list of platforms that the object supports.
     vm assert/tuple: platforms.
     self at: "platforms" put: platforms.
 
+  @meta category: "Managing meta-data"
   def self repository
+    # Attempts to retrieve the repository in which the object is stored.
     self at: "repository"; recover: { _ | self inherited: "repository" }.
 
+  @meta category: "Managing meta-data"
   def self repository: repository
+    # Updates the repository in which the object is stored.
     self at: "repository" put: repository.
 
+  @meta category: "Managing meta-data"
   def self see-also
+    # Attempts to retrieve a list of cross-references.
     self at: "see-also".
 
+  @meta category: "Managing meta-data"
   def self see-also: items
+    # Updates the list of cross-references.
     vm assert/tuple: items.
     self at: "see-also" put: items.
 
+  @meta category: "Managing meta-data"
   def self see-also: object reason: reason
+    # Attach a new `see-also` cross-reference to the object.
     do { 
       items <- self see-also.
       return self see-also: items, self traits See-Also {
@@ -251,32 +568,54 @@ let Meta-Mirror = {
     }.
     self.
 
+  @meta category: "Managing meta-data"
   def self stability
+    # Attempts to retrieve the stability of the object.
     self at: "stability".
 
+  @meta category: "Managing meta-data"
   def self stability: stability
+    # Updates the stability of the object.
     self at: "stability" put: stability.
 
+  @meta category: "Managing meta-data"
   def self portability
+    # Attempts to retrieve the portability of the object.
     self at: "portability"; recover: { _ | self inherited: "portability" }.
 
+  @meta category: "Managing meta-data"
   def self portability: portability
+    # Updates the portability of the object.
     self at: "portability" put: portability.
 
+  @meta category: "Managing meta-data"
   def self complexity
+    # Attempts to retrieve the complexity of the object.
+    #
+    # This mostly makes sense for [[Block]] and [[Method]] objects, but
+    # might also be useful to describe some other object that performs a
+    # single computation.
     self at: "complexity".
 
+  @meta category: "Managing meta-data"
   def self complexity: complexity
+    # Updates the complexity of the object.
     self at: "complexity" put: complexity.
 
-  def self signature do {
-    name <- self name.
-    arguments <- self arguments.
-    name-and-args <- return format-signature call: name with: arguments.
-    return "def ", (name-and-args joined-by: " ")
-  }
+  @meta category: "Auxiliary functions"
+  def self signature
+    # Attempts to rebuild the signature of a method.
+    #
+    # Only makes sense for [[Method]] objects.
+    do {
+      name <- self name.
+      arguments <- self arguments.
+      name-and-args <- return format-signature call: name with: arguments.
+      return "def ", (name-and-args joined-by: " ")
+    }
 }.
 
+# A helper for formatting method signatures.
 let format-signature = { name args |
   (name contains?: ":") then: {
     args interleaved-with: (name split-at: ":"; map: _, ":"); filter: _ =/= ":".
@@ -293,41 +632,60 @@ let format-signature = { name args |
   }
 }.
 
+
+# ----------------------------------------------------------------------
+@meta category: "Metadata"
 let See-Also = {
+  @meta category: "Inspecting"
   def self describe
+    # A textual representation of the object.
     Debug-Text, self reference describe, " - ", self reason describe.
 }.
 
+@meta category: "Metadata"
+@meta documentation: """
+The Stability meta-data tells users how much they can rely on an object's
+API. Siren uses the same stability index that [Node.js][stability-index] uses.
+
+[stability-index]: https://nodejs.org/api/documentation.html#documentation_stability_index
+"""
 let Stability = {
   def_ traits {
     def_ Stability-Trait {
       def self describe
+        # A textual representation of the object.
         Debug-Text, "<Stability: ", self index as-text, " - ", self name, ">".
 
+      @meta category: "Converting"
       def self explain
+        # Returns a textual representation of what the particular stability
+        # index means.
         "Stability: ", self index as-text, " - ", self name, "\n\n", self description
     }
   }
 
-
+  @meta category: "Metadata"
   def self deprecated = self traits Stability-Trait {
     def self index = 0.
     def self name = "Deprecated".
     def self description = "This feature is known to be problematic and will either be entirely removed from the system, or completely redesigned. You should not rely on it."
   }
 
+  @meta category: "Metadata"
   def self experimental = self traits Stability-Trait {
     def self index = 1.
     def self name = "Experimental".
     def self description = "This feature is experimental and likely to change (or be removed) in the future.".
   }
 
+  @meta category: "Metadata"
   def self stable = self traits Stability-Trait {
     def self index = 2.
     def self name = "Stable".
     def self description = "This feature is stable and its API is unlikely to change (unless it's necessary for security, or other important reasons). You should expect backwards compatibility with the system, and a well-defined and automated (if possible) migration path if it changes.".
   }
 
+  @meta category: "Metadata"
   def self locked = self traits Stability-Trait {
     def self index = 3.
     def self name = "Locked".
@@ -335,57 +693,97 @@ let Stability = {
   }
 }.
 
+@meta category: "Metadata"
+@meta documentation: """
+Represents the source of a particular object's definition.
+"""
 let Source-Location = {
   def self describe
-    Debug-Text,
-    "<Source-Location at line ", self line describe, ", column ", self column describe, " in ", self filename describe, ">".
+    # A textual representation of the object.
+    let pos = do { line <- self line.
+                   col  <- self column.
+                   return " at line ", line as-text, ", column ", column as-text.
+                 } get-or-default: "".
+    let file = self filename map: { x | " in ", x describe }; get-or-default: "".
+
+    Debug-Text, "<Source-Location", pos, file, ">".
 
   def self source: code
+    # Updates the source code.
     self { def_ source = code }.
 
   def self line: line
+    # Updates the line number of the origin of the definition.
+    #
+    # Note that this expects lines to be regular Integer objects.
     vm assert/numeric: line.
     self { def_ line = line }.
 
   def self column: column
+    # Updates the column number of the origin of the definition.
+    #
+    # Note that this expects columns to be regular Integer objects.
     vm assert/numeric: column
     self { def_ column = column }.
 
   def self start: n
+    # Update the starting offset of the origin of the definition.
+    #
+    # The starting offset is the number of characters that come before
+    # the start of the definition of the object in the source code.
     vm assert/numeric: n.
     self { def_ start = n }.
 
   def self end: n
+    # Update the ending offset of the origin of the definition.
+    #
+    # The ending offset is the number of characters that come before
+    # the end of the definition of the object in the source code.
     vm assert/numeric: n.
     self { def_ end = n }.
 }.
 
 vm extend: Root with: {
+  @meta category: "Decorators"
+  @meta documentation: """
+  Defines the `name` meta-data of an object.
+  """
   def_ name: name { object |
     Mirror reflect: object; meta; name: name.
     object.
   }
 
+  @meta category: "Decorators"
+  @meta documentation: """
+  Defines the `category` meta-data of an object.
+  """
   def_ category: category { object |
     Mirror reflect: object; meta; category: category.
     object.
   }
 
+  @meta category: "Decorators"
+  @meta documentation: """
+  Defines the `tags` meta-data of an object.
+  """
   def_ tags: tags { object |
     Mirror reflect: object; meta; tags: tags.
     object.
   }
 
+  @meta category: "Decorators"
+  @meta documentation: """
+  Defines the `documentation` meta-data of an object.
+  """
   def_ documentation: docs { object |
     Mirror reflect: object; meta; documentation: docs.
     object.
   }
 
-  def_ examples: examples { object |
-    Mirror reflect: object; meta; examples: examples.
-    object.
-  }
-
+  @meta category: "Decorators"
+  @meta documentation: """
+  Attaches a new example to the `examples` meta-data of an object.
+  """
   def_ example: example { object |
     let meta = Mirror reflect: object; meta.
     let examples = meta examples get-or-default: [].
@@ -393,51 +791,91 @@ vm extend: Root with: {
     object.
   }
 
+  @meta category: "Decorators"
+  @meta documentation: """
+  Defines the `complexity` meta-data of an object.
+  """
   def_ complexity: complexity { object |
     Mirror reflect: object; meta; complexity: complexity.
     object.
   }.
 
+  @meta category: "Decorators"
+  @meta documentation: """
+  Defines the `portability` meta-data of an object.
+  """
   def_ portability: portability { object |
     Mirror reflect: object; meta; portability: portability.
     object.
   }.
 
+  @meta category: "Decorators"
+  @meta documentation: """
+  Defines the `stability` meta-data of an object.
+  """
   def_ stability: stability { object |
     Mirror reflect: object; meta; stability: stability.
     object.
   }.
 
+  @meta category: "Decorators"
+  @meta documentation: """
+  Attaches a new cross reference to the `see-also` meta-data of an object.
+  """
   def_ see-also: reference reason: reason { object |
     Mirror reflect: reference; meta; see-also: reference reason: reason.
     object.
   }.
 
+  @meta category: "Decorators"
+  @meta documentation: """
+  Defines the `repository` meta-data of an object.
+  """
   def_ repository: repository { object |
     Mirror reflect: object; meta; repository: repository.
     object.
   }
 
+  @meta category: "Decorators"
+  @meta documentation: """
+  Defines the `platforms` meta-data of an object.
+  """
   def_ platforms: platforms { object |
     Mirror reflect: object; meta; platforms: platforms.
     object.
   }.
 
+  @meta category: "Decorators"
+  @meta documentation: """
+  Defines the `since` meta-data of an object.
+  """
   def_ since: version { object |
     Mirror reflect: object; meta; since: version.
     object.
   }.
 
+  @meta category: "Decorators"
+  @meta documentation: """
+  Marks an object as deprecated with the given reason.
+  """
   def_ deprecated: reason { object |
     Mirror reflect: object; meta; deprecated: reason.
     object.
   }.
 
+  @meta category: "Decorators"
+  @meta documentation: """
+  Defines the `licence` meta-data of an object.
+  """
   def_ licence: licence { object |
     Mirror reflect: object; meta; licence: licence.
     object.
   }.
 
+  @meta category: "Decorators"
+  @meta documentation: """
+  Defines the `authors` meta-data of an object.
+  """
   def_ authors: authors { object |
     Mirror reflect: object; meta; authors: authors.
     object.
