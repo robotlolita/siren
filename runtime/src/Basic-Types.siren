@@ -12,6 +12,58 @@
 $siren/1
 module | vm | where
 
+# -- Ordering ----------------------------------------------------------
+vm extend: Root with: {
+  def_ Ordering = Ordering.
+}.
+
+let Ordering = {
+  def self describe
+    Debug-Text, "<Ordering>".
+
+  def_ less-than    = Less-Than.
+  def_ greater-than = Greater-Than.
+  def_ equal        = Equal.
+}.
+
+let Base-Ordering = {
+  def self less-than? = False.
+  def self greater-than? = False.
+  def self equal? = False.
+}.
+
+let Less-Than = Base-Ordering {
+  def self describe
+    Debug-Text, "<Ordering: Less-Than>".
+
+  def self less-than? = True.
+
+  def self match: pattern
+    pattern less-than.
+}.
+
+let Greater-Than = Base-Ordering {
+  def self describe
+    Debug-Text, "<Ordering: Greater-Than>".
+
+  def self greater-than? = True.
+
+  def self match: pattern
+    pattern greater-than.
+}.
+
+let Equal = Base-Ordering {
+  def self describe
+    Debug-Text, "<Ordering: Equal>".
+
+  def self equal? = True.
+
+  def self match: pattern
+    pattern equal.
+}.
+
+
+
 # -- Booleans ----------------------------------------------------------
 vm extend: Root with: {
   def_ Boolean = Boolean.
@@ -50,6 +102,9 @@ let True = Boolean {
 
   def self === that
     self && that.
+
+  def self =/= that
+    self === that; not.
 }.
 
 let False = Boolean {
@@ -77,6 +132,9 @@ let False = Boolean {
 
   def self === that
     (self || that) not.
+
+  def self =/= that
+    self === that; not.
 }.
 
 
@@ -126,6 +184,9 @@ let Ok = Result {
       def_ failure: v = False.
     }.
 
+  def self =/= that
+    self === that; not.
+
   def self merge
     self value.
 
@@ -163,6 +224,9 @@ let Failure = Result {
       def_ ok: v      = False.
       def_ failure: v = v === self value.
     }.
+
+  def self =/= that
+    self === that; not.
 
   def self then: ok else: failure
     failure value.

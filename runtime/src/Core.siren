@@ -129,8 +129,7 @@ vm extend: Root with: {
   def_ Exception = Exception.
 }.
 
-
-# -- Core support for traits -------------------------------------------
+# -- Traits support ----------------------------------------------------
 let Traits = {}.
 
 vm extend: Root with: {
@@ -160,9 +159,9 @@ vm extend: Root with: {
     object.
   }
 
-  def_ trait: trait { object |
+  def_ mixin: mixin { object |
     let o2 = object refined-by: {}.
-    vm extend: o2 with: trait.
+    vm extend: o2 with: mixin.
     o2
   }
 }

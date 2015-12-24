@@ -1688,7 +1688,7 @@ $meta.set(Siren_Tuple, 'name', $text('Tuple'));
 // -- The Siren part of the runtime ------------------------------------
 require('./Reflection')(Siren, Primitives);
 require('./Core')(Siren, Primitives);
-require('./Traits')(Siren, Primitives);
+require('./Mixins')(Siren, Primitives);
 require('./Basic-Types')(Siren, Primitives);
 require('./Text')(Siren, Primitives);
 require('./Numeric')(Siren, Primitives);

@@ -1,0 +1,151 @@
+#-----------------------------------------------------------------------
+# 
+# This source file is part of the Siren project.
+#
+# Copyright (C) 2013-2015 Quildreen Motta.
+# Licensed under the MIT licence.
+#
+# See LICENCE for licence information.
+# See CONTRIBUTORS for the list of contributors to the project.
+#
+#-----------------------------------------------------------------------
+$siren/1
+module | vm | where
+
+@documentation: """
+Mixins provide a set of functionality that can be 'mixed into' another
+object, as long as the object exposes a particular interface.
+"""
+let Mixins = {}.
+
+vm extend: Root with: {
+  def_ mixins = Mixins.
+}.
+
+# -- Comparable --------------------------------------------------------
+vm extend: mixins with: {
+  def_ Comparable = Comparable.
+}.
+
+@stability: Mirror Stability stable
+@portability: "portable"
+@documentation: """
+The `Comparable` mixin provides relational operators for all objects
+implementing the `Comparable` interface:
+
+    def self compared-to: other → Ordering
+"""
+let Comparable = {
+  @category: "Comparing and testing"
+  def self === other
+    # Tests if two objects are equal to each other.
+    self compared-to: other; equal?.
+
+  @category: "Comparing and testing"
+  def self =/= other
+    # Tests if two objects are different from each other.
+    self === other; not.
+
+  @category: "Comparing and testing"
+  def self > other
+    # Tests if this object is greater than the other object.
+    self compared-to: other; greater-than?.
+
+  @category: "Comparing and testing"
+  def self < other
+    # Tests if this object is less than the other object.
+    self compared-to: other; less-than?.
+
+  @category: "Comparing and testing"
+  def self >= other
+    # Tests if this object is greater than or equal another object.
+    let order = self compared-to: other.
+    order greater-than? || order equal?.
+
+  @category: "Comparing and testing"
+  def self <= other
+    # Tests if this object is less than or equal another object.
+    let order = self compared-to: other.
+    order less-than? || order equal?.
+
+  def self min: other
+    # Returns the smallest of two objects.
+    self < other then: { self } else: { other }.
+
+  def self max: other
+    # Returns the largest of two objects.
+    self > other then: { self } else: { other }.
+}.
+
+
+# -- Foldable ----------------------------------------------------------
+vm extend: mixins with: {
+  def_ Foldable = Foldable.
+  def_ Arithmetic-Foldable = Arithmetic-Foldable.
+}.
+
+@stability: Mirror Stability stable
+@portability: "portable"
+@documentation: """
+The `Foldable` mixin provides a set of functionality that takes a
+collection of items to a single value. Objects incorporating this
+mixin are expected to provide the following message:
+
+    def self from: initial fold-with: (f :: Binary-Block)
+"""
+let Foldable = {
+  @category: "Comparing and testing"
+  def self every?: predicate
+    # Returns True if all items in the collection pass the predicate.
+    self from: True fold-with: _ && _.
+
+  @category: "Comparing and testing"
+  def self some?: predicate
+    # Returns True if any of the items in the collection pass the predicate.
+    self from: False fold-with: _ || _.
+
+  @category: "Folding"
+  def self count
+    # Returns the number of elements in the collection.
+    self from: 0 fold-with: _ + 1.
+}.
+
+@stability: Mirror Stability stable
+@portability: "portable"
+@documentation: """
+The `Arithmetic-Foldable` mixin is like [[Foldable]], and has the same
+requisites, but assumes that all elements in the collection are numbers.
+"""
+let Arithmetic-Foldable = {
+  @category: "Arithmetic"
+  def self sum
+    # Returns the sum of all elements in the collection.
+    self from: 0 fold-with: _ + _.
+
+  @category: "Arithmetic"
+  def self product
+    # Returns the product of all elements in the collection.
+    self from: 0 fold-with: _ * _.
+
+  @category: "Arithmetic"
+  def self maximum
+    # Returns the largest element in the collection.
+    self from: (Result failure: "Can't compute the maximum of an empty collection.")
+         fold-with: { acc x |
+           acc match: {
+             def_ ok: y      = Result ok: (x max: y).
+             def_ failure: _ = Result ok: x.
+           }
+         }.
+
+  @category: "Arithmetic"
+  def self minimum
+    # Returns the smallest element in the collection.
+    self from: (Result failure: "Can't compute the minimum of an empty collection.")
+         fold-with: { acc x |
+           acc match: {
+             def_ ok: y      = Result ok: (x min: y).
+             def_ failure: _ = Result ok: x.
+           }
+         }.
+}

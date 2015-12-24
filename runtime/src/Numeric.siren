@@ -58,9 +58,9 @@ vm extend: Integer with: {
   def self compared-to: n
     vm assert/numeric: n.
     vm integer/compare: self to: n
-       less-than:    traits Ordered Less-Than
-       equal:        traits Ordered Equal
-       greater-than: traits Ordered Greater-Than.
+       less-than:    Ordering Less-Than
+       equal:        Ordering Equal
+       greater-than: Ordering Greater-Than.
 
   def self < n
     vm assert/numeric: n.
@@ -77,6 +77,12 @@ vm extend: Integer with: {
 
   def self >= n
     (self === n) || (self > n).
+
+  def self min: n
+    self < n then: { self } else: { n }.
+
+  def self max: n
+    self > n then: { self } else: { n }.
 
   def self + n
     vm assert/numeric: n.
@@ -163,9 +169,9 @@ vm extend: Float-64bits with: {
   def self compared-to: n
     vm assert/numeric: n.
     vm float/compare: self to: n
-       less-than:    traits Ordered Less-Than
-       equal:        traits Ordered Equal
-       greater-than: traits Ordered Greater-Than.
+       less-than:    Ordering Less-Than
+       equal:        Ordering Equal
+       greater-than: Ordering Greater-Than.
 
   def self < n
     vm assert/numeric: n.
@@ -182,6 +188,12 @@ vm extend: Float-64bits with: {
 
   def self >= n
     (self === n) || (self > n).
+
+  def self min: n
+    self < n then: { self } else: { n }.
+
+  def self max: n
+    self > n then: { self } else: { n }.
 
   def self + n
     vm assert/numeric: n.

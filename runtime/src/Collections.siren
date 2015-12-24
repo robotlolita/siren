@@ -31,6 +31,9 @@ vm extend: traits with: {
 }.
 
 # -- Tuples ------------------------------------------------------------
+vm extend: Tuple with: mixins Foldable.
+vm extend: Tuple with: mixins Arithmetic-Foldable.
+
 vm extend: Tuple with: {
   def self describe
     let concat = { acc x | acc === "" then: { x describe }
