@@ -660,7 +660,7 @@ let Stability = {
       def self explain
         # Returns a textual representation of what the particular stability
         # index means.
-        "Stability: ", self index as-text, " - ", self name, "\n\n", self description
+        "## Stability: ", self index as-text, " - ", self name, "\n\n", self description
     }
   }
 

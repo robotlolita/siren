@@ -20,6 +20,17 @@ var isString  = require('is-string');
 var isBoolean = require('is-boolean-object');
 var showJs    = require('core.inspect');
 
+var chalk            = require('chalk');
+var marked           = require('marked');
+var TerminalRenderer = require('marked-terminal');
+
+marked.setOptions({
+  renderer: new TerminalRenderer({
+    reflowText: true,
+    width: 72
+  })
+});
+
 
 // -- Aliases ----------------------------------------------------------
 var prototypeOf   = Object.getPrototypeOf;
@@ -1674,6 +1685,16 @@ var Primitives = $makeInternalObject({
   },
   'console/error:': function(_, text) {
     process.stderr.write(text.string);
+  },
+  'terminal-bold:': function(_, text) {
+    return new _Text(chalk.bold(text.string));
+  },
+  'terminal-heading:': function(_, text) {
+    return new _Text(chalk.green.bold(text.string));
+  },
+  'render-markdown-to-terminal:': function(_, text) {
+    var s = text.string.replace(/\[\[([^\]]+)\]\]/g, '`$1`');
+    return new _Text(marked(s.trim()));
   }
 });
 

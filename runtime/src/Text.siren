@@ -22,7 +22,7 @@ vm extend: Text with: {
 
   def self repeat: times
     times <= 0 then: { "" }
-               else: { self, self repeat: times predecessor }.
+               else: { self, (self repeat: times predecessor) }.
 
   def self, text
     vm assert/textual: text.

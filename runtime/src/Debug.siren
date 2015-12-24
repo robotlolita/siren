@@ -46,19 +46,33 @@ let Debug = {
     self inspect: object context: vm global-context.
 
   def self inspect: object context: context
+    let show-messages = { mirror |
+      mirror methods each: { pair |
+        let method = pair value.
+        let method-meta = Mirror reflect: method; meta.
+        method-meta signature map: { s | Console write-line!: "  ", s }.
+      }.
+      Console write-line!: "".
+      mirror parent chain: { parent |
+        let mirror' = Mirror reflect: parent context: context.
+        let name = mirror' meta name get-or-default: "(Anonymous object)".
+        Console write-line!: (vm terminal-heading: "Inheriting from ", name).
+        Console write-line!: (vm terminal-heading: "----------------", ("-" repeat: name length)).
+        show-messages call: mirror'.
+      }. 
+    }.
+
     let mirror = Mirror reflect: object context: context.
     let name = mirror meta name get-or-default: "(Anonymous object)".
-    Console write!: name, " {\n".
-    mirror methods each: { pair |
-      let method = pair value.
-      let method-meta = Mirror reflect: method; meta.
-      method-meta signature chain: { s | Console write-line!: "  ", s }.
+    Console write-line!: (vm terminal-heading: "\n", name).
+    Console write-line!: (vm terminal-heading: ("=" repeat: name length)).
+    mirror meta documentation map: { doc |
+      Console write-line!: "".
+      Console write-line!: (vm render-markdown-to-terminal: doc)
     }.
-    Console write-line!: "}".
-    mirror parent chain: { parent |
-      Console write!: "\nInheriting from ".
-      self inspect: parent context: context.
-    }.
+    Console write-line!: (vm terminal-heading: "Messages").
+    Console write-line!: (vm terminal-heading: "--------").
+    show-messages call: mirror.
     self.
 
   def self inspect: object message: message
@@ -70,8 +84,10 @@ let Debug = {
     maybe-method chain: { method |
       let meta = Mirror reflect: method context: context; meta.
       meta signature chain: { signature |
-        Console write-line!: signature.
-        let docs = meta documentation get-or-default: "".
+        Console write-line!: "".
+        Console write-line!: (vm terminal-bold: signature).
+        Console write-line!: ("-" repeat: signature length).
+        let docs = vm render-markdown-to-terminal: (meta documentation get-or-default: "").
         Console write-line!: (docs split-at: "\n"; map: "  ", _; joined-by: "\n").
         Console write-line!: "".
         self describe-examples: meta examples.
@@ -85,23 +101,25 @@ let Debug = {
         self describe-simple: "Portability" value: meta portability.
         Console write-line!: "".
         self describe-stability: meta stability.
+        Console write-line!: "".
       }.
     }.
     self.
 
   def self describe-stability: maybe-stability do {
     stability <- maybe-stability.
-    return Console write-line!: stability explain.
+    return Console write-line!: (vm render-markdown-to-terminal: stability explain).
   }.
 
   def self describe-examples: maybe-examples
     maybe-examples chain: { examples |
       examples length > 0 then: {
-        Console write-line!: "Examples:".
+        Console write-line!: (vm terminal-bold: "Examples:").
         examples each: { example |
           let mirror = Mirror reflect: example; meta.
           mirror source code chain: { source |
-            Console write-line!: "  ", source.
+            let src = vm render-markdown-to-terminal: "```ruby\n", source, "\n```".
+            Console write-line!: src.
           }
         }.
         Console write-line!: "".
@@ -110,14 +128,16 @@ let Debug = {
 
   def self describe-simple: tag value: maybe-value do {
     value <- maybe-value.
-    return Console write-line!: tag, ": ", value as-text.
+    return Console write-line!: (vm terminal-bold: tag), ": ", value as-text.
   }.
 
   def self describe-location: source do {
-    start <- source start.
-    end   <- source end.
-    file  <- source filename.
-    return Console write-line!: "From: ", file, " at ", start as-text, " .. ", end as-text.
+    line   <- source line.
+    column <- source column.
+    file   <- source filename.
+    return Console write-line!: (vm terminal-bold: "From: "),
+                                file,
+                                " at line ", line as-text, ", column ", column as-text.
   }.
 
     
