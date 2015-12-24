@@ -211,22 +211,23 @@ function makeBlock(bind, meta, args, body) {
   )
 }
 
-function generateModule(bind, meta, args, exports, body) {
+function generateModule(bind, meta, args, exports, body, deco) {
   var hasExports = exports.value.length > 0;
   if (hasExports) {
-    var returnValue = [
-      js.Return({}, S.makeObject({}, generatePlainRecord(bind, exports), id('_Module')))
-    ];
+    var returnValue = S.makeObject({}, generatePlainRecord(bind, exports), id('_Module'));
   } else {
-    var returnValue = [js.Return({}, id('_Module'))];
+    var returnValue = id('_Module');
   }
+  returnValue = js.Return({}, deco.reduce(function(r, e) {
+    return send(e.meta, generate(bind, e), selector({}, str('call:')), [r]);
+  }, returnValue));
 
   return set(meta, mem({}, id('module'), id('exports')),
              fn({}, null, generate(bind, [Expr.Id(meta, '$Siren')] +++ safeArgs(bind, args)),
                 [js.ExprStmt({}, str('use strict'))]
                 +++ cloneMethods({})
                 +++ generate(bind, body)
-                +++ returnValue));
+                +++ [returnValue]));
 }
 
 function generateApply(bind, apExpr) {
@@ -438,7 +439,11 @@ function generate(bind, x) {
       S.tuple(meta, generate(bind, xs)),
 
     Expr.Record(meta, xs) =>
-      S.makeObject(meta, generatePlainRecord(bind, Expr.Record(meta, xs)), S.object({})),
+      S.withData(
+        {},
+        S.makeObject(meta, generatePlainRecord(bind, Expr.Record(meta, xs)), S.object({})),
+        { module: id('_Module') }
+      ),
 
     Expr.Let(meta, Expr.Id(_, name), value) =>
       letb(
@@ -454,10 +459,18 @@ function generate(bind, x) {
       generateApply(bind, n),
 
     Expr.Clone(meta, source, bindings) =>
-      send(meta,
-           generate(bind, source),
-           selector({}, str('refined-by:')),
-           [S.makeObject({}, generatePlainRecord(bind, bindings), S.object({}))]),
+      S.withData(
+        {},
+        send(meta,
+             generate(bind, source),
+             selector({}, str('refined-by:')),
+             [S.withData(
+               {},
+               S.makeObject({}, generatePlainRecord(bind, bindings), S.object({})),
+               { module: id('_Module') }
+             )]),
+        { module: id('_Module') }
+      ),
 
     Expr.Return(meta, expr) =>
       methCall(meta, id('$Siren'), id('$return'), [generate(bind, expr)]),
@@ -484,8 +497,8 @@ function generate(bind, x) {
     Expr.Do(meta, xs) =>
       generateDo(bind, meta, xs),
 
-    Expr.Module(meta, args, exports, body) =>
-      generateModule(bind, meta, args, exports, body),
+    Expr.Module(meta, args, exports, body, deco) =>
+      generateModule(bind, meta, args, exports, body, deco),
 
     Expr.Seq(meta, body) =>
       js.Prog(meta, generate(bind, body).map(toStatement)),

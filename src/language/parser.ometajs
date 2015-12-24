@@ -47,6 +47,10 @@ function decorateLet(letNode, expr) {
                   Expr.Apply(letNode.meta, Expr.Id({}, 'call:'), expr, [letNode.value]))
 }
 
+function decorateModule(node, expr) {
+  return Expr.Module(node.meta, node.args, node.exports, node.body, node.deco.concat([expr]))
+}
+
 function src(start, end) {
   return {
     line: start.line,
@@ -147,8 +151,11 @@ ometa SirenParser {
   letStmt = '@' expr:a ws letStmt:b                         -> decorateLet(b, a)
           | kw('let') ws identifier:a ~':' ws '=' ws expr:b -> Expr.Let({ literal: isLiteral(b) }, a, b),
 
-  module     = pos:sp kw('module') ws moduleArgs?:a ws exportStmt?:b ws kw('where') docComment?:doc ws stmtList:cs pos:ep
-             -> Expr.Module(extend(src(sp, ep), { doc: doc || '' }), a || [], b || Expr.Record({}, []), cs),
+  module     = '@' expr:a ws module:b
+             -> decorateModule(b, a)
+
+             | pos:sp kw('module') ws moduleArgs?:a ws exportStmt?:b ws kw('where') docComment?:doc ws stmtList:cs pos:ep
+             -> Expr.Module(extend(src(sp, ep), { doc: doc || '' }), a || [], b || Expr.Record({}, []), cs, []),
   moduleArgs = '|' ws argName:a (ws argName)*:as ws '|' -> [a].concat(as),
   exportStmt = kw('exposing') ws record:a -> a,
 
@@ -274,5 +281,5 @@ ometa SirenParser {
 
   program = ws "$siren/1" ws
           ( ws module:m ws eof    -> m
-          | ws pos:sp stmtList:xs pos:ep ws eof -> Expr.Module(src(sp, ep), [], Expr.Record({}, []), xs))
+          | ws pos:sp stmtList:xs pos:ep ws eof -> Expr.Module(src(sp, ep), [], Expr.Record({}, []), xs, []))
 }

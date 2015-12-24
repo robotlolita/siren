@@ -19,7 +19,7 @@ union Expr {
   Raw          { tree: Object },
   GlobalObject { meta: Object },
   Hole         { meta: Object },
-  Module       { meta: Object, args: Array, exports: Record, body: Array },
+  Module       { meta: Object, args: Array, exports: Record, body: Array, deco: Array },
   Seq          { meta: Object, body: Array },
   Comment      { meta: Object, comment: String },
   Id           { meta: Object, name: String },

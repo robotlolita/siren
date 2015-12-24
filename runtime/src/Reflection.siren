@@ -44,6 +44,7 @@ let Object-Mirror = Mirror {
   def self meta
     self traits Meta-Mirror {
       def_ reflectee = self reflectee.
+      def_ mirror    = self.
     }.
 
   def self methods
@@ -93,6 +94,12 @@ let Object-Mirror = Mirror {
        then: { Result failure: "Free object." }
        else: { Result ok: result };
        value.
+
+  def self at-module
+    let result = vm reflect/module: self reflectee.
+    vm if: (vm failed?: result)
+       then: { Result failure: "No module." }
+       else: { Result ok: result }.
 }.
 
 let Meta-Mirror = {
@@ -103,6 +110,16 @@ let Meta-Mirror = {
 
   def self describe
     Debug-Text, "<Meta-Mirror on: ", self reflectee describe, ">".
+
+  def self inherited: name
+    vm assert/text: name.
+    do {
+      parent <- self mirror belongs-to.
+      Mirror reflect: parent; meta; at: name.
+    } recover: { _ | do {
+      mod <- self mirror at-module.
+      Mirror reflect: mod; meta; at: name.
+    }}.
 
   def self at: name
     vm assert/text: name.
@@ -138,7 +155,7 @@ let Meta-Mirror = {
       def_ end       = self at: "end-offset".
       def_ line      = self at: "line".
       def_ column    = self at: "column".
-      def_ filename  = self at: "filename".
+      def_ filename  = Result ok: (self mirror at-module filename).
     }.
 
   def self source: source
@@ -147,7 +164,6 @@ let Meta-Mirror = {
     self at: "end-offset" put: source end.
     self at: "line" put: source line.
     self at: "column" put: source column.
-    self at: "filename" put: source filename.
     self.
 
   def self category
@@ -179,14 +195,14 @@ let Meta-Mirror = {
     self at: "examples" put: examples.
 
   def self authors
-    self at: "authors".
+    self at: "authors"; recover: { _ | self inherited: "authors" }.
 
   def self authors: authors
     vm assert/tuple: authors.
     self at: "authors" put: authors.
 
   def self licence
-    self at: "licence".
+    self at: "licence"; recover: { _ | self inherited: "licence" }.
 
   def self licence: licence
     self at: "licence" put: licence.
@@ -206,14 +222,14 @@ let Meta-Mirror = {
     self at: "since" put: version.
 
   def self platforms
-    self at: "platforms".
+    self at: "platforms"; recover: { _ | self inherited: "platforms" }.
 
   def self platforms: platforms
     vm assert/tuple: platforms.
     self at: "platforms" put: platforms.
 
   def self repository
-    self at: "repository".
+    self at: "repository"; recover: { _ | self inherited: "repository" }.
 
   def self repository: repository
     self at: "repository" put: repository.
@@ -242,7 +258,7 @@ let Meta-Mirror = {
     self at: "stability" put: stability.
 
   def self portability
-    self at: "portability".
+    self at: "portability"; recover: { _ | self inherited: "portability" }.
 
   def self portability: portability
     self at: "portability" put: portability.
@@ -278,7 +294,8 @@ let format-signature = { name args |
 }.
 
 let See-Also = {
-
+  def self describe
+    Debug-Text, self reference describe, " - ", self reason describe.
 }.
 
 let Stability = {
@@ -326,6 +343,14 @@ let Source-Location = {
   def self source: code
     self { def_ source = code }.
 
+  def self line: line
+    vm assert/numeric: line.
+    self { def_ line = line }.
+
+  def self column: column
+    vm assert/numeric: column
+    self { def_ column = column }.
+
   def self start: n
     vm assert/numeric: n.
     self { def_ start = n }.
@@ -333,9 +358,6 @@ let Source-Location = {
   def self end: n
     vm assert/numeric: n.
     self { def_ end = n }.
-
-  def self filename: name
-    self { def_ filename = name }.
 }.
 
 vm extend: Root with: {

@@ -625,7 +625,7 @@ function $_extend(object, record) {
   return object;
 }
 
-function $makeFunction(fn, meta) {
+function $makeFunction(fn, meta, module) {
   meta = meta || {};
   if (meta.name)  fn.displayName = meta.name.string;
   var result;
@@ -649,11 +649,12 @@ function $makeFunction(fn, meta) {
     default:
     result = new _MethodN(fn);
   }
+  result.module = module;
   $meta.update(result, meta);
   return result;
 }
 
-function $makeBlock(fn, meta) {
+function $makeBlock(fn, meta, module) {
   meta = meta || {};
   if (meta.name)  fn.displayName = meta.name.string;
   var result;
@@ -677,6 +678,7 @@ function $makeBlock(fn, meta) {
     default:
     result = new _BlockN(fn);
   }
+  result.module = module;
   $meta.update(result, meta);
   return result;
 }
@@ -694,6 +696,11 @@ function $withMeta(value, meta) {
   if (value != null && (value === Siren_Object || isPrototypeOf.call(Siren_Object, value))) {
     $meta.updateIfNotExists(value, meta || {});
   }
+  return value;
+}
+
+function $withData(value, data) {
+  extend(value, data);
   return value;
 }
 
@@ -734,6 +741,7 @@ var Siren = {
   '$makeBlock': $makeBlock,
   '$makeObject': $makeObject,
   '$withMeta': $withMeta,
+  '$withData': $withData,
   '$return': $return,
   '$handleReturn': $handleReturn
 };
@@ -821,7 +829,11 @@ $_extend(Siren_Object, {
 
   'describe': function(self) {
     var name = $meta.get(self, 'name');
-    return new _DebugText('<' + (name || 'Anonymous Object') + '>');
+    var module = self.module? ' at ' + self.module.filename : '';
+    var line = $meta.get(self, 'line');
+    var column = $meta.get(self, 'column');
+    var pos = line && column? ' line ' + line.number + ', column ' + column.number : '';
+    return new _DebugText('<' + (name || 'Anonymous Object') + module + pos + '>');
   }
 });
 
@@ -932,7 +944,12 @@ $_extend(Siren_Importer, {
 
 $_extend(Siren_Block, {
   'describe': function(self) {
-    return new _DebugText('<Block arity: ' + self.call.length + '>');
+    var module = self.module? ' at: ' + self.module.filename : '';
+    var line = $meta.get(self, 'line');
+    var column = $meta.get(self, 'column');
+    var pos = line && column? ' line ' + line.number + ', column ' + column.number : '';
+
+    return new _DebugText('<Block arity: ' + String(self.call.length) + module + pos + '>');
   },
 
   'apply:': function(self, _arguments) {
@@ -1512,6 +1529,10 @@ var Primitives = $makeInternalObject({
 
   'reflect/belongs-to:': function(_, object) {
     return object.belongsTo;
+  },
+
+  'reflect/module:': function(_, object) {
+    return object.module;
   },
 
   'meta:at:': function(_, object, name) {

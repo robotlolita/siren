@@ -102,7 +102,8 @@ exports.makeFunction = makeFunction;
 function makeFunction(m, fn, meta) {
   return rtCall(m, '$makeFunction', [
     fn,
-    js.Obj({}, fnMeta(meta))
+    js.Obj({}, fnMeta(meta)),
+    js.Id({}, '_Module')
   ]);
 }
 
@@ -113,7 +114,8 @@ function makeBlock(m, fn, meta) {
     js.Obj(
       {},
       fnMeta(meta)
-    )
+    ),
+    js.Id({}, '_Module')
   ]);
 }
 
@@ -125,4 +127,9 @@ function makeObject(m, o, p) {
 exports.withMeta = withMeta;
 function withMeta(m, o, meta) {
   return rtCall(m, '$withMeta', [o, genObject(meta)]);
+}
+
+exports.withData = withData;
+function withData(m, o, data) {
+  return rtCall(m, '$withData', [o, genObject(data)]);
 }
