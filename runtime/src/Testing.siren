@@ -41,7 +41,7 @@ let Object-Testing = {
     Console write-line!: "".
     
   def self write-method-heading!: method
-    let meta = Mirror reflect: method; meta.
+    let meta = method meta.
     Console write-line!: "- ", (meta name get-or-default: "(anonymous method)").
 
   def self run!
@@ -51,10 +51,10 @@ let Object-Testing = {
     mirror methods each: { pair |
       let method = pair value.
       self write-method-heading!: method.
-      let method-meta = Mirror reflect: method; meta.
+      let method-meta = method meta.
 
       method-meta examples get-or-default: []; each: { example |
-        let code = Mirror reflect: example; meta; source; code; get-or-default: "(Source code unavailable)".
+        let code = Mirror reflect: example; meta source code; get-or-default: "(Source code unavailable)".
         example value match: {
           def_ ok: _
             Console write-line!: "  ✔ ", code.

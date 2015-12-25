@@ -49,16 +49,15 @@ let Debug = {
     let show-messages = { mirror |
       mirror methods each: { pair |
         let method = pair value.
-        let method-meta = Mirror reflect: method; meta.
+        let method-meta = method meta.
         method-meta signature map: { s | Console write-line!: "  ", s }.
       }.
       Console write-line!: "".
       mirror parent chain: { parent |
-        let mirror' = Mirror reflect: parent context: context.
-        let name = mirror' meta name get-or-default: "(Anonymous object)".
+        let name = parent meta name get-or-default: "(Anonymous object)".
         Console write-line!: (vm terminal-heading: "Inheriting from ", name).
         Console write-line!: (vm terminal-heading: "----------------", ("-" repeat: name length)).
-        show-messages call: mirror'.
+        show-messages call: parent.
       }. 
     }.
 
@@ -82,7 +81,7 @@ let Debug = {
     let mirror = Mirror reflect: object context: context.
     let maybe-method = mirror method-from-name: message.
     maybe-method chain: { method |
-      let meta = Mirror reflect: method context: context; meta.
+      let meta = method meta.
       meta signature chain: { signature |
         Console write-line!: "".
         Console write-line!: (vm terminal-bold: signature).

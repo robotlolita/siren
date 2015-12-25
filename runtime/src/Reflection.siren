@@ -189,7 +189,9 @@ let Object-Mirror = Mirror {
     # The result is a list of [[Association]]s, with the `key` being the message
     # name, and the `value` being a [[Method]] object.
     let xs = vm reflect/methods: self reflectee context: self reflectee-context.
-    xs map: { pair | pair first! => pair last! }.
+    xs map: { pair |
+      pair first! => (Mirror reflect: pair last! context: self reflectee-context)
+    }.
 
 
   @meta category: "Extracting information"
@@ -251,7 +253,7 @@ let Object-Mirror = Mirror {
     let result = vm reflect/method-for-selector: selector on: self reflectee.
     vm if: (vm failed?: result)
        then: { Result failure: "No such method: ", selector description }
-       else: { Result ok: result };
+       else: { Result ok: (Mirror reflect: result context: self reflectee-context) };
        value.
 
   @meta category: "Extracting information"
@@ -263,7 +265,7 @@ let Object-Mirror = Mirror {
     let result = vm reflect/parent: self reflectee.
     vm if: (vm failed?: result)
        then: { Result failure: "No parent." }
-       else: { Result ok: result };
+       else: { Result ok: (Mirror reflect: result context: self reflectee-context) };
        value.
 
   @meta category: "Extracting information"
@@ -273,7 +275,7 @@ let Object-Mirror = Mirror {
     let result = vm reflect/belongs-to: self reflectee.
     vm if: (vm failed?: result)
        then: { Result failure: "Free object." }
-       else: { Result ok: result };
+       else: { Result ok: (Mirror reflect: result context: self reflectee-context) };
        value.
 
   @meta category: "Extracting information"
@@ -286,7 +288,7 @@ let Object-Mirror = Mirror {
     let result = vm reflect/module: self reflectee.
     vm if: (vm failed?: result)
        then: { Result failure: "No module." }
-       else: { Result ok: result };
+       else: { Result ok: (Mirror reflect: result context: self reflectee-context) };
        value.
 
   @meta category: "Comparing and testing"
@@ -343,10 +345,10 @@ let Meta-Mirror = {
     vm assert/text: name.
     do {
       parent <- self mirror belongs-to.
-      Mirror reflect: parent; meta; at: name.
+      parent meta at: name.
     } recover: { _ | do {
       mod <- self mirror at-module.
-      Mirror reflect: mod; meta; at: name.
+      mod meta at: name.
     }}.
 
   @meta category: "Managing meta-data"
@@ -408,7 +410,7 @@ let Meta-Mirror = {
       def_ end       = self at: "end-offset".
       def_ line      = self at: "line".
       def_ column    = self at: "column".
-      def_ filename  = self mirror at-module map: _ filename
+      def_ filename  = self mirror at-module map: { m | m reflectee filename }.
     }.
 
   @meta category: "Managing meta-data"
