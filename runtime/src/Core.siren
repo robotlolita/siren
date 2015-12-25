@@ -125,8 +125,13 @@ let Exception = {
     vm throw: (vm error: self name message: reason).
 }.
 
+let Unimplemented = Exception name: "<Unimplemented>".
+let Message-Send-Failure = Exception name: "<Message Send Failure>".
+
 vm extend: Root with: {
   def_ Exception = Exception.
+  def_ Unimplemented = Unimplemented.
+  def_ Message-Send-Failure = Message-Send-Failure.
 }.
 
 # -- Traits support ----------------------------------------------------
@@ -140,7 +145,7 @@ vm extend: Root with: {
 # -- Utility decorators / messages -------------------------------------
 vm extend: Root with: {
   def_ unimplemented
-    Exception name: "<Unimplemented>" raise!: "unimplemented".
+    Unimplemented raise!: "unimplemented".
 
   def_ lazy { fn |
     let computed = Reference new: False.
@@ -163,5 +168,37 @@ vm extend: Root with: {
     let o2 = object refined-by: {}.
     vm extend: o2 with: mixin.
     o2
+  }
+
+  def_ required { method |
+    @inherit-meta: method
+    let expectation = Method {
+      def self in: object apply: _
+        let mirror      = Mirror reflect: method.
+        let object-name = Mirror reflect: object; meta name; get-or-default: "(Anonymous object)".
+        let method-name = mirror meta name get-or-default: "(Anonymous method)".
+        let signature   = mirror meta signature get-or-default: method-name.
+
+        Message-Send-Failure raise!:
+          object-name, " does not define `", method-name, "`. ",
+          "You must either refine ", object-name, " and provide ",
+          "the missing message, or mix it in another object that ",
+          "defines this message. ", object-name, " cannot be used ",
+          "directly.\n",
+          "\n",
+          "## Example:\n\n",
+          "    Old-Object { ", signature, " = ... }.",
+          "\n\n",
+          "Or:\n\n",
+          "    @mixin: Old-Object\n",
+          "    let New-Object = { ", signature, " = ... }.".
+
+      def self in: object                         = self in: object apply: [].
+      def self in: object call: a                 = self in: object apply: [a].
+      def self in: object call: a with: b         = self in: object apply: [a. b].
+      def self in: object call: a with: b with: c = self in: object apply: [a. b. c].
+    }.
+    Mirror reflect: expectation; meta; at: "expectation.unfulfilled" put: True.
+    expectation
   }
 }

@@ -602,6 +602,15 @@ let Meta-Mirror = {
     # Updates the complexity of the object.
     self at: "complexity" put: complexity.
 
+  @meta category: "Managing meta-data"
+  def self inherit-from: another
+    # Allows `another` object to provide meta-data for this object.
+    #
+    # Only meta-data that isn't already defined in this object will
+    # be inherited.
+    vm meta: self reflectee inherit: another.
+    self.
+
   @meta category: "Auxiliary functions"
   def self signature
     # Attempts to rebuild the signature of a method.
@@ -878,6 +887,15 @@ vm extend: Root with: {
   """
   def_ authors: authors { object |
     Mirror reflect: object; meta; authors: authors.
+    object.
+  }.
+
+  @meta category: "Decorators"
+  @meta documentation: """
+  Inherits meta-data from another object.
+  """
+  def_ inherit-meta: from { object |
+    Mirror reflect: object; meta; inherit-from: from.
     object.
   }.
 }.
