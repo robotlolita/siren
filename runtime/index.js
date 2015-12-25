@@ -359,29 +359,34 @@ function $handleReturn(value) {
 function _Block0(fn) {
   assert_arity(fn, 0);
   this.call = fn;
+  this.nativeFunction = true;
 }
 _Block0.prototype = Siren_Block0;
 
 function _Block1(fn) {
   assert_arity(fn, 1);
   this.call = fn;
+  this.nativeFunction = true;
 }
 _Block1.prototype = Siren_Block1;
 
 function _Block2(fn) {
   assert_arity(fn, 2);
   this.call = fn;
+  this.nativeFunction = true;
 }
 _Block2.prototype = Siren_Block2;
 
 function _Block3(fn) {
   assert_arity(fn, 3);
   this.call = fn;
+  this.nativeFunction = true;
 }
 _Block3.prototype = Siren_Block3;
 
 function _BlockN(fn) {
   this.call = fn;
+  this.nativeFunction = true;
 }
 _BlockN.prototype = Siren_BlockN;
 
@@ -391,6 +396,7 @@ function _Method0(fn) {
   assert_arity(fn, 0);
   this.belongsTo = null;
   this.call = fn;
+  this.nativeFunction = true;
 }
 _Method0.prototype = Siren_Method0;
 
@@ -398,6 +404,7 @@ function _Method1(fn) {
   assert_arity(fn, 1);
   this.belongsTo = null;
   this.call = fn;
+  this.nativeFunction = true;
 }
 _Method1.prototype = Siren_Method1;
 
@@ -405,6 +412,7 @@ function _Method2(fn) {
   assert_arity(fn, 2);
   this.belongsTo = null;
   this.call = fn;
+  this.nativeFunction = true;
 }
 _Method2.prototype = Siren_Method2;
 
@@ -412,12 +420,14 @@ function _Method3(fn) {
   assert_arity(fn, 3);
   this.belongsTo = null;
   this.call = fn;
+  this.nativeFunction = true;
 }
 _Method3.prototype = Siren_Method3;
 
 function _MethodN(fn) {
   this.belongsTo = null;
   this.call = fn;
+  this.nativeFunction = true;
 }
 _MethodN.prototype = Siren_MethodN;
 
@@ -515,7 +525,12 @@ function recover(object, context, originalMessage, args) {
   var selector = context.lookup(object, 'does-not-understand:');
   if (selector && object[selector]) {
     var message = new _Message(originalMessage, args);
-    return object[selector].call(object, message);
+    var method = object[selector];
+    if (method.nativeFunction) {
+      return method.call(object, message);
+    } else {
+      return method.send2(context, new _Text('does-not-understand:'), object, message);
+    }
   } else {
     throw new Error('Failed to send ' + message);
   }
@@ -524,42 +539,72 @@ function recover(object, context, originalMessage, args) {
 // Sending messages
 Siren_Object.send0 = function(context, message) {
   var selector = context.lookup(this, message);
-  if (selector)
-    return this[selector].call(this);
-  else
+  if (selector) {
+    var method = this[selector];
+    if (method.nativeFunction) {
+      return method.call(this);
+    } else {
+      method.send1(context, new _Text('in:'), this);
+    }
+  } else {
     return recover(this, context, message, []);
+  }
 };
 
 Siren_Object.send1 = function(context, message, a) {
   var selector = context.lookup(this, message);
-  if (selector)
-    return this[selector].call(this, a);
-  else
+  if (selector) {
+    var method = this[selector];
+    if (method.nativeFunction) {
+      return method.call(this, a);
+    } else {
+      method.send2(context, new _Text('in:call:'), this, a);
+    }
+  } else {
     return recover(this, context, message, [a]);
+  }
 };
 
 Siren_Object.send2 = function(context, message, a, b) {
   var selector = context.lookup(this, message);
-  if (selector)
-    return this[selector].call(this, a, b);
-  else
+  if (selector) {
+    var method = this[selector];
+    if (method.nativeFunction) {
+      return method.call(this, a, b);
+    } else {
+      return method.send3(context, new _Text('in:call:with:'), this, a, b);
+    }
+  } else {
     return recover(this, context, message, [a, b]);
+  }
 };
 
 Siren_Object.send3 = function(context, message, a, b, c) {
   var selector = context.lookup(this, message);
-  if (selector)
-    return this[selector].call(this, a, b, c);
-  else
+  if (selector) {
+    var method = this[selector];
+    if (method.nativeFunction) {
+      return method.call(this, a, b, c);
+    } else {
+      return method.sendN(context, new _Text('in:call:with:with:'), this, a, b, c);
+    }
+  } else {
     return recover(this, context, message, [a, b, c]);
+  }
 };
 
 Siren_Object.sendN = function(context, message, args) {
   var selector = context.lookup(this, message);
-  if (selector)
-    return this[selector].call.apply(this[selector], [this].concat(args));
-  else
+  if (selector) {
+    var method = this[selector];
+    if (method.nativeFunction) {
+      return method.call.apply(method, [this].concat(args));
+    } else {
+      return method.sendN(context, new _Text('in:apply:'), new _Tuple([this].concat(args)));
+    }
+  } else {
     return recover(this, context, message, args);
+  }
 };
 
 
@@ -1109,7 +1154,7 @@ var Primitives = $makeInternalObject({
 
   'defer:': function(_, f) {
     setImmediate(function() {
-      f.call();
+      f.send0($context, 'value');
     });
   },
 
@@ -1132,8 +1177,8 @@ var Primitives = $makeInternalObject({
   },
 
   'while:do:': function(_, predicate, block) {
-    while(predicate.call()) {
-      block.call();
+    while(predicate.send0($context, 'value')) {
+      block.send0($context, 'value');
     }
   },
 
@@ -1159,9 +1204,9 @@ var Primitives = $makeInternalObject({
 
   'try:catch:': function(_, block, recover) {
     try {
-      return block.call();
+      return block.send0($context, 'value');
     } catch (e) {
-      return recover.call(e);
+      return recover.send1($context, 'call:', e);
     }
   },
 
@@ -1440,13 +1485,13 @@ var Primitives = $makeInternalObject({
 
   'tuple:each:': function(_, a, f) {
     var arr = a.array;
-    for (var i = 0; i < arr.length; ++i)  f.call(arr[i]);
+    for (var i = 0; i < arr.length; ++i)  f.send1($context, 'call:', arr[i]);
   },
 
   'tuple:map:': function(_, a, f) {
     var arr = a.array;
     var r = [];
-    for (var i = 0; i < arr.length; ++i) r[i] = f.call(arr[i]);
+    for (var i = 0; i < arr.length; ++i) r[i] = f.send1($context, 'call:', arr[i]);
     return new _Tuple(r);
   },
 
@@ -1454,7 +1499,7 @@ var Primitives = $makeInternalObject({
     var arr = a.array;
     var r = [];
     for (var i = 0; i < arr.length; ++i) {
-      var t = f.call(arr[i]);
+      var t = f.send1($context, 'call:', arr[i]);
       if (!Array.isArray(t.array)) {
         throw new TypeError("Expected a tuple.");
       }
@@ -1468,7 +1513,7 @@ var Primitives = $makeInternalObject({
     var r = [];
     for (var i = 0; i < arr.length; ++i) {
       var v = arr[i];
-      if (f.call(v))  r.push(v);
+      if (f.send1($context, 'call:', v))  r.push(v);
     }
     return new _Tuple(r);
   },
@@ -1476,14 +1521,14 @@ var Primitives = $makeInternalObject({
   'tuple:fold:from:': function(_, a, f, b) {
     var arr = a.array;
     for (var i = 0; i < arr.length; ++i)
-      b = f.call(b, arr[i]);
+      b = f.send2($context, 'call:with:', b, arr[i]);
     return b;
   },
 
   'tuple:fold-right:from:': function(_, a, f, b) {
     var arr = a.array;
     for (var i = arr.length - 1; i > 0; i--)
-      b = f.call(b, arr[i]);
+      b = f.send2($context, 'call:with:', b, arr[i]);
     return b;
   },
 
@@ -1493,7 +1538,7 @@ var Primitives = $makeInternalObject({
 
   'tuple:sort:': function(_, a, f) {
     return new _Tuple(a.array.sort(function(a, b) {
-      return Number(f.call(a, b).number);
+      return Number(f.send2($context, 'call:with:', a, b).number);
     }));
   },
 
@@ -1552,6 +1597,10 @@ var Primitives = $makeInternalObject({
 
   'meta:at:put:': function(_, object, name, value) {
     $meta.set(object, name.string, value);
+  },
+
+  'meta:inherit:': function(_, object, another) {
+    return $withMeta(object, $meta.data.get(another) || {});
   },
 
   // ---- JS operations
