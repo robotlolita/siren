@@ -213,6 +213,13 @@ let Browser = {
 A browser for visualising details about messages.
 """
 let Message-Browser = Browser {
+  @required
+  @category: "Configuration"
+  def self object
+    # The message object that we're browsing
+    unimplemented.
+
+  @category: "Inspecting"
   def self describe
     # A textual representation of this object.
     Debug-Text,
