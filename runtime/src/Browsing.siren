@@ -65,16 +65,16 @@ For example, if one wanted to use the browser to generate an
 HTML page with the information, they would just need to provide
 a new display configuration:
 
-   let HTML-Display = browse display {
-     def self heading!: text
-       Console write-line!: (HTML h1: text) as-text.
-
-     ( ... )
-   }.
-
-   let HTML-Browser = browse { def_ display = HTML-Display }.
-   HTML-Browser inspect
-   # => "<h1>Browser</h1><div><strong>From:</strong> (...)"
+    let HTML-Display = browse display {
+      def self heading!: text
+        Console write-line!: (HTML h1: text) as-text.
+    
+      ( ... )
+    }.
+    
+    let HTML-Browser = browse { def_ display = HTML-Display }.
+    HTML-Browser inspect
+    # => "<h1>Browser</h1><div><strong>From:</strong> (...)"
 """
 let Browser = {
   @category: "Inspecting"
