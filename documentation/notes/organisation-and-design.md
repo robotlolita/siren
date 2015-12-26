@@ -140,6 +140,9 @@ above adds a few more. So, below is a complete list of conventions:
   (`!`). Keyword messages will look like `foo:bar:baz!:`, binary
   messages don't follow this rule.
 
+- `as-type`, when a message allows one to convert the object to another
+  type.
+
 - `Some-Object-Name`, local objects are always defined in proper
   case. Objects that are not meant to be used directly (they only serve
   as a namespace, or they need to be refined first) also get named in
@@ -152,6 +155,51 @@ above adds a few more. So, below is a complete list of conventions:
   into another object (through the `mixin:` decorator) should be added
   to a `mixins` namespace in the module.
 
+
+## Common categories
+
+A few standard categories to use when describing your objects:
+
+- **Configuration**, the message provides an object that changes the
+  behaviour of the rest of the object.
+
+- **Refining**, the message constructs a new object with a different
+  piece of configuration.
+
+- **Inspecting**, the message is meant for debugging.
+
+- **Comparing and testing**, this message allows one to compare the
+  object with a similar object, or test some internal property of the
+  object.
+
+- **Extracting information**, for a compound object, this message allows
+  one to access a particular portion of the data.
+
+- **Converting to other types**, this message allows one to convert an object from one
+  type to another (like Text → Integer).
+
+- **Transforming**, this message allows one to apply some kind of
+  transformation to the data this object represents.
+
+- **Combining**, this message allows one to combine objects of the same
+  type.
+
+- **Handling errors**, this message allows one to handle errors that may
+  be represented by/stored in the object.
+
+- **Auxiliary operations**, this message should not be in this object,
+  but it's here anyway playing a supporting role. This indicates either
+  a miscategorisation or bad organisation, in general.
+
+- **Decorators**, this message is specifically meant to be used as a
+  decorator.
+
+- **Mixins**, this message provides a mixin.
+
+
+## How to write documentation
+
+TBD
 
 <!--
 Local Variables:
