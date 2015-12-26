@@ -478,7 +478,7 @@ function generate(bind, x) {
     Expr.Use(meta, traits, xs) =>
       js.Call(meta,
               fn({}, null, [id('_Context')],
-                 generate(bind, xs)),
+                 returnLast(generate(bind, xs).map(toStatement))),
               [send({}, id('_Context'), selector({}, str('with:')), [generate(bind, traits)])]),
 
     Expr.Using(meta, traits) =>
