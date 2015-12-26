@@ -49,7 +49,6 @@
   "devDependencies": {
     "lambda-chop": "~0.1.5",
     "es6-macros": "0.0.7",
-    "adt-simple": "~0.1.3",
     "sparkler": "~0.3.5",
     "sweet.js": "0.7.1",
     "macros.operators": "~0.5.1"
