@@ -9,7 +9,7 @@ let fibonacci = { number |
   fib call: number with: 0 with: 1.
 }.
 
-Console write-line!: "Fib 500: ", (fibonacci call: 500) as-string.
+Console write-line!: "Fib 500: ", (fibonacci call: 500) as-text.
 
 
 # Floating point numbers:
@@ -23,4 +23,20 @@ let fibonacci-float = { number |
   }}
 }.
 
-Console write-line!: "Fib 15:  ", (fibonacci-float call: 15.0) as-string.
+Console write-line!: "Fib 15:  ", (fibonacci-float call: 15.0) as-text.
+
+# As an extensions to numbers
+let Fibonacci-Float-Perspective = Float-64bits extended-by: {
+  def self fibonacci
+    use Fibonacci-Float-Perspective in {  # By default we get the global context
+      self <= 1.0 then: {
+        self.
+      } else: {
+        (self - 1.0) fibonacci + (self - 2.0) fibonacci.
+      }
+    }
+}.
+
+use Fibonacci-Float-Perspective in {
+  Console write-line!: "Fib 20:  ", 20.0 fibonacci as-text
+}
