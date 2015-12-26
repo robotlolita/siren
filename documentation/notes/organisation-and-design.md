@@ -96,6 +96,35 @@ objects, by requiring one to send a `message:` message before they can
 get a `Message-Browser`.
 
 
+## Incomplete objects
+
+Incomplete objects should describe their entire expected interface. The
+`required` decorator is used to describe expectations, and the
+documentation should give people enough information so they can
+implement the required behaviours. E.g.:
+
+```ruby
+let Sum = {
+  @required
+  def self from: initial fold-with: reducer
+    # Computes a single value by applying a binary message to the
+    # values of this object and an accumulator.
+    #
+    # `from:fold-with:` is a structural transformation that allows
+    # one to compute a value out of all of the contents of a
+    # compound object.
+    #
+    # E.g.:
+    #
+    #     [1. 2. 3] from: 0 fold-with: _ + _ ===> (((0 + 1) + 2) + 3)
+    unimplemented
+
+  def self sum
+    self from: 0 fold-with: _ + _
+}
+```
+
+
 ## Naming conventions
 
 Siren uses a handful of naming conventions. And the approach outlined
