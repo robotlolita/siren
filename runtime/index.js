@@ -964,7 +964,7 @@ $_extend(Siren_Block, {
   },
 
   'apply:': function(self, _arguments) {
-    return self.call.apply(_arguments);
+    return self.call.apply(undefined, _arguments.array);
   }
 });
 
