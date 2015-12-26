@@ -31,11 +31,50 @@ system, be it by finding objects that can do the tasks they want
 to, or by inspecting information about what they can do with
 an object.
 
-A browser looks at an [[Object]] in a particular [[Context]]. Both
-the context and the object may be refined while you interact
-with the browser, in a "navigation" kind-of way. By default, the
-browser looks at the global object ([[Root]]) in the global
-context.
+A browser looks at an [[Object]] in a particular [[Context]]. Both the
+context and the object may be refined while you interact with the
+browser, in a "navigation" kind-of way. By default, the browser looks at
+itself in the global context.
+
+From there, an user can navigate to other objects or particular
+messages in an object by refining the Browser. The [[object:]] and
+[[message:]] messages respectively allow these refinements:
+
+    let inspect-browser = browse message: "inspect".
+    inspect-browser documentation.
+    # Inspects the object this browser is pointing to.
+    # 
+    # => <Message-Browser for: <Unbound-Method arity: 1>>
+
+    
+    let mirror-browser = browse object: Mirror.
+    mirror-browser common-metadata.
+    # Category: Reflection
+    # Platforms: [ECMAScript 2015]
+    # Licence: MIT
+    # => <Browser for: <Mirror>> 
+
+Besides the common [[object]] and [[context]] configurations, the
+Browser also expects a [[display]], which determines how the
+information output will be formatted in whatever medium it's
+displayed at. The browser comes configured with a display for
+terminal emulators by default, but it can be refined to provide
+support for a different medium.
+
+For example, if one wanted to use the browser to generate an
+HTML page with the information, they would just need to provide
+a new display configuration:
+
+   let HTML-Display = browse display {
+     def self heading!: text
+       Console write-line!: (HTML h1: text) as-text.
+
+     ( ... )
+   }.
+
+   let HTML-Browser = browse { def_ display = HTML-Display }.
+   HTML-Browser inspect
+   # => "<h1>Browser</h1><div><strong>From:</strong> (...)"
 """
 let Browser = {
   @category: "Inspecting"
@@ -52,16 +91,17 @@ let Browser = {
     vm global-context
 
   @category: "Configuration"
-  def_ object
+  def self object
     # The object you're browsing at the moment.
-    Root.
+    self.
 
   @category: "Configuration"
   def_ display
     # The object used to display information in the browser.
     Browser-Default-Display.
 
-  @category: "Configuration"
+
+  @category: "Auxiliary operations"
   def self mirror
     # The mirror object used to inspect the internals of objects.
     Mirror reflect: self object context: self context.
