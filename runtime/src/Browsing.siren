@@ -62,11 +62,6 @@ let Browser = {
     Browser-Default-Display.
 
   @category: "Configuration"
-  def_ message-browser
-    # The browser used for displaying messages.
-    Message-Browser
-
-  @category: "Configuration"
   def self mirror
     # The mirror object used to inspect the internals of objects.
     Mirror reflect: self object context: self context.
@@ -87,7 +82,7 @@ let Browser = {
   def self message: message
     # Browses the given message in the object this browser is pointing to.
     let method = self mirror method-from-name: message; get!; reflectee.
-    self message-browser { def_ object = method }.
+    Message-Browser { def_ object = method }.
 
 
   @category: "Visualising"
