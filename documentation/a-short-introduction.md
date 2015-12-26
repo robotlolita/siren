@@ -231,66 +231,86 @@ You can expect the usual operators defined on numbers (`+`, `-`, `*`,
 ...), but how do you know all the things you can do with numbers, and
 what all of these operations do, precisely? Well, Siren allows you to
 inspect objects in the REPL and understand what you can do with
-them. This feature is exposed through the `Debug` object.
+them. This feature is exposed through the `Browser` object.
 
 For example, to see what you can do with a floating point number, you
-send the `inspect:` message to the `Debug` object giving the number as
-an argument:
+point the `Browser` object to the floating point number, then send it
+an `inspect` message.
 
 ```ruby
-> Debug inspect: 1.0
-# (Anonymous object) {
-# }
+> browse object: 1.0; inspect
+# (Anonymous object)
+# ==================
 # 
-# Inheriting from Float-64bits {
-#   def self describe
-#   def self as-integer
-#   def self as-string
-#   def self as-float
-#   def self integral?
-#   def self fractional?
-#   def self === n
-#   def self =/= n
-#   def self between: n and?: m
-#   def self compared-to: n
-#   def self < n
-#   def self <= n
-#   def self > n
-#   def self >= n
-#   def self + n
-#   def self negated
-#   def self - n
-#   def self * n
-#   def self ** n
-#   def self absolute
-#   def self / n
-#   def self divided-by: n
-#   def self modulo: n
-#   def self successor
-#   def self predecessor
-#   def start to: end
-#   def self expatriate-to-JS
-# }
 # 
-# Inheriting from Numeric {
-#   def _ describe
-#   def _ exceptions
-# }
+# (No documentation)
 # 
-# Inheriting from Object {
-#   def self does-not-understand: message
-#   def self perform: message in: context
-#   def self refined-by: object
-#   def self refined-by: object in: context
-#   def self extended-by: object in: context
-#   def self extended-by: object
-#   def self describe
-#   def self => value
-#   def self expatriate-to-JS
-#   def self ==> that
-#   def self =/=> that
-# }
-# => <Debug>
+# 
+# 
+# Messages in (Anonymous object)
+# ------------------------------
+# 
+# Inheriting from Float-64bits
+# ----------------------------
+# 
+# (Uncategorised):
+#   • self describe
+#   • self as-integer
+#   • self as-text
+#   • self as-float
+#   • self integral?
+#   • self fractional?
+#   • self === n
+#   • self =/= n
+#   • self between: n and?: m
+#   • self clamp-between: n and: m
+#   • self compared-to: n
+#   • self < n
+#   • self <= n
+#   • self > n
+#   • self >= n
+#   • self min: n
+#   • self max: n
+#   • self + n
+#   • self negated
+#   • self - n
+#   • self * n
+#   • self ** n
+#   • self absolute
+#   • self / n
+#   • self divided-by: n
+#   • self modulo: n
+#   • self remainder: n
+#   • self divisible-by?: n
+#   • self successor
+#   • self predecessor
+#   • start to: end
+#   • self expatriate-to-JS
+# 
+# Inheriting from Numeric
+# -----------------------
+# 
+# (Uncategorised):
+#   • _ describe
+#   • _ exceptions
+# 
+# Inheriting from Object
+# ----------------------
+# 
+# (Uncategorised):
+#   • self does-not-understand: message
+#   • self perform: message in: context
+#   • self refined-by: object
+#   • self refined-by: object in: context
+#   • self extended-by: object in: context
+#   • self extended-by: object
+#   • self describe
+#   • self => value
+#   • self expatriate-to-JS
+#   • self ==> that
+#   • self =/=> that
+# 
+# => <Browser for: <Float(64): 1.0>>
 ```
 
 You can see that the number `1.0` itself (described as an `Anonymous
@@ -300,27 +320,29 @@ like `+`, `*`, and `**`, as well as other messages such as `integral?`
 and `successor`.
 
 Let's try to get more information about the `integral?` message. You can
-do this by sending the message `inspect:message:` to the `Debug` object,
-passing as arguments the object you want to inspect, and the name of the
-message you want more information about:
+do this by sending the message `message:` to the `browse` object,
+with the name of the message, then sending it an `inspect` message:
 
 ```ruby
 # Note that the name of the message is a text
-> Debug inspect: 1.0 message: "integral?"
+> browse object: 1.0; message: "integral?"; inspect
 # def self integral?
-#    Tests if the number is an integral number.
+# ---------------------------
 # 
-#    Floating points are integral if they don't have any number
-#    after the dot. So `1.0` is an integral number, whereas `1.1`
-#    is a fractional one.
 # 
-# Examples:
-#   { 1.1 integral?  ==> False }
-#   { 1.0 integral?  ==> True  }
 # 
-# Category: Testing and Predicates
+# Source for integral?
+# --------------------
 # 
-# => <Debug>
+#    def self integral?
+#        vm if: (vm float/is-integer: self)
+#           then: True else: False.
+# 
+# 
+# Belongs to: Float-64bits
+# From: /home/quil/Personal/siren/runtime/Numeric.js at line 152, column 3
+# 
+# => <Message-Browser for: <Unbound-Method arity: 1>>
 ```
 
 From this you can see the documentation of the function, some usage
