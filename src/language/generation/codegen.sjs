@@ -482,7 +482,7 @@ function generate(bind, x) {
               [send({}, id('_Context'), selector({}, str('with:')), [generate(bind, traits)])]),
 
     Expr.Using(meta, traits) =>
-      letb(
+      set(
         meta,
         id('_Context'),
         send({}, id('_Context'), selector({}, str('with:')), [generate(bind, traits)])
