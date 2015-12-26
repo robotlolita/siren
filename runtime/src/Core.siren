@@ -150,13 +150,28 @@ vm extend: Root with: {
   def_ lazy { fn |
     let computed = Reference new: False.
     let data = Reference new: Unit.
-    let update = { data set!: (fn in: Unit apply: []). computed set!: True }.
-    { _ | computed then: { data value } else: { update value. data value } }.
+    let update = { o a | data set!: (fn in: o apply: a). computed set!: True }.
+    Method {
+      def self in: object apply: args = data.
+        computed then: { data value }
+                 else: { update call: object with: args. data value. }
+
+      def self in: object                         = self in: object apply: [].
+      def self in: object call: a                 = self in: object apply: [a].
+      def self in: object call: a with: b         = self in: object apply: [a. b].
+      def self in: object call: a with: b with: c = self in: object apply: [a. b. c].
+    }.
   }
 
   def_ value { fn |
     let data = fn in: Unit apply: [].
-    { _ | data }.
+    Method {
+      def self in: _ apply: _ = data.
+      def self in: _ = data.
+      def self in: _ call: _ = data.
+      def self in: _ call: _ with: _ = data.
+      def self in: _ call: _ with: _ with: _ = data.
+    }.
   }
 
   def_ brand: brand { object |

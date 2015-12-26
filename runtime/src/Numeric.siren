@@ -55,6 +55,9 @@ vm extend: Integer with: {
   def self between: n and?: m
     (self >= n) && (self <= m).
 
+  def self clamp-between: n and: m
+    (self max: n) min: m.
+
   def self compared-to: n
     vm assert/numeric: n.
     vm integer/compare: self to: n
@@ -165,6 +168,9 @@ vm extend: Float-64bits with: {
 
   def self between: n and?: m
     (self >= n) && (self <= m).
+
+  def self clamp-between: n and: m
+    (self max: n) min: m.
 
   def self compared-to: n
     vm assert/numeric: n.

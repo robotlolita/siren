@@ -115,6 +115,21 @@ vm extend: Tuple with: {
     vm tuple: self
        filter: { a | (transformation call: a) then: { vm true } else: { vm false }}.
 
+  def self without: predicate
+    self filter: { x | (predicate call: x) not }.
+
+  def self slice-from: start to: end
+    vm tuple: self
+       slice-from: (start clamp-between: 1 and: self length)
+       to: (end clamp-between: 1 and: self length).
+
+  def self without-last
+    self slice-from: 1 to: self length - 1.
+
+  def self without-first
+    self slice-from: 2 to: self length.
+
+
   def self every?: predicate
     self from: True fold-with: _ && _.
 
@@ -162,6 +177,26 @@ vm extend: Tuple with: {
   def self interleaved-with: tuple
     vm assert/tuple: tuple.
     self zip: tuple with: { a b | [a. b] }; flattened.
+
+  def self associated-with: key
+    self each: { x | x key === key then: { ^ Result ok: x value } }.
+    Result failure: "(No key ", key describe, ")".
+
+  def self associate: key with: value
+    let new = do {
+      old <- self associated-with: key.
+      return self without: { p | Mirror reflect: p value; is: old }.
+    } get-or-default: self.
+    new, [ key => value ].
+
+  def self grouped-by: categoriser
+    let map = Reference new: [].
+    self each: { x |
+      let category = categoriser call: x.
+      let xs = map value associated-with: category; get-or-default: [].
+      map set!: (map value associate: category with: xs, [x]).
+    }.
+    map value.
 }.
 
 

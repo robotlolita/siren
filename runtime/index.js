@@ -1292,6 +1292,13 @@ var Primitives = $makeInternalObject({
     return String.fromCharCode(Number(a.number));
   },
 
+  'text/compare:to:less-than:equal:greater-than:': function(_, l, r, lt, eq, gt) {
+    l = l.string; r = r.string;
+    return l < r?   lt
+    :      l > r?   gt
+    :      /* _ */  eq;
+  },
+
   // ---- Numeric
   'integer:equals:': function(_, a, b) {
     return a.number.eq(b.number);
@@ -1542,6 +1549,10 @@ var Primitives = $makeInternalObject({
     }));
   },
 
+  'tuple:slice-from:to:': function(_, a, n, m) {
+    return new _Tuple(a.array.slice(n.number - 1, m.number));
+  },
+
   'tuple:push:': function(_, a, b) {
     a.array.push(b);
   },
@@ -1744,6 +1755,23 @@ var Primitives = $makeInternalObject({
   'render-markdown-to-terminal:': function(_, text) {
     var s = text.string.replace(/\[\[([^\]]+)\]\]/g, '`$1`');
     return new _Text(marked(s.trim()));
+  },
+
+  // ---- Map
+  'map/new': function(_) {
+    return new Map();
+  },
+
+  'map:at:': function(_, m, k) {
+    return m.get(k);
+  },
+
+  'map:at:put:': function(_, m, k, v) {
+    m.set(k, v);
+  },
+
+  'map/keys:': function(_, m) {
+    return new _Tuple(Array.from(m.keys()));
   }
 });
 
@@ -1789,6 +1817,7 @@ require('./JS')(Siren, Primitives);
 require('./Concurrency')(Siren, Primitives);
 require('./Console')(Siren, Primitives);
 require('./Testing')(Siren, Primitives);
+require('./Browsing')(Siren, Primitives);
 
 // -- Exports ----------------------------------------------------------
 module.exports = Siren;

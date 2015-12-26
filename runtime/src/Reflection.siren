@@ -319,7 +319,7 @@ let Object-Mirror = Mirror {
     # reference. Note that even if you have two objects that are identical, such
     # as `1` and `1`, this operation will still return [[False]] when comparing
     # them!
-    vm if: vm refeq: self reflectee and: object
+    vm if: (vm refeq: self reflectee and: object)
        then: True else: False.
 }.
 
@@ -612,37 +612,7 @@ let Meta-Mirror = {
     # be inherited.
     vm meta: self reflectee inherit: another.
     self.
-
-  @meta category: "Auxiliary functions"
-  def self signature
-    # Attempts to rebuild the signature of a method.
-    #
-    # Only makes sense for [[Method]] objects.
-    do {
-      name <- self name.
-      arguments <- self arguments.
-      name-and-args <- return format-signature call: name with: arguments.
-      return "def ", (name-and-args joined-by: " ")
-    }
 }.
-
-# A helper for formatting method signatures.
-let format-signature = { name args |
-  (name contains?: ":") then: {
-    args interleaved-with: (name split-at: ":"; map: _, ":"); filter: _ =/= ":".
-  } else: {
-    args length === 0 then: {
-      [name].
-    } else: { args length === 1 then: {
-      [args first!. name].
-    } else: { args length === 2 then: {
-      [args first!. name. args last!].
-    } else: {
-      ["(Can't format signature)"].
-    }}}
-  }
-}.
-
 
 # ----------------------------------------------------------------------
 @meta category: "Metadata"

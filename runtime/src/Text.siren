@@ -12,6 +12,8 @@
 $siren/1
 module | vm | where
 
+vm extend: Text with: mixins Comparable.
+
 vm extend: Text with: {
   def_ traits {
     def_ Character-View = Character-View.
@@ -35,6 +37,13 @@ vm extend: Text with: {
 
   def self =/= text
     (self === text) not.
+
+  def self compared-to: text
+    vm assert/text: text.
+    vm text/compare: self to: text
+       less-than: Ordering less-than
+       equal: Ordering equal
+       greater-than: Ordering greater-than
 
   def self empty?
     self === "".
