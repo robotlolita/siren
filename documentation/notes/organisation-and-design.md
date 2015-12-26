@@ -141,14 +141,14 @@ above adds a few more. So, below is a complete list of conventions:
   messages don't follow this rule.
 
 - `Some-Object-Name`, local objects are always defined in proper
-  case. Objects that are not meant to be used directly (they only define
-  links to other objects, or they need to be refined first) also get
-  named in proper-case in messages.
+  case. Objects that are not meant to be used directly (they only serve
+  as a namespace, or they need to be refined first) also get named in
+  proper-case in messages.
 
 - `some-object-name`, objects that are useful out of the box get named
   in all lower case.
 
-- `mixins Some-Object-Name`, objects that are strictly meant to be mixed
+- `Mixins Some-Object-Name`, objects that are strictly meant to be mixed
   into another object (through the `mixin:` decorator) should be added
   to a `mixins` namespace in the module.
 
