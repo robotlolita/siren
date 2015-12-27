@@ -202,7 +202,54 @@ A few standard categories to use when describing your objects:
 
 ## How to write documentation
 
-TBD
+Your documentation should look something like:
+
+```text
+[short descriptive summary of what the object/message does]
+
+## Why?
+
+[detailed description of WHY the object exists. This should provide
+ compelling arguments on why someone might use the object.]
+
+## Drawbacks
+
+[if applicable, provide a description of the problems people might
+ run into by using this object, because of some design trade-off
+ you made (maybe your API is easy to use and consistent, but not
+ very efficient? Detail that here)]
+
+## Architecture
+
+[For objects/modules, describe the general architecture, so people
+ know how each piece fits together, and can better reason about
+ its behaviour/contribute]
+```
+
+Where possible, examples of how to use an object/message should
+be provided. Examples are great for people to start playing around
+with an object, and they double as test cases in Siren.
+
+Always provide the common meta-data for objects:
+
+- Stability
+- Authors
+- Licence
+- Platforms
+- Portability
+- Category
+- Tags (where applicable)
+
+For any non-trivial (constant-time) behaviour, a `complexity` meta-data
+should be attached, describing the algorithmic complexity of the
+behaviour in Big O notation. Where relevant, also provide complexity for
+behaviours that run in constant-time (like `count` in objects, which
+is generally linear).
+
+See the
+[Origami Tower conventions documentation](https://github.com/origamitower/conventions/blob/master/general/how-do-i-open-source-a-new-project.md)
+for more details on all of this.
+
 
 <!--
 Local Variables:
