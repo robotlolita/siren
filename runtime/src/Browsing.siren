@@ -148,7 +148,7 @@ let Browser = {
     let doc = self mirror meta documentation get-or-default: "(No documentation)".
     self display markdown!: doc.
     self.
-
+    
 
   @category: "Visualising"
   def self common-metadata
@@ -232,6 +232,8 @@ let Browser = {
                        pair value each: { method |
                          let signature = self display signature: method.
                          signature map: { s | self display line!: "  • ", s }.
+                         let doc = self display documentation-summary: method.
+                         doc empty? not then: { self display faded-line!: "     | ", doc }.
                        }
                      }.
 
@@ -342,7 +344,7 @@ let Browser-Default-Display = {
 
   def self indented: indent text!: text
     let pad = " " repeat: indent.
-    Console write-line!: (text split-at: "\n"; map: pad, _; joined-by: "\n").
+    Console write-line!: (text split-at-line-breaks map: pad, _; joined-by: "\n").
 
   def self line-break!
     Console write-line!: "".
@@ -356,6 +358,25 @@ let Browser-Default-Display = {
 
   def self bold: text
     vm terminal-bold: text.
+
+  def self faded: text
+    vm terminal-faded: text.
+
+  def self error: text
+    vm terminal-error: text.
+
+  def self faded-line!: text
+    self line!: (self faded: text).
+
+  @category: "Auxiliary operations"
+  def self documentation-summary: method-mirror
+    # Returns a summary of the documentation of the object the browser is pointing to.
+    let doc = method-mirror meta documentation get-or-default: "";
+                split-at: "."; first!;
+                split-at-line-breaks; joined-by: " ";
+                trim.
+    doc length > 70 then: { (doc characters slice-from: 1 to: 70) as-text trim, "..." }
+                    else: { doc }.
 
   def self signature: method-mirror
     let format-signature = { name args |

@@ -38,6 +38,9 @@ vm extend: Text with: {
   def self =/= text
     (self === text) not.
 
+  def self trim
+    vm text/trim: self.
+
   def self compared-to: text
     vm assert/text: text.
     vm text/compare: self to: text
@@ -78,6 +81,9 @@ vm extend: Text with: {
   def self split-at: separator
     vm assert/text: separator.
     vm text: self split: separator.
+
+  def self split-at-line-breaks
+    vm text/split-at-line-breaks: self.
 }.
 
 let Character-View = {

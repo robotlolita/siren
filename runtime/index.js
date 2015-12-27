@@ -1097,8 +1097,19 @@ var Primitives = $makeInternalObject({
   },
 
   'assert/number:between:and:': function(_, a, b, c) {
-    if (a.number < b.number || a.number > c.number)
-      throw new RangeError('Expected ' + (+a.number) + ' between ' + (+b.number) + ' and ' + (+c.number));
+    var x = a.number, y = b.number, z = c.number;
+    var fail = false;
+    if (BigNum.isBigNum(x) || BigNum.isBigNum(y) || BigNum.isBigNum(z)) {
+      if (Number.isInteger(+x) && Number.isInteger(+y) && Number.isInteger(+z)) {
+        fail = BigNum(x).lt(BigNum(y)) || BigNum(x).gt(BigNum(z));
+      } else {
+        fail = (+x) < (+y) || (+x) > (+z);
+      }
+    } else {
+      fail = (+x) < (+y) || (+x) > (+z);
+    }
+    if (fail)
+      throw new RangeError('Expected ' + (+x) + ' between ' + (+y) + ' and ' + (+z));
   },
 
   'assert/numeric:': function(_, a) {
@@ -1273,8 +1284,16 @@ var Primitives = $makeInternalObject({
     return a.string.length;
   },
 
+  'text/trim:': function(_, a) {
+    return new _Text(a.string.trim());
+  },
+
   'text:split:': function(_, a, b) {
     return new _Tuple(a.string.split(b.string).map($text));
+  },
+
+  'text/split-at-line-breaks:': function(_, a) {
+    return new _Tuple(a.string.split(/\r\n|\n\r|\r|\n/).map($text));
   },
 
   'text/slice:from:to:': function(_, a, b, c) {
@@ -1749,6 +1768,12 @@ var Primitives = $makeInternalObject({
   },
   'terminal-bold:': function(_, text) {
     return new _Text(chalk.bold(text.string));
+  },
+  'terminal-faded:': function(_, text) {
+    return new _Text(chalk.grey(text.string));
+  },
+  'terminal-error:': function(_, text) {
+    return new _Text(chalk.red(text.string));
   },
   'terminal-heading:': function(_, text) {
     return new _Text(chalk.green.bold(text.string));
