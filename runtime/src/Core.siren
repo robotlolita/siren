@@ -115,6 +115,7 @@ object-mirror method-from-name: "refined-by:context:"; get!; meta;
 
 object-mirror method-from-name: "refined-by:"; get!; meta;
   category: "Refining";
+  complexity: "O(n), n is the number of properties in object";  
   tags: ["Convenience"];
   see-also: "refined-by:context:" reason: "A refinement that allows providing a context for the message reconstruction.";
   documentation: """
@@ -124,6 +125,7 @@ object-mirror method-from-name: "refined-by:"; get!; meta;
 
 object-mirror method-from-name: "extended-by:context:"; get!; meta;
   category: "Extending";
+  complexity: "O(n), n is the number of properties in object";  
   see-also: "extended-by:" reason: "An extensions that uses the global context";
   documentation: """
   Extends the object with new messages, as provided by the given
@@ -150,6 +152,7 @@ object-mirror method-from-name: "extended-by:context:"; get!; meta;
 
 object-mirror method-from-name: "extended-by:"; get!; meta;
   category: "Extending";
+  complexity: "O(n), n is the number of properties in object";  
   tags: ["Convenience"];
   see-also: "extended-by:context:" reason: "An extension that allows you to provide a custom context.";
   documentation: """
