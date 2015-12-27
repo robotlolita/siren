@@ -680,13 +680,24 @@ Provides a common way of explaning the stability index.
 """
 let Stability-Explanation-Mixin = {
   @meta category: "Configuration"
-  def self index = unimplemented.
+  def self index
+    # The numeric index in the stability index table.
+    #
+    # See the [Node.js stability index][index] page for more information.
+    #
+    # [index]: https://nodejs.org/api/documentation.html#documentation_stability_index
+    unimplemented.
 
   @meta category: "Configuration"
-  def self name = unimplemented.
+  def self name
+    # A short, descriptive name for this kind of stability.
+    unimplemented.
 
   @meta category: "Configuration"
-  def self description = unimplemented.
+  def self description
+    # A descriptive summary of what it means for an API to be marked with this
+    # kind of stability.
+    unimplemented.
 
   @meta category: "Inspecting"
   def self describe
