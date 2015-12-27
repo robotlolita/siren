@@ -192,7 +192,6 @@ vm extend: Root with: {
         let mirror      = Mirror reflect: method.
         let object-name = Mirror reflect: object; meta name; get-or-default: "(Anonymous object)".
         let method-name = mirror meta name get-or-default: "(Anonymous method)".
-        let signature   = mirror meta signature get-or-default: method-name.
 
         Message-Send-Failure raise!:
           object-name, " does not define `", method-name, "`. ",
@@ -202,11 +201,11 @@ vm extend: Root with: {
           "directly.\n",
           "\n",
           "## Example:\n\n",
-          "    Old-Object { ", signature, " = ... }.",
+          "    Old-Object { def ", method-name, " = ... }.",
           "\n\n",
           "Or:\n\n",
           "    @mixin: Old-Object\n",
-          "    let New-Object = { ", signature, " = ... }.".
+          "    let New-Object = { def ", method-name, " = ... }.".
 
       def self in: object                         = self in: object apply: [].
       def self in: object call: a                 = self in: object apply: [a].

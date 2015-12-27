@@ -1757,21 +1757,15 @@ var Primitives = $makeInternalObject({
     return new _Text(marked(s.trim()));
   },
 
-  // ---- Map
-  'map/new': function(_) {
-    return new Map();
+  // ---- Waiting for initial configuration
+  'after-runtime-configuration:': function(_, block) {
+    afterRuntimeConfig.push(block);
   },
-
-  'map:at:': function(_, m, k) {
-    return m.get(k);
-  },
-
-  'map:at:put:': function(_, m, k, v) {
-    m.set(k, v);
-  },
-
-  'map/keys:': function(_, m) {
-    return new _Tuple(Array.from(m.keys()));
+  'update:message:with:': function(_, o, m, b) {
+    var s = $context.lookup(o, m.string);
+    if (!s) throw new Error('No message ' + m);
+    var meth = b.send1($context, 'call:', o[s]);
+    o[s] = meth;
   }
 });
 
@@ -1805,6 +1799,8 @@ $meta.set(Siren_Float, 'name', $text('Float-64bits'));
 $meta.set(Siren_Tuple, 'name', $text('Tuple'));
 
 // -- The Siren part of the runtime ------------------------------------
+var afterRuntimeConfig = [];
+
 require('./Reflection')(Siren, Primitives);
 require('./Core')(Siren, Primitives);
 require('./Mixins')(Siren, Primitives);
@@ -1818,6 +1814,10 @@ require('./Concurrency')(Siren, Primitives);
 require('./Console')(Siren, Primitives);
 require('./Testing')(Siren, Primitives);
 require('./Browsing')(Siren, Primitives);
+
+afterRuntimeConfig.forEach(function(b) {
+  b.send0($context, 'value');
+});
 
 // -- Exports ----------------------------------------------------------
 module.exports = Siren;
