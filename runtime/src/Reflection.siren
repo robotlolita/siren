@@ -84,25 +84,27 @@ object: the [[Mirror]]. A Mirror is something that can reflect on
 an object, within a particular [[Context]], and provide information
 about the internal details of the object.
 
-There are two views one can get of an object:
+A mirror gives you a view of the internal, semantic details of a particular
+object. Which allows, for example, one to query which messages an object
+understands, and access the operations that those messages invoke.
 
-  - [[traits Object-Mirror]] gives one a view of the internal, semantic
-    details of a particular object. An Object-Mirror allows one to, for
-    example, look at which messages an object understand, and access the
-    internal operation that those messages invoke.
+From there, one may acquire a [[Meta-Mirror]], by sending a [[meta]] message to
+the mirror. The [[Meta-Mirror]] allows one to look at the meta-data associated
+with one object, and update that meta-data. Meta-data has no bearing on the
+behaviour of the program, but provides useful information for the development
+tools. This "documentation", for example, is just a piece of meta-data on
+mirrors.
 
-  - [[traits Meta-Mirror]] gives one a view of meta-data associated with
-    one object. Meta-data has no bearing on the behaviour of the program,
-    but provides useful information for the development tools.
-    "documentation" is a piece of meta-data attached to the object, for
-    example.
-
-In order to access this information, one must first acquire an Object-Mirror
+In order to access this information, one must first acquire an [[Mirror]]
 for a particular object. The reflection API expects an object (which can
 be any Siren object), and a [[Context]], which will be used to resolve
 message names to message selectors:
 
     let mirror = Mirror reflect: Mirror context: Context.
+
+> **NOTE**  
+> Mirrors come pre-configured to look at themselves in the global context, so
+> the above is equivalent to just accessing [[Mirror]].
 
 With a mirror, we can start looking at the internal information in the object.
 For example, if we wanted to know which messages the [[Mirror]] object
@@ -110,12 +112,12 @@ responds to directly, we could send the `methods` message to the mirror:
 
     mirror methods
     # => [<Association: "describe" => <Unbound-Method arity: 1>>.
-    #     <Association: "traits" => <Unbound-Method arity: 1>>.
     #     <Association: "reflect:context:" => <Unbound-Method arity: 3>>.
-    #     <Association: "reflect:" => <Unbound-Method arity: 2>>]
+    #     <Association: "reflect:" => <Unbound-Method arity: 2>>.
+    #     ( ... )]
 
 We can also access the meta-data of the Mirror object, this is done by sending
-a `meta` message to the mirror, which returns a [[traits Meta-Mirror]] object
+a `meta` message to the mirror, which returns a [[Meta-Mirror]] object
 for the object we're looking at:
 
     mirror meta category.
@@ -133,48 +135,44 @@ let Mirror = {
   @meta category: "Inspecting"
   def self describe
     # A textual description of the object.
-    Debug-Text, "<Mirror>".
+    Debug-Text,
+    "<Mirror on: ", self reflectee describe,
+      " context: ", self reflectee-context describe, ">".
 
-  def_ traits {
-    def_ Object-Mirror = Object-Mirror.
-    def_ Meta-Mirror   = Meta-Mirror.
-  }
+  @meta category: "Configuration"
+  def self reflectee
+    # The object this mirror is looking at.
+    self.
 
-  @meta category: "Constructing"
+  @meta category: "Configuration"
+  def self reflectee-context
+    # The context in which this mirror looks at the object.
+    vm global-context.
+
+  @meta category: "Refining"
   def self reflect: object context: context
     # Constructs a Mirror looking at `object` in the given `context`.
     #
     # A [[Context]] is used to tell the mirror how message names should be
     # resolved to message [[Selector]]s.
-    self traits Object-Mirror {
+    self {
       def_ reflectee = object.
       def_ reflectee-context = context.
     }.
 
-  @meta category: "Constructing"
+  @meta category: "Refining"
   def self reflect: object
     # Constructs a Mirror looking at `object` in the global context.
     #
     # A [[Context]] is used to tell the mirror how message names should be
     # resolved to message [[Selector]]s.
-    self reflect: object context: vm global-context
-}.
-
-@meta category: "Reflection"
-let Object-Mirror = Mirror {
-  @meta category: "Inspecting"
-  def self describe
-    # A textual description of the object.
-    Debug-Text,
-    "<Object-Mirror on: ", self reflectee describe,
-             " context: ", self reflectee-context describe, ">".
+    self reflect: object context: self reflectee-context
 
   @meta category: "Constructing"
   def self meta
     # A view of the meta-data attached to the object.
-    self traits Meta-Mirror {
-      def_ reflectee = self reflectee.
-      def_ mirror    = self.
+    Meta-Mirror {
+      def_ mirror = self.
     }.
 
   @meta category: "Extracting information"
@@ -325,10 +323,15 @@ let Object-Mirror = Mirror {
 
 @meta category: "Reflection"
 let Meta-Mirror = {
-  def_ traits {
-    def_ Source-Location = Source-Location.
-    def_ See-Also        = See-Also.
-  }
+  @meta category: "Extracting information"
+  def self reflectee
+    # The object this meta-mirror is looking at.
+    self mirror reflectee.
+
+  @meta category: "Configuration"
+  def self mirror
+    # The original object mirror.
+    unimplemented.
 
   @meta category: "Inspecting"
   def self describe
@@ -404,7 +407,7 @@ let Meta-Mirror = {
   def self source
     # Retrieves information about the place where the object was defined, and
     # its source code.
-    self traits Source-Location {
+    Source-Location {
       def_ code      = self at: "source".
       def_ start     = self at: "start-offset".
       def_ end       = self at: "end-offset".
@@ -563,7 +566,7 @@ let Meta-Mirror = {
     # Attach a new `see-also` cross-reference to the object.
     do { 
       items <- self see-also.
-      return self see-also: items, self traits See-Also {
+      return self see-also: items, See-Also {
         def_ reference = object.
         def_ reason = reason.
       }
@@ -631,43 +634,52 @@ API. Siren uses the same stability index that [Node.js][stability-index] uses.
 [stability-index]: https://nodejs.org/api/documentation.html#documentation_stability_index
 """
 let Stability = {
-  def_ traits {
-    def_ Stability-Trait {
-      def self describe
-        # A textual representation of the object.
-        Debug-Text, "<Stability: ", self index as-text, " - ", self name, ">".
+  @meta category: "Mixins"
+  def_ stability-explanation-mixin {
+    @meta category: "Configuration"
+    def self index = unimplemented.
 
-      @meta category: "Converting"
-      def self explain
-        # Returns a textual representation of what the particular stability
-        # index means.
-        "## Stability: ", self index as-text, " - ", self name, "\n\n", self description
-    }
+    @meta category: "Configuration"
+    def self name = unimplemented.
+
+    @meta category: "Configuration"
+    def self description = unimplemented.
+
+    @meta category: "Inspecting"
+    def self describe
+      # A textual representation of the object.
+      Debug-Text, "<Stability: ", self index as-text, " - ", self name, ">".
+
+    @meta category: "Converting to other types"
+    def self explain
+      # Returns a textual representation of what the particular stability
+      # index means.
+      "## Stability: ", self index as-text, " - ", self name, "\n\n", self description
   }
 
   @meta category: "Metadata"
-  def self deprecated = self traits Stability-Trait {
+  def self deprecated = self stability-explanation-mixin {
     def self index = 0.
     def self name = "Deprecated".
     def self description = "This feature is known to be problematic and will either be entirely removed from the system, or completely redesigned. You should not rely on it."
   }
 
   @meta category: "Metadata"
-  def self experimental = self traits Stability-Trait {
+  def self experimental = self stability-explanation-mixin {
     def self index = 1.
     def self name = "Experimental".
     def self description = "This feature is experimental and likely to change (or be removed) in the future.".
   }
 
   @meta category: "Metadata"
-  def self stable = self traits Stability-Trait {
+  def self stable = self stability-explanation-mixin {
     def self index = 2.
     def self name = "Stable".
     def self description = "This feature is stable and its API is unlikely to change (unless it's necessary for security, or other important reasons). You should expect backwards compatibility with the system, and a well-defined and automated (if possible) migration path if it changes.".
   }
 
   @meta category: "Metadata"
-  def self locked = self traits Stability-Trait {
+  def self locked = self stability-explanation-mixin {
     def self index = 3.
     def self name = "Locked".
     def self description = "This API will not change, however security and other bug fixes will still be applied to this feature."
@@ -679,6 +691,7 @@ let Stability = {
 Represents the source of a particular object's definition.
 """
 let Source-Location = {
+  @meta category: "Inspecting"
   def self describe
     # A textual representation of the object.
     let pos = do { line <- self line.
@@ -689,10 +702,27 @@ let Source-Location = {
 
     Debug-Text, "<Source-Location", pos, file, ">".
 
+  @meta category: "Configuration"
+  def self source = unimplemented.
+
+  @meta category: "Configuration"
+  def self line = unimplemented.
+
+  @meta category: "Configuration"
+  def self column = unimplemented.
+
+  @meta category: "Configuration"
+  def self start = unimplemented.
+
+  @meta category: "Configuration"
+  def self end = unimplemented.
+
+  @meta category: "Refining"
   def self source: code
     # Updates the source code.
     self { def_ source = code }.
 
+  @meta category: "Refining"
   def self line: line
     # Updates the line number of the origin of the definition.
     #
@@ -700,6 +730,7 @@ let Source-Location = {
     vm assert/numeric: line.
     self { def_ line = line }.
 
+  @meta category: "Refining"
   def self column: column
     # Updates the column number of the origin of the definition.
     #
@@ -707,6 +738,7 @@ let Source-Location = {
     vm assert/numeric: column
     self { def_ column = column }.
 
+  @meta category: "Refining"
   def self start: n
     # Update the starting offset of the origin of the definition.
     #
@@ -715,6 +747,7 @@ let Source-Location = {
     vm assert/numeric: n.
     self { def_ start = n }.
 
+  @meta category: "Refining"
   def self end: n
     # Update the ending offset of the origin of the definition.
     #
