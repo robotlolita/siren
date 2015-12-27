@@ -10,7 +10,156 @@
 #
 #-----------------------------------------------------------------------
 $siren/1
+@portability: "portable"
+@licence: "MIT"
+@stability: Stability experimental
+@authors: ["Quildreen Motta"]
 module | vm | where
+
+let authors = ["Quildreen Motta"].
+
+
+# -- [ Object ] --------------------------------------------------------
+vm after-runtime-configuration: {
+
+let object-mirror = Mirror reflect: Object.
+
+object-mirror meta
+  category: "Core";
+  authors: authors;
+  portability: "portable";
+  platforms: ["ECMAScript 2015"];
+  licence: "MIT";
+  stability: Stability experimental;
+  documentation: """
+The [[Object]] is the basis of all computations in Siren's system.
+
+Objects are entities that know how to perform computation. One may ask
+an object to perform a particular operation by *sending it a
+message*. For example, one could send a `+` message to a number to have
+it perform arithmetic addition.
+
+The messages that an object understands, and the messages we can refer
+to are separate concepts in Siren. An object doesn't understand `+`, it
+understands a different thing that we can't really talk about directly.
+So, in order to send messages to an object, we must first translate from
+our concept of "messages" to the objects'. This translation is done by a
+[[Context]], which provides a mapping from our messages to the internal
+names objects use.
+
+Objects can be refined or extended to provide additional
+messages. Refining an object creates a new object, with a larger
+catalogue of message.
+
+    let New-Object = Object refined-by: { ... } context: Context.
+    New-Object some-new-message.
+
+Extending an object expands its catalogue of messages, but **does not**
+define the appropriate translations for those messages in the
+[[Context]], instead it returns a [[Perspective]], which can then be
+installed in any context.
+
+    let perspective = Object extended-by: { ... } context: Context.
+    use perspective in { Object some-new-message }.
+
+When an object doesn't understand a message, it'll send itself a
+`does-not-understand:` message, allowing one to define how this
+situation should be handled. By default the [[Object]] will stop the
+program and notify the user that it can't perform the operation, but any
+object may define a different behaviour for this message.
+""".
+
+object-mirror method-from-name: "does-not-understand:"; get!; meta;
+  category: "Handling errors";
+  documentation: """
+  Allows defining how to handle errors resulting from sending messages
+  to an object for which there isn't a translation in the [[Context]].
+
+  This operation receives a [[Message]] object that describes which
+  message was sent, and which parameters were sent with the message.
+  """.
+
+object-mirror method-from-name: "perform:context:"; get!; meta;
+  category: "Dynamic operations";
+  documentation: """
+  Allows performing a message by its name, which can be computed
+  dynamically.
+
+  This operation allows one to ask an object to perform a message by
+  providing a [[Message]] object, containing the name of the message and
+  the arguments for its execution, and a [[Context]] in which to resolve
+  the name.
+
+      1 + 2
+
+      # Becomes:
+
+      1 perform: (Message name: "+" arguments: [2]) context: Context.
+  """.
+
+object-mirror method-from-name: "refined-by:context:"; get!; meta;
+  category: "Refining";
+  complexity: "O(n), n is the number of properties in object";
+  see-also: "refined-by:" reason: "A refinement using the global context by default.";
+  documentation: """
+  Constructs a new object `O'` based on this object, such that `O'` is
+  a strict superset of this object (i.e.: it contains all of the
+  properties in this object, plus the new provided ones).
+
+  It's necessary to provide a [[Context]] for the refinement. The
+  context is used to figure out the original mapping from message names
+  to message [[Selector]]s. This allows objects comming from different
+  contexts to be used for refinements, rather than limiting this to
+  literals.
+  """.
+
+object-mirror method-from-name: "refined-by:"; get!; meta;
+  category: "Refining";
+  tags: ["Convenience"];
+  see-also: "refined-by:context:" reason: "A refinement that allows providing a context for the message reconstruction.";
+  documentation: """
+  Constructs a new object based on the given object. Uses the global
+  context to reconstruct the messages in the object.
+  """.
+
+object-mirror method-from-name: "extended-by:context:"; get!; meta;
+  category: "Extending";
+  see-also: "extended-by:" reason: "An extensions that uses the global context";
+  documentation: """
+  Extends the object with new messages, as provided by the given
+  [[object]] in the given [[Context]].
+
+  Objects in Siren can be extended any time with new messages. Each
+  extension creates a completely new internal message identifier, such
+  that conflicts are impossible to happen. As a result of extending an
+  object, you receive a [[Perspective]], which can be installed in a
+  [[Context]] to use the extensions provided:
+
+      let perspective = Integer extended-by: {
+        def self double = self * 2.
+      } context: Context.
+
+      2 double.
+      # => <Message Send Failure>: <Integer: 2> does not understand double.
+
+      use perspective in {
+        2 double
+        # => <Integer: 4>
+      }.
+  """.
+
+object-mirror method-from-name: "extended-by:"; get!; meta;
+  category: "Extending";
+  tags: ["Convenience"];
+  see-also: "extended-by:context:" reason: "An extension that allows you to provide a custom context.";
+  documentation: """
+  Extends the object with new messages as provided by the given [[object]].
+  """.
+
+object-mirror method-from-name: "describe"; get!; meta;
+  category: "Inspecting";
+  documentation: "A textual representation for the object.".
+}.
 
 
 # -- Blocks ------------------------------------------------------------
@@ -96,13 +245,13 @@ let Unit = {
     Debug-Text,
     "<Unit>".
 
-  def self refined-by: _ in: _
+  def self refined-by: _ context: _
     self.
 
   def self refined-by: _
     self.
 
-  def self extended-by: _ in: _
+  def self extended-by: _ context: _
     self.
 
   def self extended-by: _

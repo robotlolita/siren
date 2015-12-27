@@ -674,8 +674,8 @@ function $_extend(object, record) {
       name: new _Text(k),
       arguments: new _Tuple(parseArgs(record[k]).map($text)),
       documentation: new _Text(''),
-      source: '<native>',
-      filename: '<native>'
+      source: new _Text('<native>'),
+      filename: new _Text('<native>')
     });
     $context.merge([$extendObject(object, o)]);
   });
@@ -861,7 +861,7 @@ $_extend(Siren_Object, {
     throw e;
   },
 
-  'perform:in:': function(self, message, context) {
+  'perform:context:': function(self, message, context) {
     assert_message(message);
     assert_context(context);
     return self.sendN(context, message.name, message.args);
@@ -871,17 +871,17 @@ $_extend(Siren_Object, {
     return $makeObject(objectToRecord(object, $context), self);
   },
 
-  'refined-by:in:': function(self, object, context) {
+  'refined-by:context:': function(self, object, context) {
     return $makeObject(objectToRecord(object, context), self);
   },
 
-  'extended-by:in:': function(self, object, context) {
+  'extended-by:context:': function(self, object, context) {
     var p = $extendObject(self, objectToRecord(object, context));
     return new _Perspective(p[0], p[1]);
   },
 
   'extended-by:': function(self, object) {
-    return self.send2($context, 'extended-by:in:', object, $context);
+    return self.send2($context, 'extended-by:context:', object, $context);
   },
 
   'describe': function(self) {
