@@ -437,24 +437,26 @@ function _Text(s) {
 }
 _Text.prototype = Siren_Text;
 _Text.prototype.toString = function(){ return this.string; };
-
+_Text.prototype.string = "";
 
 function _Integer(n) {
   this.number = n;
 }
 _Integer.prototype = Siren_Integer;
-
+_Integer.prototype.number = BigNum(0);
 
 function _Float(n) {
   this.number = n;
 }
 _Float.prototype = Siren_Float;
+_Float.prototype.number = 0;
 
 
 function _Tuple(v) {
   this.array = v;
 }
 _Tuple.prototype = Siren_Tuple;
+_Tuple.prototype.array = [];
 
 
 function _Perspective(object, mappings) {
@@ -468,7 +470,6 @@ function _Selector(symbol) {
   this.symbol = symbol;
 }
 _Selector.prototype = Siren_Selector;
-
 
 function _Message(name, args) {
   this.name = name;
