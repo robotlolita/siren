@@ -222,9 +222,10 @@ let Browser = {
     # Displays the messages of the object the browser is pointing to.
     let category = { m | m meta category get-or-default: "(Uncategorised)" }.
     let show-messages = { mirror |
-      mirror methods map: _ value;
+      mirror methods sorted-by: { a b | a key compared-to: b key }; # message names
+                     map: _ value;
                      grouped-by: category;
-                     sorted-by: { a b | a key compared-to: b key };
+                     sorted-by: { a b | a key compared-to: b key }; # category names
                      each: { pair |
                        self display line-break!.
                        self display minor-heading!: pair key.
