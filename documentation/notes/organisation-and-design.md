@@ -166,6 +166,9 @@ A few standard categories to use when describing your objects:
 - **Refining**, the message constructs a new object with a different
   piece of configuration.
 
+- **Constructing**, the message constructs a new object *of a different
+  type*.
+
 - **Inspecting**, the message is meant for debugging.
 
 - **Comparing and testing**, this message allows one to compare the
