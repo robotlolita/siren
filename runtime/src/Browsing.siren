@@ -231,7 +231,15 @@ let Browser = {
                        self display minor-heading!: pair key.
                        pair value each: { method |
                          let signature = self display signature: method.
-                         signature map: { s | self display line!: "  • ", s }.
+                         let missing? = method meta at: "expectation.unfulfilled".
+                         missing? then: {
+                           signature map: { s |
+                             let error = self display error: "(required, but missing)".
+                             self display line!: "  • ", s, " ", error.
+                           }.
+                         } else: {
+                           signature map: { s | self display line!: "  • ", s }.
+                         }.
                          let doc = self display documentation-summary: method.
                          doc empty? not then: { self display faded-line!: "     | ", doc }.
                        }
