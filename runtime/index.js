@@ -925,7 +925,7 @@ $_extend(Siren_Message, {
     return new _Message(name.string, args.array);
   },
 
-  'send-to:in:': function(self, object, context) {
+  'send-to:context:': function(self, object, context) {
     return object.sendN(context, self.name, self.args);
   },
 
