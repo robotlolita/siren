@@ -152,7 +152,7 @@ module.exports = function() {
 
   function define(object, name, args, meta, fn) {
     var selector = Symbol(name);
-    var method = new Method();
+    var method = new Method(null, globalContext);
     method.isPrimitive = true;
     method.primitive = fn;
     method.scope = globalScope;
@@ -204,11 +204,11 @@ module.exports = function() {
   var Siren_DebugText = clone(Siren_Object);
   var Siren_Numeric   = clone(Siren_Object);
   var Siren_Integer   = clone(Siren_Numeric);
-  var Siren_Float     = clone(Siren_Float);
+  var Siren_Float     = clone(Siren_Numeric);
   var Siren_Tuple     = clone(Siren_Object);
 
-  var Siren_Block  = clone(Siren_Block);
-  var Siren_Method = clone(Siren_Method);
+  var Siren_Block  = clone(Siren_Object);
+  var Siren_Method = clone(Siren_Object);
 
 
   // -- Handling meta-data -----------------------------------------------
@@ -459,6 +459,12 @@ module.exports = function() {
     this.belongsTo = null;
   }
   Method.prototype = Siren_Method;
+
+
+  function Module(filename) {
+    this.filename = filename;
+  }
+  Module.prototype = Siren_Module;
 
 
   // -- Globals ----------------------------------------------------------

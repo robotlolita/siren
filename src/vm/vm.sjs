@@ -62,6 +62,17 @@
 var opcodes = require('./opcodes');
 
 
+// -- Aliases ----------------------------------------------------------
+var {
+  NOP, RETURN, NON_LOCAL_RETURN,
+  SEND_0, SEND_1, SEND_2, SEND_3, SEND_4, SEND_5, SEND_6,
+  CALL_NATIVE_0, CALL_NATIVE_1, CALL_NATIVE_2, CALL_NATIVE_3, CALL_NATIVE_4, CALL_NATIVE_5, CALL_NATIVE_6, CALL_NATIVE_VARIADIC,
+  PUSH, POP, DUP, DROP,
+  SET_LOCAL, GET_LOCAL,
+  INTEGER_LOAD, FLOAT_LOAD, TEXT_LOAD, TUPLE_LOAD
+} = opcodes;
+
+
 // -- Macros -----------------------------------------------------------
 macro (#assert) {
   rule { ($test:expr, $message) } => {
@@ -119,7 +130,7 @@ macro (#send) {
           oldArguments.push(this.stack.pop());
 
         // Put the message in the stack
-        this.stack.push(new Message(message, oldArguments, this.currentFrame.context));
+        this.stack.push(new this.runtime.Message(message, oldArguments, this.currentFrame.context));
         var method = object[selector];
       } else {
         // No "does-not-understand" message found. This is a very weird
@@ -166,18 +177,44 @@ macro (#send) {
 //
 // @type: new (Scope, Context, Block, Number) -> StackFrame
 function StackFrame(parent, context, block, returnPointer) {
-  this.scope = new Scope(parent);
-  this.context = new Context(context);
+  // ##### data: scope
+  // The scope for this stack frame.
+  //
+  // @type: Scope
+  this.scope = Object.create(parent)
+
+  // ##### data: context
+  // The context for this stack frame.
+  //
+  // @type: Context
+  this.context = context.clone();
+
+  // ##### data: block
+  // The method/block object that we point to.
+  //
+  // @type: Block | Method
   this.block = block;
+
+  // ##### data: method
+  // The method this stack frame belongs to. Undefined for methods.
+  //
+  // @type: Method | null
   this.method = block.method;
+
+  // ##### data: returnTo
+  // A pointer to where to return in the instruction vector.
+  //
+  // @type: UInt32
   this.returnTo = returnPointer;
 }
 
 // #### class: VM
 // Executes Siren-core bytecode.
 //
-// @type: new Array(Byte | Object) -> VM
-function VM(instructions) {
+// @type: new Runtime, Array(Byte | Object) -> VM
+function VM(runtime, instructions) {
+  var rt = runtime;
+
   // ##### data: instructions
   // An array of instructions to execute.
   //
@@ -203,16 +240,24 @@ function VM(instructions) {
   this.currentInstruction = 0;
 
   // ##### data: currentFrame
-  // The frame in which locals in which we should look things up.
+  // The frame in which locals in which we should look things up. We start
+  // in the global frame.
   //
   // @type: StackFrame | null
-  this.currentFrame = null;
+  this.currentFrame = new StackFrame(rt.protos.Scope, rt.context, {}, Infinity);
 
   // ##### data: maxStackSize
   // The maximum number of frames we can have on the call stack.
   //
   // @type: UInt32
   this.maxStackSize = Math.pow(2, 32);
+
+  // ##### data: runtime
+  // The runtime used for this VM.
+  //
+  // @type: Runtime
+  this.runtime = rt;
+
 }
 
 // ##### method: run()
@@ -223,14 +268,8 @@ function VM(instructions) {
 //
 // @type: () -> SirenError
 VM::run = function() {
-  var { NOP, RETURN, NON_LOCAL_RETURN,
-        SEND_0, SEND_1, SEND_2, SEND_3, SEND_4, SEND_5, SEND_6,
-        CALL_NATIVE_0, CALL_NATIVE_1, CALL_NATIVE_2, CALL_NATIVE_3, CALL_NATIVE_4, CALL_NATIVE_5, CALL_NATIVE_6, CALL_NATIVE_VARIADIC,
-        PUSH, POP, DUP, DROP
-      } = opcodes;
-
   while (true) {
-    #assert(this.currentInstruction > 0 && this.currentInstruction < this.instructions.length,
+    #assert(this.currentInstruction >= 0 && this.currentInstruction < this.instructions.length,
             "Instruction pointer out of bounds!");
 
     switch(#read(0)) {
@@ -323,7 +362,38 @@ VM::run = function() {
       throw new Error("not implemented");
 
     case INTEGER_LOAD:
-      throw new Error("not implemented");
+      var num = #read(1);
+      assert(typeof num === "string", "Expected an integer.");
+      this.stack.push(new this.runtime.Integer(bignum(num)));
+      #move(2);
+      break;
+
+    case FLOAT_LOAD:
+      var num = #read(1);
+      assert(typeof num === "number", "Expected a number.");
+      this.stack.push(new this.runtime.Float(num));
+      #move(2);
+      break;
+
+    case TEXT_LOAD:
+      var text = #read(1);
+      assert(typeof text === "string", "Expected a text.");
+      this.stack.push(new this.runtime.Text(text));
+      #move(2);
+      break;
+
+    case TUPLE_LOAD:
+      var size = #read(1);
+      assert(typeof size === "number", "Expected an integer.");
+      var items = [];
+      for (var i = 0; i < size; ++i) items.push(this.stack.pop());
+      this.stack.push(new this.runtime.Tuple(items));
+      #move(2);
+      break;
+    }
+
+    if (this.currentInstruction >= this.instructions.length) {
+      return true;
     }
   }
 };
@@ -335,3 +405,6 @@ VM::run = function() {
 VM::dump = function() {
 
 };
+
+// -- Exports ----------------------------------------------------------
+module.exports = VM;
