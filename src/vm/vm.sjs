@@ -273,18 +273,40 @@ VM::run = function() {
             "Instruction pointer out of bounds!");
 
     switch(#read(0)) {
+
+    // ##### code: NOP
+    // Does nothing. Useful for operations that expect an instruction, but
+    // have nothing relevant to do, like if/then/else.
+    //
+    // @type: [...] NOP -> [...]
     case NOP:
       #move(1);
       break;
 
+    // ----- Control flow ----------------------------------------------
+    // These operations allow controlling the flow of code in the
+    // VM.
+
+    // ###### code: RETURN
+    // Returns from the method or block, normally, to the previous position
+    // in the call stack.
+    //
+    // @type: [...] RETURN -> [...]
     case RETURN:
       #assert(this.callStack.length > 0, "Can only return from inside functions/methods.");
       var returnTo = this.currentFrame.returnTo;
       this.currentFrame = this.callStack.pop();
       this.currentInstruction = returnTo;
-      this.stack.push(#read(1));
       break;
 
+    // ###### code: NON_LOCAL_RETURN
+    // Returns from a block, to the method that defined that block.
+    //
+    // It's important to note that, for this to work, the method **must not** have
+    // already returned. The NON_LOCAL_RETURN must ocurr during the execution of
+    // the method, otherwise it's a runtime error.
+    //
+    // @type: [...] NON_LOCAL_RETURN -> [...]
     case NON_LOCAL_RETURN:
       #assert(this.callStack.length > 0, "Can only return (non-locally) from inside a block.");
       #assert(this.currentFrame.method != null, "Can't return (non-locally) from a block that isn't associated with a method");
@@ -298,37 +320,68 @@ VM::run = function() {
       }
       this.currentFrame = this.callStack.pop();
       this.currentInstruction = methodFrame.returnTo;
-      this.stack.push(#read(1));
       break;
 
+    // ----- Message sends ---------------------------------------------
+    // While message sends are a form of control flow, we separate them
+    // in their own category because there are particularities about
+    // them.
+    //
+    // In Siren, a message can be sent to an object. All of the arguments,
+    // including the object the message will be sent to, are passed on the
+    // stack, while the name of the message is defined statically.
+    //
+    // Siren doesn't support variadic messages. All messages have a well
+    // defined arity, and the maximum arity supported (right now) is 6.
+    // A message with more than 6 arguments should just take an object
+    // or tuple.
+    //
+    // `message` is always a single string, with the message identifier.
+
+    // ###### code: SEND_0
+    // @type: [... object] SEND_0 message -> [... Object]
     case SEND_0:
       #send(0);
       break;
 
+    // ###### code: SEND_1
+    // @type: [... object arg1] SEND_1 message -> [... Object]
     case SEND_1:
       #send(1);
       break;
 
+    // ###### code: SEND_2
+    // @type: [... object arg1 arg2] SEND_2 message -> [... Object]
     case SEND_2:
       #send(2);
       break;
 
+    // ###### code: SEND_3
+    // @type: [... object arg1 arg2 arg3] SEND_3 message -> [... Object]
     case SEND_3:
       #send(3);
       break;
 
+    // ###### code: SEND_4
+    // @type: [... object arg1 arg2 arg3 arg4] SEND_4 message -> [... Object]
     case SEND_4:
       #send(4);
       break;
 
+    // ###### code: SEND_5
+    // @type: [... object arg1 arg2 arg3 arg4 arg5] SEND_5 message -> [... Object]
     case SEND_5:
       #send(5);
       break;
 
+    // ###### code: SEND_6
+    // @type: [... object arg1 arg2 arg3 arg4 arg5 arg6] SEND_6 message -> [... Object]
     case SEND_6:
       #send(6);
       break;
 
+    // ----- Invoking native functions ---------------------------------
+    // @TODO: not implemented
     case CALL_NATIVE_0:
     case CALL_NATIVE_1:
     case CALL_NATIVE_2:
@@ -340,23 +393,71 @@ VM::run = function() {
       throw new Error("not implemented");
       break;
 
+
+    // ----- Stack manipulation ----------------------------------------
+    // Siren uses a stack-based VM, which means that arguments to functions
+    // and other pieces of data are all pushed onto a particular stack, and
+    // when functions need them, they just pop the arguments from the stack
+    // to use them.
+
+    // ###### code: PUSH
+    // Puts a new value on the stack. Used for passing value to or returning
+    // values from functions/operations.
+    //
+    // Note that for primitives, the LOAD_* operations are used instead.
+    //
+    // @type: [...] PUSH value -> [... value]
     case PUSH:
       var data = #read(1);
       this.stack.push(data);
       #move(2);
       break;
 
+    // ###### code: DUP
+    // Duplicates the item at the top of the stack.
+    //
+    // @type: [... a] DUP -> [... a a]
     case DUP:
+      assert(this.stack.length > 0, "DUP requires at least one item on the stack.");
       var data = #peek(0);
       this.stack.push(data);
       #move(1);
       break;
 
+    // ###### code: DROP
+    // Removes the item from the top of the stack.
+    //
+    // @type: [... a] DROP -> [...]
     case DROP:
+      assert(this.stack.length > 0, "DROP requires at least one item on the stack.");
       this.stack.pop();
       #move(1);
       break;
 
+    // ###### code: SWAP
+    // Inverts the order of the items at the top of the stack.
+    //
+    // @type: [... a b] SWAP -> [... b a]
+    case SWAP:
+      var l = this.stack.length;
+      assert(l >= 2, "SWAP requires at least 2 items on the stack.");
+      var a = this.stack[l - 2];
+      var b = this.stack[l - 1];
+      this.stack[l - 2] = b;
+      this.stack[l - 1] = a;
+      #move(1);
+      break;
+
+
+    // ------ Local scopes ---------------------------------------------
+    // Siren has first-class scoping. Each stack frame contains a pointer
+    // to its Scope object and its Context object. The operations on
+    // local scoping allows one to define new entries on the Scope object,
+    // or retrieve existing entries.
+    //
+    // Entries are pretty much retrieved through a message send. Attaching
+    // a new one is equivalent to attaching a memoised unary message to
+    // an object.
     case SET_LOCAL:
     case GET_LOCAL:
       throw new Error("not implemented");
