@@ -60,6 +60,7 @@
 
 // -- Dependencies -----------------------------------------------------
 var opcodes = require('./opcodes');
+var maybe = require('data.maybe');
 
 
 // -- Aliases ----------------------------------------------------------
@@ -72,6 +73,7 @@ var {
   INTEGER_LOAD, FLOAT_LOAD, TEXT_LOAD, TUPLE_LOAD
 } = opcodes;
 
+var BYTECODE_CONTEXT_RANGE = 25;
 
 // -- Macros -----------------------------------------------------------
 macro (#assert) {
@@ -215,13 +217,36 @@ VM::run = function() {
 
     switch(#read(0)) {
 
-    // ##### code: NOP
+    // ###### code: UNREACHABLE
+    // Marks points of the bytecode that the VM should never reach.
+    // It's an error to get to this point.
+    //
+    // @type: [...] UNREACHABLE
+    case UNREACHABLE:
+      this.dump();
+      throw new Error("The VM should never reach this point.\n"
+                    + "Current instruction: " + this.currentInstruction + "\n"
+                    + "Context:\n"
+                    + JSON.stringify(this.instructions.slice(this.currentInstruction - BYTECODE_CONTEXT_RANGE, this.currentInstruction + BYTECODE_CONTEXT_RANGE)));
+
+    // ###### code: NOP
     // Does nothing. Useful for operations that expect an instruction, but
     // have nothing relevant to do, like if/then/else.
     //
     // @type: [...] NOP -> [...]
     case NOP:
       #move(1);
+      break;
+
+    // ###### code: TRACE_INFO
+    // Defines tracing information for the current code being executed.
+    // Assumes the compiler outputs tracing information for each
+    // expression.
+    //
+    // @type: [...] TRACE_INFO trace -> [...]
+    case TRACE_INFO:
+      throw new Error("Not implemented.");
+      #move(2);
       break;
 
     // ----- Control flow ----------------------------------------------
@@ -261,6 +286,16 @@ VM::run = function() {
       }
       this.currentFrame = this.callStack.pop();
       this.currentInstruction = methodFrame.returnTo;
+      break;
+
+    // ###### code: JUMP
+    // Transfers control to a target instruction, represented as an integer
+    // offset from the next instruction.
+    //
+    // @type: [...] JUMP offset -> [...]
+    case JUMP:
+      assert(this.instructions.length > this.currentInstruction, "JUMP requires an offsets.");
+      this.currentInstruction += #read(1);
       break;
 
     // ----- Message sends ---------------------------------------------
@@ -453,6 +488,35 @@ VM::run = function() {
       for (var i = 0; i < size; ++i) items.push(this.stack.pop());
       this.stack.push(new this.runtime.Tuple(items));
       #move(2);
+      break;
+
+    // ###### code: OBJECT_CLONE
+    // Clones an object.
+    //
+    // @type: [... object] OBJECT_CLONE -> object
+    case OBJECT_CLONE:
+      assert(this.stack.length > 0, "OBJECT_CLONE requires an object on the stack.");
+      var object = this.stack.pop();
+      this.stack.push(Object.create(object));
+      #move(1);
+      break;
+
+    // ###### code: OBJECT_DEFINE_METHOD
+    // Defines a method in the object.
+    //
+    // @type: [... object] OBJECT_DEFINE_METHOD name offset size -> [... object]
+    case OBJECT_DEFINE_METHOD:
+      assert(this.stack.length > 0, "OBJECT_DEFINE_METHOD requires an object on the stack.");
+      assert(this.instructions.length > this.currentInstruction + 2, "OBJECT_DEFINE_METHOD requires name, offset, and size following its opcode.");
+      var object = #peek(1);
+      var name = #read(1);
+      var offset = #read(2) + 3;
+      var size = #read(3);
+      var method = new this.runtime.Method(this.currentFrame.scope, this.currentFrame.context);
+      method.baseInstructionPointer = this.currentInstruction + offset;
+      method.endInstructionPointer = this.currentInstruction + offset + size;
+      throw new Error("not implemented");
+      #move(4);
       break;
     }
 

@@ -40,9 +40,13 @@ macro (#enum) {
 // Constants for the instruction codes.
 
 #enum OPCODES {
+  UNREACHABLE,
   NOP,
+  TRACE_INFO,
+
   RETURN,
   NON_LOCAL_RETURN,
+  JUMP,
 
   SEND_0,
   SEND_1,
