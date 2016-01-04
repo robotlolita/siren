@@ -380,20 +380,6 @@ VM::run = function() {
       #send(6);
       break;
 
-    // ----- Invoking native functions ---------------------------------
-    // @TODO: not implemented
-    case CALL_NATIVE_0:
-    case CALL_NATIVE_1:
-    case CALL_NATIVE_2:
-    case CALL_NATIVE_3:
-    case CALL_NATIVE_4:
-    case CALL_NATIVE_5:
-    case CALL_NATIVE_6:
-    case CALL_NATIVE_VARIADIC:
-      throw new Error("not implemented");
-      break;
-
-
     // ----- Stack manipulation ----------------------------------------
     // Siren uses a stack-based VM, which means that arguments to functions
     // and other pieces of data are all pushed onto a particular stack, and
