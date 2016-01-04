@@ -110,65 +110,6 @@ macro (#ensureStackRange) {
   }
 }
 
-macro (#send) {
-  rule { ($argCount) } => {
-    var message = #read(1);
-    var context = this.currentFrame.context;
-    var object = #peek($argCount + 1);
-    var selector = context.lookup(object, message);
-
-    // Check if there's a message defined in the object
-    if (selector) {
-      var method = object[selector];
-    } else {
-      // no method was found for the message
-      var selector = context.lookup(object, "does-not-understand:");
-      if (selector) {
-        // Get the old arguments from the stack
-        var oldArguments = [];
-        for (var i = 0; i < $argCount; ++i)
-          oldArguments.push(this.stack.pop());
-
-        // Put the message in the stack
-        this.stack.push(new this.runtime.Message(message, oldArguments, this.currentFrame.context));
-        var method = object[selector];
-      } else {
-        // No "does-not-understand" message found. This is a very weird
-        // error that can only happen when either objects haven't been
-        // properly initialised, or a message has been sent with an
-        // empty context!
-        this.dump();
-        throw new Error("Message not understood: " + message);
-      }
-    }
-    #assert(method != null, "The operation pointed by the selector is invalid.");
-
-    // Methods can be a primitive (JS function), or a regular Siren
-    // method.
-    //
-    // For primitive functions, we just invoke them passing the
-    // VM as the first argument, the primitive can then pop the stuff it
-    // needs from the stack.
-    //
-    // For Siren methods, we create a stack frame, and jump to the pointer
-    // specified in the object. It's IMPORTANT to note that this pointer
-    // CAN CHANGE. Methods can be replaced at runtime, while maintaining
-    // the same locals!
-    if (method.isPrimitive) {
-      method.primitive(this);
-    } else {
-      var frame = new StackFrame(method.scope,
-                                 method.context,
-                                 method,
-                                 this.currentInstruction + 1);
-      this.currentInstruction = method.baseInstructionPointer;
-      this.callStack.push(this.currentFrame);
-      #ensureStackRange();
-      this.currentFrame = frame;
-    }
-  }
-}
-
 // -- Implementation ---------------------------------------------------
 
 // #### class: StackFrame
@@ -341,43 +282,43 @@ VM::run = function() {
     // ###### code: SEND_0
     // @type: [... object] SEND_0 message -> [... Object]
     case SEND_0:
-      #send(0);
+      this.send(#read(1), 0, this.currentInstruction + 2);
       break;
 
     // ###### code: SEND_1
     // @type: [... object arg1] SEND_1 message -> [... Object]
     case SEND_1:
-      #send(1);
+      this.send(#read(1), 1, this.currentInstruction + 2);
       break;
 
     // ###### code: SEND_2
     // @type: [... object arg1 arg2] SEND_2 message -> [... Object]
     case SEND_2:
-      #send(2);
+      this.send(#read(1), 2, this.currentInstruction + 2);
       break;
 
     // ###### code: SEND_3
     // @type: [... object arg1 arg2 arg3] SEND_3 message -> [... Object]
     case SEND_3:
-      #send(3);
+      this.send(#read(1), 3, this.currentInstruction + 2);
       break;
 
     // ###### code: SEND_4
     // @type: [... object arg1 arg2 arg3 arg4] SEND_4 message -> [... Object]
     case SEND_4:
-      #send(4);
+      this.send(#read(1), 4, this.currentInstruction + 2);
       break;
 
     // ###### code: SEND_5
     // @type: [... object arg1 arg2 arg3 arg4 arg5] SEND_5 message -> [... Object]
     case SEND_5:
-      #send(5);
+      this.send(#read(1), 5, this.currentInstruction + 2);
       break;
 
     // ###### code: SEND_6
     // @type: [... object arg1 arg2 arg3 arg4 arg5 arg6] SEND_6 message -> [... Object]
     case SEND_6:
-      #send(6);
+      this.send(#read(1), 6, this.currentInstruction + 2);
       break;
 
     // ----- Stack manipulation ----------------------------------------
@@ -444,10 +385,34 @@ VM::run = function() {
     // Entries are pretty much retrieved through a message send. Attaching
     // a new one is equivalent to attaching a memoised unary message to
     // an object.
-    case SET_LOCAL:
-    case GET_LOCAL:
-      throw new Error("not implemented");
 
+    // ###### code: SET_LOCAL
+    // Defines a new local variable.
+    //
+    // @type: [... a] SET_LOCAL name -> [...]
+    case SET_LOCAL:
+      assert(this.stack.length > 0, "SET_LOCAL requires one value on the stack.")
+      var value = this.stack.pop();
+      this.currentFrame.scope.$define(#read(1), value);
+      #move(2);
+      break;
+
+    // ###### code: GET_LOCAL
+    // Loads a local variable.
+    //
+    // @type: [...] GET_LOCAL name -> [... a]
+    case GET_LOCAL:
+      this.stack.push(this.currentFrame.scope);
+      this.send(#read(1), 0, this.currentInstruction + 2);
+      break;
+
+
+    // -- Loading primitives -------------------------------------------
+
+    // ###### code: INTEGER_LOAD
+    // Loads a big integer in the stack.
+    //
+    // @type: [...] INTEGER_LOAD string -> [... string]
     case INTEGER_LOAD:
       var num = #read(1);
       assert(typeof num === "string", "Expected an integer.");
@@ -455,6 +420,10 @@ VM::run = function() {
       #move(2);
       break;
 
+    // ###### code: FLOAT_LOAD
+    // Loads a floating point in the stack.
+    //
+    // @type: [...] FLOAT_LOAD number -> [... number]
     case FLOAT_LOAD:
       var num = #read(1);
       assert(typeof num === "number", "Expected a number.");
@@ -462,6 +431,10 @@ VM::run = function() {
       #move(2);
       break;
 
+    // ###### code: TEXT_LOAD
+    // Loads a text value in the stack.
+    //
+    // @type: [...] TEXT_LOAD string -> [... string]
     case TEXT_LOAD:
       var text = #read(1);
       assert(typeof text === "string", "Expected a text.");
@@ -469,6 +442,10 @@ VM::run = function() {
       #move(2);
       break;
 
+    // ###### code: TUPLE_LOAD
+    // Loads a tuple in the stack.
+    //
+    // @type: [... a₁ a₂ ... aₙ] TUPLE_LOAD n -> [... tuple]
     case TUPLE_LOAD:
       var size = #read(1);
       assert(typeof size === "number", "Expected an integer.");
@@ -482,6 +459,67 @@ VM::run = function() {
     if (this.currentInstruction >= this.instructions.length) {
       return true;
     }
+  }
+};
+
+// ##### method: send(message, argCount, returnTo)
+// Sends a message to an object.
+//
+// @type: (String, Int, Int) -> ()
+VM::send = function(message, argCount, returnTo) {
+  var context = this.currentFrame.context;
+  var object = #peek($argCount + 1);
+  var selector = context.lookup(object, message);
+
+  // Check if there's a message defined in the object
+  if (selector) {
+    var method = object[selector];
+  } else {
+    // no method was found for the message
+    var selector = context.lookup(object, "does-not-understand:");
+    if (selector) {
+      // Get the old arguments from the stack
+      var oldArguments = [];
+      for (var i = 0; i < $argCount; ++i)
+        oldArguments.push(this.stack.pop());
+
+      // Put the message in the stack
+      this.stack.push(new this.runtime.Message(message, oldArguments, this.currentFrame.context));
+      var method = object[selector];
+    } else {
+      // No "does-not-understand" message found. This is a very weird
+      // error that can only happen when either objects haven't been
+      // properly initialised, or a message has been sent with an
+      // empty context!
+      this.dump();
+      throw new Error("Message not understood: " + message);
+    }
+  }
+  #assert(method != null, "The operation pointed by the selector is invalid.");
+
+  // Methods can be a primitive (JS function), or a regular Siren
+  // method.
+  //
+  // For primitive functions, we just invoke them passing the
+  // VM as the first argument, the primitive can then pop the stuff it
+  // needs from the stack.
+  //
+  // For Siren methods, we create a stack frame, and jump to the pointer
+  // specified in the object. It's IMPORTANT to note that this pointer
+  // CAN CHANGE. Methods can be replaced at runtime, while maintaining
+  // the same locals!
+  if (method.isPrimitive) {
+    method.primitive(this);
+    this.currentInstruction = returnTo;
+  } else {
+    var frame = new StackFrame(method.scope,
+                               method.context,
+                               method,
+                               returnTo);
+    this.currentInstruction = method.baseInstructionPointer;
+    this.callStack.push(this.currentFrame);
+    #ensureStackRange();
+    this.currentFrame = frame;
   }
 };
 

@@ -467,6 +467,12 @@ module.exports = function() {
   Module.prototype = Siren_Module;
 
 
+  Siren_Scope.$define = function(name, value) {
+    define(this, name, [], {}, function() {
+      return value;
+    });
+  };
+
   // -- Globals ----------------------------------------------------------
   var globalMeta = new Meta();
   var globalContext = new Context(null);
