@@ -72,7 +72,7 @@ Siren only has message passing, so entities don't have a concept of "fields" or
 
 Other definitions tend to focus on specific features of particular
 object-oriented languages: (subtyping or structural) polymorphism, inheritance,
-encapsulation. Siren doesn't have inheritance of encapsulation.
+encapsulation. Siren doesn't have inheritance or encapsulation.
 
 More so, most object-oriented languages have a concept of "identity", where you
 can uniquely identify an object even if it has the exact same data as another
