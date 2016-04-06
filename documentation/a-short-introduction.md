@@ -1,3 +1,21 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [A Short Introduction to Siren](#a-short-introduction-to-siren)
+  - [Installation](#installation)
+    - [Pre-requisites](#pre-requisites)
+      - [Building the compiler and REPL](#building-the-compiler-and-repl)
+  - [Interacting with Siren](#interacting-with-siren)
+  - [A world of objects](#a-world-of-objects)
+  - [Inspecting objects](#inspecting-objects)
+  - [Arithmetic in Siren](#arithmetic-in-siren)
+  - [Working with text](#working-with-text)
+    - [A quick note about Text vs. Debug-Text](#a-quick-note-about-text-vs-debug-text)
+  - [Working with objects](#working-with-objects)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # A Short Introduction to Siren
 
 Siren is a prototype and context-based programming language. In this

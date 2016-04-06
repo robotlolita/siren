@@ -1,3 +1,17 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Organisation & Design](#organisation-&-design)
+  - [Designing objects](#designing-objects)
+  - [Approach to design](#approach-to-design)
+  - [Incomplete objects](#incomplete-objects)
+  - [Naming conventions](#naming-conventions)
+  - [Common categories](#common-categories)
+  - [How to write documentation](#how-to-write-documentation)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Organisation & Design
 
 After fiddling with things for a Really Long Amount Of Time, I've

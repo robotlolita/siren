@@ -1,6 +1,7 @@
-bin = $(shell npm bin)
-ometa = $(bin)/ometajs2js
-sjs = $(bin)/sjs
+bin    := $(shell npm bin)
+ometa  := $(bin)/ometajs2js
+sjs    := $(bin)/sjs
+doctoc := $(bin)/doctoc
 
 # -- CONFIGURATION -----------------------------------------------------
 LANG_TGT_DIR := lib
@@ -25,6 +26,7 @@ RT_SRC_DIR := runtime/src
 RT_SRC := $(shell find $(RT_SRC_DIR)/ -name '*.siren')
 RT_TGT := ${RT_SRC:$(RT_SRC_DIR)/%.siren=$(RT_TGT_DIR)/%.js}
 
+DOC_DIR := documentation
 
 # -- COMPILATION -------------------------------------------------------
 $(LANG_TGT_DIR)/%.js: $(LANG_SRC_DIR)/%.ometajs
@@ -96,4 +98,7 @@ clean:
 	rm -rf node_modules
 	rm -f $(VM_TGT) $(LANG_TGT) $(RT_TGT) $(REPL_TGT)
 
-.PHONY: clean clean-vm clean-repl clean-language clean-runtime
+docs-toc: $(DOC_DIR)/*.md
+	$(doctoc) $(DOC_DIR)
+
+.PHONY: clean clean-vm clean-repl clean-language clean-runtime docs-toc

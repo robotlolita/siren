@@ -1,3 +1,20 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Platform Design](#platform-design)
+  - [Overview](#overview)
+  - [Design Goals](#design-goals)
+  - [Computations and objects](#computations-and-objects)
+  - [Designing algebras](#designing-algebras)
+  - [Making illegal states un-representable](#making-illegal-states-un-representable)
+  - [Interlude: A Review of Siren's Object Model](#interlude-a-review-of-sirens-object-model)
+  - [Translating Algebras into Siren](#translating-algebras-into-siren)
+  - [Footnotes](#footnotes)
+  - [References](#references)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 Platform Design
 ===============
 

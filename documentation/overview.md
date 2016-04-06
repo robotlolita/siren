@@ -1,3 +1,32 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [A Quick Overview of Siren](#a-quick-overview-of-siren)
+  - [Computational Model](#computational-model)
+  - [Messages and Syntax](#messages-and-syntax)
+  - [`do` notation](#do-notation)
+  - [Subjects](#subjects)
+  - [Inheritance vs. Composition](#inheritance-vs-composition)
+  - [Safe extensions and Contexts](#safe-extensions-and-contexts)
+  - [Methods, Blocks, and Returns](#methods-blocks-and-returns)
+  - [Numeric system](#numeric-system)
+  - [Text handling](#text-handling)
+  - [Collections](#collections)
+  - [Controlled mutability](#controlled-mutability)
+  - [Error handling](#error-handling)
+  - [Alien-based FFI](#alien-based-ffi)
+  - [Metadata](#metadata)
+  - [Encouraged purity](#encouraged-purity)
+  - [Branding and ad-hoc hierarchies](#branding-and-ad-hoc-hierarchies)
+  - [First-class parametric modules](#first-class-parametric-modules)
+  - [Pattern matching](#pattern-matching)
+  - [Algebraic structures](#algebraic-structures)
+  - [Concurrency](#concurrency)
+  - [Decorators](#decorators)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 A Quick Overview of Siren
 =========================
 

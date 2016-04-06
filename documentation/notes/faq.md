@@ -1,3 +1,13 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [FAQ](#faq)
+    - [What is Siren?](#what-is-siren)
+    - [Is Siren an Object-Oriented language?](#is-siren-an-object-oriented-language)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 FAQ
 ===
 

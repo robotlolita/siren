@@ -1,3 +1,15 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Standard Library](#standard-library)
+  - [Core concepts](#core-concepts)
+  - [Scalar types](#scalar-types)
+  - [Container types](#container-types)
+  - [Other libraries](#other-libraries)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Standard Library
 
 Siren's standard library should provide a consistent and productive

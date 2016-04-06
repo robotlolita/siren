@@ -47,10 +47,11 @@
     "xtend": "^4.0.0"
   },
   "devDependencies": {
-    "lambda-chop": "~0.1.5",
+    "doctoc": "^1.0.0",
     "es6-macros": "0.0.7",
+    "lambda-chop": "~0.1.5",
+    "macros.operators": "~0.5.1",
     "sparkler": "~0.3.5",
-    "sweet.js": "0.7.1",
-    "macros.operators": "~0.5.1"
+    "sweet.js": "0.7.1"
   }
 }
