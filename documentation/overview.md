@@ -66,20 +66,21 @@ Possibly others, though they don't map to specific features.
 Siren is a language where all entities you interact with are first-class values
 that may be interacted with in a certain way. In this view, these entities are
 very similar to objects in object-oriented languages; each entity carries both
-its state and the set of operations that can be performed in it.
+its state and the set of operations that can be performed in it. These entities
+will be called "Subjects".
 
-Each entity in Siren is a tuple of `(Metadata, Operations)`. `Metadata` is a
+Each subject in Siren is a tuple of `(Metadata, Operations)`. `Metadata` is a
 table mapping keys to values, and represents information that's meant for users
 browsing the environment (it contains things like documentation, original
 source code, categories, etc.). `Operations` is a table mapping an unique `Id`
 to a method (some executable code).
 
-Unlike object-oriented languages, users don't interact *directly* with these
-entities. Instead, they send messages to a context, and the context decides
+Unlike object-oriented languages, users don't interact *directly* with
+subjects. Instead, they send messages to a context, and the context decides
 which operation should be executed. In this sense, Siren is considered a
 context-based programming language.
 
-```rb
+```ruby
 # In common OO languages, this sends the message +(2) to the object 1
 1 + 2  ==> 1.+(2)
 
@@ -94,7 +95,182 @@ particular object. This means that code like `1 + 2` may execute entirely
 different operations depending on the current lexical context.
 
 
+## Messages and Syntax
 
+Siren's syntax for messages is similar to Smalltalk's:
+
+  - `SUBJECT message` is an unary message, so it only has one argument (the
+    subject). Unary messages may be any valid identifier, except reserved words.
+
+  - `SUBJECT + OTHER-SUBJECT` is a binary message, so it has two subjects as
+    arguments. Binary messages may be any valid sequence of **symbols**.
+
+  - `SUBJECT keyword: OTHER-SUBJECT other-keyword: MORE-SUBJECTS` is a keyword
+    message. Keyword messages take at least two arguments. Keywords may be any
+    valid identifier.
+
+All messages are left associative, and the only precedence assigned in Siren is
+`Unary > Binary > Keyword`. In practice the following code:
+
+```ruby
+10 between: 1 successor + 2 and?: 10 predecessor
+```
+
+Is equivalent to the following code:
+
+```ruby
+(10) between: (((1) successor) + (2)) and?: ((10) predecessor)
+```
+
+In addition to this, one may use the special syntax `;` (chain) to reduce the number of
+parenthesis when chaining operations:
+
+```ruby
+[1. 2. 3] map: _ as-text;
+          join: ", ".
+
+# Is equivalent to
+([1. 2. 3] map: _ as-text) join: ", ".
+```
+
+
+## Subjects
+
+A subject is introduced by defining its set of known operations:
+
+```ruby
+# Note that expressions are separated by `.` in Siren, and `.` may
+# optionally be added after the last expression as well.
+let Ligeia = {
+  # note that `self` is an arbitrary, and regular parameter name here
+  def self name  = "Ligeia".
+  def self hello = self name, " says 'Hello'.".
+}.
+
+Ligeia hello. # => "Ligeia says 'Hello'."
+```
+
+Subjects come with a set of default operations from the `Object` subject, by
+default, but one may decide to start with a different set of default
+operations. To support this, one may use the `refined-by:` operation:
+
+```ruby
+let Says-Hello = {
+  def self hello = self name, " says 'Hello'.".
+}.
+
+let Ligeia = Says-Hello refined-by: {
+  def self name = "Ligeia".
+}
+
+let Leucosia = Says-Hello refined-by: {
+  def self name = "Leucosia".
+}.
+
+Ligeia hello.   # => "Ligeia says 'Hello'."
+Leucosia hello. # => "Leucosia says 'Hello'."
+```
+
+The syntax `Subject { ... }` is sugar for `Subject refined-by: { ... }`.
+
+
+## Inheritance vs. Composition
+
+(TBD)
+
+
+## Safe extensions and Contexts
+
+As previously mentioned, Siren messages are sent to contexts, which then get to
+define the operation to be executed. Siren has a Global context, where mappings
+from new objects are automatically added to, and Lexical contexts, which may
+provide additional mappings.
+
+Contexts are first-class values, and are the result of extending an object:
+
+```ruby
+let Context-A = Context.
+
+let Base = {
+  def self name = "Ligeia".
+}.
+
+let Upper-Case-Context = Base extended-by: {
+  # this uses Context-A
+  def self name = self name as-upper-case.
+}.
+
+let Lower-Case-Context = Base extended-by: {
+  # this uses Context-A
+  def self name = self name as-lower-case.
+}.
+
+# this uses Context-A
+Base name. # => "Ligeia"
+
+use Upper-Case-Context in {
+  Base name. # => "LIGEIA".
+}.
+
+use Lower-Case-Context in {
+  Base name. # => "ligeia".
+}.
+
+# You can combine contexts with the `,` operator.
+# In this case, the contexts conflict in the `name` operation, and as
+# such a composition of them is not possible. This will eventually
+# require people to solve the conflict using one of the symmetric
+# composition operator in Traits (tbd).
+use Upper-Case-Context, Lower-Case-Context in {
+  Base name. # (right now, this results in a last-one-wins behaviour) "ligeia"
+}.
+```
+
+
+## Methods, Blocks, and Returns
+
+Siren's methods are internal to a subject, and can not be taken out of it
+(bar mirror reflection, if available). This means methods can't generally be
+passed around by themselves.
+
+To address this, Siren provides "blocks". Blocks are similar to first-class
+functions, and behave very much like one when they're constructed outside of a
+method:
+
+```ruby
+let double = { value | value * 2 }.
+
+double call: 2. # => 4
+```
+
+When they are constructed inside methods, however, "blocks" have an additional
+feature called *non-local return*. This allows blocks that are passed as
+arguments to other operations to return a value from the method they were
+constructed in. In essence, this allows the following:
+
+```ruby
+let Guess = {
+  def self number: n
+    (n === 4) then: {
+      ^ "You've guessed correctly!".
+    }.
+    "Better luck next time."
+}.
+
+Guess number: 1. # => "Better luck next time."
+Guess number: 4. # => "You've guessed correctly!"
+```
+
+Note that the block that computes `"You've guessed correctly!"` is a
+first-class object that is sent to another method (`then:`) to be evaluated,
+and the method `number:` itself does nothing with its return value. But because
+it has the special return operator (`^`), when it's executed that value is
+returned as if the method `number:` itself had returned it. In this sense,
+blocks are much closer to a hybrid between first-class functions, and C-style
+blocks.
+
+> **What happens if you call a block with non-local return after the method
+> that created it has returned?**. It's a runtime error.
 
 
 ## Numeric system
@@ -137,7 +313,7 @@ Furthermore, iterable operations on collections returns lazy versions of them, s
 
 All values in Siren are immutable by default, but Siren offers a `Reference` object, which has `value` and `set!:` operations. Reference works sort-of like an L-value in languages that have mutable assignment.
 
-```rb
+```ruby
 let mutable = Reference new: Unit.  # `Unit` is the object representing "no value"
 mutable set!: 1.
 mutable value. # => 1
@@ -150,7 +326,7 @@ mutable value. # => 2
 
 So far Siren only supports crashing the process by raising an exception, or returning predictable failures as a `Result` type (same as `Result` in Rust, or `Either` in Haskell);
 
-```rb
+```ruby
 let search = { list value |
   list empty? then: {
     Result failure: "Not found."
