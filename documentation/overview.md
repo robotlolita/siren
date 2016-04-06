@@ -47,7 +47,7 @@ Influences:
     ([Capability Security](http://erights.org/elib/capability/ode/ode-capabilities.html));
   - [AliceML](https://www.ps.uni-saarland.de/alice/),
     [Scala](http://www.scala-lang.org/)[(z)](http://timperrett.com/2014/07/20/scalaz-task-the-missing-documentation/),
-    [C#](http://dl.acm.org/citation.cfm?id=2367181)
+    [C#'s comonadic Tasks](http://dl.acm.org/citation.cfm?id=2367181)
     (Task and Future-based asynchronous concurrency);
   - [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))
     ([Observables](http://reactivex.io/));
