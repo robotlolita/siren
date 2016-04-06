@@ -3,58 +3,72 @@ A Quick Overview of Siren
 
 Siren:
 
-- Is a context-based programming language;
-- Has a Smalltalk-inspired syntax;
-- Could be [considered object-oriented, but I have reservations on that](notes/faq.md);
-- Has immutability by default (in the same sense as Clojure's);
-- Has first-class parametric modules;
-- Is designed for interactive programming in the REPL;
-- Has mirror-based reflection (only to support interactive programming);
-- Allows safe and controlled lexical extensions of operations;
-- Reifies most concepts to user land;
-- Does not have inheritance, but allows something closer to Traits or Extensible Records;
-- Does not have identity, nor universal equality;
-- Does not have a global namespace (*not implemented yet*);
-- Has an extensive standard library (*not implemented yet*).
+  - Is a context-based programming language;
+  - Has a Smalltalk-inspired syntax;
+  - Could be [considered object-oriented, but I have reservations on that](notes/faq.md);
+  - Has immutability by default (in the same sense as Clojure's);
+  - Has first-class parametric modules;
+  - Is designed for interactive programming in the REPL;
+  - Has mirror-based reflection (only to support interactive programming);
+  - Allows safe and controlled lexical extensions of operations;
+  - Reifies most concepts to user land;
+  - Does not have inheritance, but allows something closer to Traits or Extensible Records;
+  - Does not have identity, nor universal equality;
+  - Does not have a global namespace (*not implemented yet*);
+  - Has an extensive standard library (*not implemented yet*).
 
 
 Influences:
 
   - [Smalltalk](https://en.wikipedia.org/wiki/Smalltalk)
     (Everything is an object, Message-passing, Non-local returns);
+
   - [Self](http://www.selflanguage.org/)
     (Prototype-based OO, Mirror-based reflection);
+
   - [Newspeak](http://www.newspeaklanguage.org/)
     (First-class parametric modules, Aliens, Pattern matching (*not implemented yet*));
+
   - [Clojure](https://clojure.org/)
     (Immutability by default, Annotating objects with metadata, encouraged-but-not-enforced purity, Ad-hoc hierarchies, CSP (*not implemented yet*));
+
   - [C#'s Extension Methods](https://msdn.microsoft.com/en-us/library/bb383977.aspx?f=255&MSPPError=-2147217396),
     [Us](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.56.7535),
     [Korz](http://dl.acm.org/citation.cfm?id=2661147),
     [Piumarta's Cola](http://piumarta.com/software/cola/)
     (Contexts);
+
   - [Haskell](https://www.haskell.org/)
     (Algebraic structures, `do` notation);
+
   - [Lisp](http://www-formal.stanford.edu/jmc/recursive/recursive.html),
     [Scheme](http://www.scheme-reports.org/),
     [IPython](https://ipython.org/)
     (Interactive programming);
+
   - [Swift](https://developer.apple.com/swift/)
     ([Text handling](https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/StringsAndCharacters.html));
+
   - [Racket](https://racket-lang.org/)
     ([Contracts](https://docs.racket-lang.org/reference/contracts.html) (*not implemented yet*));
+
   - [E](http://www.erights.org/)
     ([Capability Security](http://erights.org/elib/capability/ode/ode-capabilities.html));
+
   - [AliceML](https://www.ps.uni-saarland.de/alice/),
     [Scala](http://www.scala-lang.org/)[(z)](http://timperrett.com/2014/07/20/scalaz-task-the-missing-documentation/),
     [C#'s comonadic Tasks](http://dl.acm.org/citation.cfm?id=2367181)
     (Task and Future-based asynchronous concurrency);
+
   - [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))
     ([Observables](http://reactivex.io/));
+
   - [Rust](https://www.rust-lang.org/)
     ([Result types](https://doc.rust-lang.org/std/result/));
+
   - [F#](http://fsharp.org/)
     (`|>` operator, written as `;` in Siren);
+
   - [Python](https://www.python.org/)
     ([Decorators](https://www.python.org/dev/peps/pep-0318/)).
 
@@ -183,10 +197,10 @@ The syntax `Subject { ... }` is sugar for `Subject refined-by: { ... }`.
 
 As previously mentioned, Siren messages are sent to contexts, which then get to
 define the operation to be executed. Siren has a Global context, where mappings
-from new objects are automatically added to, and Lexical contexts, which may
+from new subjects are automatically added to, and Lexical contexts, which may
 provide additional mappings.
 
-Contexts are first-class values, and are the result of extending an object:
+Contexts are first-class values, and are the result of extending a subject:
 
 ```ruby
 let Context-A = Context.
@@ -262,7 +276,7 @@ Guess number: 4. # => "You've guessed correctly!"
 ```
 
 Note that the block that computes `"You've guessed correctly!"` is a
-first-class object that is sent to another method (`then:`) to be evaluated,
+first-class subject that is sent to another method (`then:`) to be evaluated,
 and the method `number:` itself does nothing with its return value. But because
 it has the special return operator (`^`), when it's executed that value is
 returned as if the method `number:` itself had returned it. In this sense,
@@ -279,16 +293,35 @@ Currently Siren has arbitrary precision integers, and 64-bit floating point numb
 
 A redesign of the numeric system will move Siren closer to Scheme's numeric tower:
 
-- Arbitrary precision integers will be the default for integer constants;
-- Arbitrary precision decimals will be the default for decimal constants;
-- Rationals will be the default for fractional constants (not supported yet);
-- Numeric operations will choose the most appropriate number type in the result, between the above three types. Additionally, there'll be a context for operations without automatic conversions;
-- Limited numbers (Byte, (Unsigned-)Integer-16, (Unsigned-)Integer-32, (Unsigned-)Integer-64, Float-32, Float-64) will be provided as additional entities, which one may convert the initial constants to, with some precision loss. Operations on these will never convert automatically between types.
+  - Arbitrary precision integers will be the default for integer constants;
+
+  - Arbitrary precision decimals will be the default for decimal constants;
+
+  - Rationals will be the default for fractional constants (not supported yet);
+
+  - Numeric operations will choose the most appropriate number type in the
+    result, between the above three types. Additionally, there'll be a context
+    for operations without automatic conversions; 
+
+  - Limited numbers (Byte, (Unsigned-)Integer-16bits, (Unsigned-)Integer-32bits,
+    (Unsigned-)Integer-64bits, Float-32bits, Float-64bits) will be provided as
+    additional entities, which one may convert the initial constants to, with
+    some precision loss. Operations on these will never convert automatically
+    between types. 
 
 
 ## Text handling
 
-Like in Swift, text objects in Siren are entirely opaque. Unlike Swift, text objects in Siren are also immutable. Operations on text always return a new text, and it's not possible to look at the contents without getting a particular view for the text. Currently, only a `Characters` view is implemented, which allows one to look at the contents of a text as a list of character clusters (this is currently broken, btw).
+Like in Swift, text subjects in Siren are entirely opaque. Unlike Swift, text
+subjects in Siren are also immutable. Operations on text always return a new
+text, and it's not possible to look at the contents without getting a
+particular view for the text. Currently, only a `Characters` view is
+implemented, which allows one to look at the contents of a text as a list of
+character clusters (this is currently broken, btw).
+
+Siren differentiates between `"Text with escape sequences"` and `"""Raw
+text"""`, in the literals, but they both result in the same `Text` subject, and
+both support multi-line text literals.
 
 
 ## Collections
@@ -304,17 +337,21 @@ Siren will offer the following collection types:
 - Map (immutable map, *not implemented yet*);
 - Sorted-Map (map with a custom sorting function, *not implemented yet*);
 - Stream (Rx-like Observables, *not implemented yet*);
-- Range (`1 to: 10`, inclusive range objects).
+- Range (`1 to: 10`, inclusive range subjects).
 
-Furthermore, iterable operations on collections returns lazy versions of them, so we have: Lazy-List, Lazy-Vector, Lazy-Set, Lazy-Sorted-Set, Lazy-Map, Lazy-Sorted-Map.
+Furthermore, iterable operations on collections returns lazy versions of them,
+so we have: Lazy-List, Lazy-Vector, Lazy-Set, Lazy-Sorted-Set, Lazy-Map,
+Lazy-Sorted-Map.
 
 
 ## Controlled mutability
 
-All values in Siren are immutable by default, but Siren offers a `Reference` object, which has `value` and `set!:` operations. Reference works sort-of like an L-value in languages that have mutable assignment.
+All values in Siren are immutable by default, but Siren offers a `Reference`
+subject, which has `value` and `set!:` operations. Reference works sort-of like
+an L-value in languages that have mutable assignment.
 
 ```ruby
-let mutable = Reference new: Unit.  # `Unit` is the object representing "no value"
+let mutable = Reference new: Unit.  # `Unit` is the subject representing "no value"
 mutable set!: 1.
 mutable value. # => 1
 mutable set!: 2.
@@ -345,7 +382,51 @@ let search = { list value |
 }
 ```
 
-Better approaches to error handling remain an open issue here. Ideally I'd like to implement a conditions system (see Common Lisp and Dylan);
+Better approaches to error handling remain an open issue here. Ideally I'd like
+to implement a conditions system (see Common Lisp and Dylan);
 
 
+## Alien-based FFI
 
+Siren does not have special syntactical support for FFI, instead the entire FFI
+layer is implemented in user land, using the concept of
+[Aliens](http://gbracha.blogspot.com.br/2008/12/unidentified-foreign-objects-ufos.html).
+
+Aliens consist basically of two things:
+
+  - A proxies subject over "alien" (external) operations.
+
+  - A way of converting between internal (Siren) subjects — `expatriate:` —, and
+    external (Alien) subjects — `alienate:`.
+  
+This approach allows one to maintain security guarantees (like
+Object-Capability Security), while both not tying your language to a specific
+FFI mechanism, and giving people the same semantics of the language they're
+working on when interacting with external objects. One can always switch the
+FFI implementation if they're interested in different guarantees (safety vs
+performance, for example).
+
+In Siren, these proxies are created automatically when bringing JavaScript's
+objects into Siren's world. For example, if I wanted to use the
+[shoutout](https://github.com/robotlolita/shoutout) library for events, I'd do
+this:
+
+```ruby
+# Siren code                                # JS Code
+# ----------------------------------------- # ------------------------------------------
+let Signal = Module import js: "shoutout".  # require('shoutout')
+let clicked = Signal apply: [].             # Signal()
+
+clicked add: { x y | Console log: [x. y] }. # clicked.add((x, y) => console.log(x, y))
+clicked apply: [10. 10].                    # clicked(10, 10)
+# => "[10. 10]"
+```
+
+Even though this code invokes JS operations passing as argument Siren subjects,
+and even though the JS code returns JS objects, it works just fine, because the
+Alien layer converts these objects to the expected representation on both
+sides.
+
+See the
+[Alien implementation](https://github.com/siren-lang/siren/blob/master/runtime/src/JS.siren)
+for more details on how this works.
