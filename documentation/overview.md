@@ -147,6 +147,10 @@ parenthesis when chaining operations:
 ([1. 2. 3] map: _ as-text) join: ", ".
 ```
 
+## `do` notation
+
+(TBD)
+
 
 ## Subjects
 
@@ -619,3 +623,29 @@ thing set-radius!: 20.
 Brand on: thing; has?: Circle?.  # => True
 Brand on: thing; has?: Ellipse?. # => True
 ```
+
+
+## First-class parametric modules
+
+(TBD)
+
+
+## Pattern matching
+
+(TBD)
+
+
+## Algebraic structures
+
+(TBD)
+
+
+## Concurrency
+
+(TBD)
+
+
+## Decorators
+
+(TBD)
+
