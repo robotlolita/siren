@@ -430,3 +430,192 @@ sides.
 See the
 [Alien implementation](https://github.com/siren-lang/siren/blob/master/runtime/src/JS.siren)
 for more details on how this works.
+
+
+## Metadata
+
+All objects in Siren can carry meta-data around, and this meta-data is used to
+support the interactive programming part of Siren. This is fully implemented in
+the
+[Reflection](https://github.com/siren-lang/siren/blob/master/runtime/src/Reflection.siren)
+module. This meta-data is an important part of Siren's debugger and browser modules:
+
+```ruby
+> browse object: Object; messages
+# Messages in Object
+# ------------------
+# 
+# (Uncategorised):
+#   • self =/=> that
+#   • self ==> that
+#   • self => value
+#   • self expatriate-to-JS
+# 
+# Dynamic operations:
+#   • self perform: message context: context
+#      | Allows performing a message by its name, which can be computed     dyn...
+# 
+# Extending:
+#   • self extended-by: object
+#      | Extends the object with new messages as provided by the given [[object...
+#   • self extended-by: object context: context
+#      | Extends the object with new messages, as provided by the given     [[o...
+# 
+# Handling errors:
+#   • self does-not-understand: message
+#      | Allows defining how to handle errors resulting from sending messages...
+# 
+# Inspecting:
+#   • self describe
+#      | A textual representation for the object
+# 
+# Refining:
+#   • self refined-by: object
+#      | Constructs a new object based on the given object
+#   • self refined-by: object context: context
+#      | Constructs a new object `O'` based on this object, such that `O'` is...
+# 
+# => <Browser for: <Object>>
+```
+
+
+## Encouraged purity
+
+Siren does not force people to write pure applications, but it provides tools
+to make it easy to write programs like that where possible. The approach is
+very similar to Clojure's:
+
+  - All built-in data structures (bar `Reference`) are immutable, so people
+    can't mutate these structures to begin with, which means code dealing
+    just with data, and using the built-in structures, will be pure.
+
+  - Side-effecting operations are suffixed with a `!`. Side-effects could be
+    partiality (`[] first!` would crash the process with an exception, whereas
+    `[] first` is always safe), I/O, mutation, etc.
+
+
+## Branding and ad-hoc hierarchies
+
+Siren has no identity equality, no universal equality, no classes, and no
+types. Because of this, things like hierarchies do not exist in the Siren
+language, per se. Everything relies on structural equivalence (or in this case,
+"duck typed", if you want to use the term).
+
+There are two problems with this approach:
+
+  - Sometimes one wants to uniquely identify some object. This is not possible
+    if you don't have some kind of identity.
+
+  - Sometimes one wants to build hierarchies for testing characteristics that
+    can't be encoded just with available operation names.
+
+Brands are Siren's answer to both of these problems. A Brand is a unique value
+that has a concept of hierarchy:
+
+```ruby
+# Consider these values that have the same structure
+let mine  = Brand with-description: "Siren".
+let yours = Brand with-description: "Siren".
+
+# When each of them are created, they get assigned an unique identity. And
+# this identity allows us to tell them apart:
+mine  === mine.  # => True
+yours === yours. # => True
+mine  === yours. # => False
+yours === mine.  # => False
+```
+
+Hierarchies are created when a brand is refined and can be tested with the `is:`
+operation:
+
+```
+let Shape?   = Brand with-description: "Shape".
+let Ellipse? = Brand with-description: "Ellipse".
+let Circle?  = Ellipse with-description: "Circle".
+let Square?  = Brand with-description: "Square".
+
+Square? is: Shape?.   # => True
+Square? is: Ellipse?. # => False
+Circle? is: Ellipse?. # => True
+Circle? is: Shape?.   # => True
+```
+
+Besides being able to construct identities and hierarchies in an ad-hoc manner,
+brands can be attached to existing subjects, or removed from them, at any
+point. This means that a subject may have many identities and hierarchies, at
+any given time.
+
+Note that brands can only be removed if one has the canonical brand
+object. Brands are not visible from user code, not even with reflection.
+
+```ruby
+let square = {
+  def self side = 10
+  def self area = self side * self side
+}.
+
+# The `has` operation respects hierarchies
+Square? attach-to: square.
+Brand on: square; has: Square?.  # => True
+Square? remove-from: square.
+Brand on: square; has: Square?.  # => False
+```
+
+Because brands are unforgeable and not accessible from user code, they also
+serve as capabilities:
+
+```ruby
+# Here's a solution to the Circle-Ellipse problem in Siren
+let minor-radius = Reference new: 10.
+let major-radius = Reference new: 10.
+let Circle-Capability = Circle? with-description: "Circle (capability)".
+
+let thing = {
+  def self radius
+    Brand on: self; has?: Circle-Capability; then: {
+      self minor-radius.
+    } else: {
+      Exception message: "Not a circle!"; raise!
+    }
+
+  def self set-radius!: r
+    minor-radius set!: r.
+    major-radius set!: r.
+    Circle-Capability attach-to: self.
+
+  def self minor-radius = minor-radius value.
+  def self major-radius = major-radius value.
+
+  def self set-minor-radius!: r
+    minor-radius set!: r.
+    self minor-radius =/= self major-radius then: {
+      Circle-Capability remove-from: self
+    }
+
+  def self set-major-radius!: r
+    major-radius set!: r
+    self minor-radius =/= self major-radius then: {
+      Circle-Capability remove-from: self
+    }
+
+  def self area = Float-64bits pi * self minor-radius * self major-radius
+}
+
+# It starts as a circle. And a circle is also a special form of Ellipse
+Brand on: thing; has?: Circle?.  # => True
+Brand on: thing; has?: Ellipse?. # => True
+
+# But when we change the value in the subject, its *class/hierarchy/type*
+# also changes (this is impossible to do in languages where classifications
+# are tied to objects/subjects — like in class hierarchies/instanceof, — or
+# to types — like in type systems with subtyping support)
+thing set-minor-radius!: 5.
+
+Brand on: thing; has?: Circle?.  # => False
+Brand on: thing; has?: Ellipse?. # => True
+
+thing set-radius!: 20.
+
+Brand on: thing; has?: Circle?.  # => True
+Brand on: thing; has?: Ellipse?. # => True
+```
