@@ -79,7 +79,7 @@ Influences:
     ([Text handling](https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/StringsAndCharacters.html));
 
   - [Racket](https://racket-lang.org/)
-    ([Contracts](https://docs.racket-lang.org/reference/contracts.html) (*not implemented yet*));
+    (Numeric tower, [Contracts](https://docs.racket-lang.org/reference/contracts.html) (*not implemented yet*));
 
   - [E](http://www.erights.org/)
     ([Capability Security](http://erights.org/elib/capability/ode/ode-capabilities.html));
@@ -532,7 +532,7 @@ very similar to Clojure's:
 Siren has no identity equality, no universal equality, no classes, and no
 types. Because of this, things like hierarchies do not exist in the Siren
 language, per se. Everything relies on structural equivalence (or in this case,
-"duck typed", if you want to use the term).
+"duck typing", if you want to use the term).
 
 There are two problems with this approach:
 
@@ -561,7 +561,7 @@ yours === mine.  # => False
 Hierarchies are created when a brand is refined and can be tested with the `is:`
 operation:
 
-```
+```ruby
 let Shape?   = Brand with-description: "Shape".
 let Ellipse? = Brand with-description: "Ellipse".
 let Circle?  = Ellipse with-description: "Circle".
