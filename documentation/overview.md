@@ -178,7 +178,30 @@ parenthesis when chaining operations:
 
 ## `do` notation
 
-(TBD)
+Siren makes a fair bit of use of algebraic structures to capture effects
+and remove partiality where possible. While not a pure language, like
+Haskell, having a notation for sequencing these effects still helps
+writing programs in an easier way. To this end, Siren supports a form of
+`do` notation, more similar to Scala's `for` comprehensions than
+Haskell's `do`.
+
+This works pretty much by translating a `do` block to calls to monad and
+functor instances:
+
+```ruby
+do {
+  a <- [1. 2. 3].
+  b <- [4. 5. 6].
+  return a + b
+}
+
+# Is equivalent to
+[1. 2. 3] chain: { a |  # action; action
+  [4. 5. 6] map: { b |  # action; return expr
+    a + b
+  }
+}
+```
 
 
 ## Subjects
