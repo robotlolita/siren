@@ -119,9 +119,15 @@ vm extend: Tuple with: {
     self filter: { x | (predicate call: x) not }.
 
   def self slice-from: start to: end
-    vm tuple: self
-       slice-from: (start clamp-between: 1 and: self length)
-       to: (end clamp-between: 1 and: self length).
+    let start' = start < 1 then: { 1 } else: { start }.
+    
+    end >= start' then: {
+      vm tuple: self
+         slice-from: (start clamp-between: 1 and: self length)
+         to: (end clamp-between: 1 and: self length).
+    } else: {
+      [].
+    }.
 
   def self without-last
     self slice-from: 1 to: self length - 1.
