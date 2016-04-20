@@ -243,7 +243,7 @@ vm after-runtime-configuration: {
   importer-mirror meta;
     category: "Modularity";
     authors: authors;
-    portability: portable;
+    portability: "portable";
     platforms: ["ECMAScript 2015"];
     licence: "MIT";
     stability: Stability experimental;
