@@ -24,7 +24,7 @@
   "homepage": "http://github.com/robotlolita/siren",
   "dependencies": {
     "adt-simple": "^0.1.3",
-    "bignum": "^0.11.0",
+    "bignum": "^0.12.5",
     "boo": "~2.0.0",
     "chalk": "^1.1.1",
     "core.arity": "~1.0.0",
