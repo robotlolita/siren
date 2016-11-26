@@ -32,6 +32,9 @@ let Testing = {
       def_ target = object.
       def_ target-context = context.
     }.
+
+  def self for: object
+    self for: object context: vm global-context.
 }.
 
 let Object-Testing = {
@@ -85,7 +88,7 @@ let Equality-Divergence = Divergence {
   }
 
   def self describe
-    Debug-Text, 
+    Debug-Text,
     "<Equality-Divergence: ", self left describe, " === ", self right describe, ">".
 
   def self left: left-value right: right-value
@@ -121,9 +124,14 @@ let Reference-Equality-Divergence = Equality-Divergence {
     def_ Inverse = Reference-Inequality-Divergence.
   }
 
-  def self describe
-    Debug-Text, 
+  def self describe 
     "<Reference-Equality-Divergence: ", self left describe, " === ", self right describe, ">".
+  
+  def self left: left-value right: right-value
+    self {
+      def_ left  = left-value.
+      def_ right = right-value.
+    }.
 
   def self explain
     Debug-Text,
@@ -168,17 +176,13 @@ let Object-Assertions = Assertions {
 
   def self equal: other
     self assert: self target === other
-         divergence: self traits Equality-Divergence {
-                       @value def_ left = self target.
-                       def_ right = other
-                     }.
+         divergence: (self traits Equality-Divergence left: self target
+                                                      right: other).
 
   def self is: other
     self assert: (Mirror reflect: self target; is: other)
-         divergence: self traits Reference-Equality-Divergence {
-                       @value def_ left = self target.
-                       def_ right = other
-                     }.
+         divergence: (self traits Reference-Equality-Divergence left: self target
+                                                                right: other).
 }.
 
 vm extend: Object with: {

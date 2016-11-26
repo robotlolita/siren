@@ -59,6 +59,10 @@ let meta = {
   }
 }.
 
+vm extend: vm with: {
+  def_ meta = meta.
+}.
+
 # ----------------------------------------------------------------------
 vm extend: Root with: {
   def_ Mirror = Mirror.

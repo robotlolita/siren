@@ -101,4 +101,7 @@ clean:
 docs-toc: $(DOC_DIR)/*.md
 	$(doctoc) $(DOC_DIR)
 
-.PHONY: clean clean-vm clean-repl clean-language clean-runtime docs-toc
+test:
+	bin/siren tests/runtime.siren
+
+.PHONY: clean clean-vm clean-repl clean-language clean-runtime docs-toc test

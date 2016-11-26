@@ -12,6 +12,7 @@
 $siren/1
 module | vm | where
 
+
 # -- Ordering ----------------------------------------------------------
 vm extend: Root with: {
   def_ Ordering = Ordering.
@@ -81,6 +82,8 @@ let True = Boolean {
   def self describe
     Debug-Text, "<True>".
 
+  @vm meta example: { True && True  ==> True  }
+  @vm meta example: { True && False ==> False }
   def self && that
     that.
 
