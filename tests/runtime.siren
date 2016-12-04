@@ -1,4 +1,0 @@
-$siren/1
-
-Console write-line!: "--: Basic types".
-Testing for: True; run!.

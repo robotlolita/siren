@@ -1,0 +1,164 @@
+// # module: siren.parser
+//
+// Parser for the Siren language.
+
+// -- Dependencies -----------------------------------------------------
+var Expr = require('./ast');
+
+var reserved = [
+  'module', 'where', 'define', 'import', 'exposing', 'use', 'in',
+  'let', 'do', 'end', '=>'
+];
+
+function isValid(a) {
+  return reserved.indexOf(a) === -1
+}
+
+function get(k){ return function(o){
+  return o[k]
+}}
+
+function kwName(args) {
+  return Expr.Id(args.map(get(0)).map(get('name')).join(''));
+}
+
+function kwArgs(args) {
+  return args.map(get(1));
+}
+
+function types(xs) {
+  return xs.map(function(x){ return x[1] });
+}
+
+function args(xs) {
+  return xs.map(function(x){ return x[0] });
+}
+
+
+// ## object: SirenParser
+ometa SirenParser {
+  space   = /\s/,
+  ignored = space | comment,
+  comment = fromTo('#', '\n'):a -> a.slice(1),
+  ws      = ignored*,
+  sep     = ',',
+  symbol  = ~( letter | digit | space
+             | '_' | '$' | '^' | '@' | ';' | ':' | '{' | '}' | '(' | ')' | '[' | ']' | '.'
+             ) char,
+  eof     = ~char,
+  kw :xs  = seq(xs) ~(letter | digit | symbol | sep | ':'),
+
+
+  // Identifiers
+  idStart    = letter,
+  idRest     = ~sep (letter | digit | symbol),
+  identifier = <idStart idRest*>:a     ?(isValid(a)) -> Expr.Id(a),
+  keyword    = <idStart idRest*>:a ':'               -> Expr.Id(a + ':'),
+  symbols    = <symbol+>:a             ?(isValid(a)) -> Expr.Id(a),
+  argName    = '(' ws identifier:a ~':' ws expr:b ')' -> [a, b]
+             | identifier:a ~':'                      -> [a, Expr.Any()]
+             | '_'                                    -> [Expr.Id('_'), Expr.Any()],
+
+  selector   = identifier
+             | symbols
+             | keyword+:xs -> Expr.Id(xs.map(get('name')).join('')),
+
+  // Patterns
+  pattern = kw('define') ws (keywordPattern | binaryPattern | unaryPattern | varPattern):p
+            -> Expr.Define(p[0], types(p[1]), args(p[1]), p[2]),
+
+  patternBody = '=' ws expr:as -> [as]
+              | 'do' ws stmtList:as ws 'end' -> as,
+
+  keywordArgs = (ws keyword:k ws argName:n -> [k, n])+,
+
+  keywordPattern = argName:a space* keywordArgs:as space* patternBody:v
+                -> [kwName(as), [a].concat(kwArgs(as)), v],
+  unaryPattern   = argName:a space* identifier:b space* patternBody:v
+                -> [b, [a], v],
+  binaryPattern  = argName:a space* symbols:b ws argName:c space* patternBody:v
+                -> [b, [a, c], v],
+  varPattern     = identifier:a space* patternBody:v
+                -> [a, [], v],
+
+
+
+  // Statements
+  letStmt = kw('let') ws identifier:a ~':' ws '=' ws expr:b -> Expr.Let(a, b),
+
+  module = kw('module') ws identifier:a ws kw('for:') ws identifier:b ws kw('where') ws stmtList:cs
+        -> Expr.Module(a, b, cs),
+
+  // Expressions
+  stmt = letStmt
+       | pattern
+       | expr,
+
+  expr = appExpr,
+
+  appExpr = keywordExpr
+          | binaryExpr,
+
+  keywordApp  = keyword:k ws binaryExpr:v -> [k, v],
+
+  keywordExpr = binaryExpr:a (ws keywordApp)+:as
+                -> Expr.Apply(kwName(as), [a].concat(kwArgs(as))),
+  binaryExpr  = binaryExpr:a ws symbols:s ws unaryExpr:b
+                -> Expr.Apply(s, [a, b])
+              | unaryExpr,
+  unaryExpr   = unaryExpr:a ws identifier:i ~':'
+                -> Expr.Apply(i, [a])
+              | unaryExpr:a ws block:v
+                -> Expr.Clone(a, v)
+              | primaryExpr,
+  primaryExpr = value
+              | identifier:a ~':'                  -> Expr.Apply(a, [])
+              | keywordApp:a (ws keywordApp)*:as   -> Expr.Apply(kwName(as), [a].concat(kwArgs(as)))
+              | '(' ws expr:a ws ')'               -> a,
+
+  exprList = expr:a (ws '.' ws exprList)?:as -> [a].concat(as || [])
+           | expr:a (ws '.')? -> [a],
+  stmtList = stmt:a (ws '.' ws stmtList)?:as -> [a].concat(as || [])
+           | stmt:a (ws '.')? -> [a],
+
+  blockStmt = stmt
+            | '^' ws expr:a -> Expr.Return(a),
+  blockStmtList = blockStmt:a (ws '.' ws blockStmtList)?:as -> [a].concat(as || [])
+                | blockStmt:a (ws '.')? -> [a],
+
+
+  // Values
+  value = number | string | lambda,
+
+  octDigit = /[0-7_]/,
+  hexDigit = /[0-9a-fA-F_]/,
+  binDigit = '0' | '1' | '_',
+  digits = (digit | '_')+:as -> Number(as.join('').replace(/_/g, '')),
+  number = '-'?:s ( digits:a '.' digits:b exponent?:c
+                    -> Expr.Number(+((s || '+') + a + '.' + b + (c || 0)))
+                  | digits:a
+                    -> Expr.Number(+((s || '+') + a))
+                  ),
+  sign = '+' | '-',
+  exponent = ('e' | 'E') sign?:s digits:d -> s + d,
+
+  stringEscape     = '\\' ( 'b' -> '\b'
+                          | 'f' -> '\f'
+                          | 'n' -> '\n'
+                          | 'r' -> '\r'
+                          | 't' -> '\t'
+                          | char),
+  stringChar       = (stringEscape | (~seq('"') char)):a -> a,
+  unescapableChars = ~seq('"""') char,
+  string           = seq('"""') <unescapableChars*>:as seq('"""') -> Expr.String(as)
+                   | '"' (stringChar)*:as '"'                     -> Expr.String(as.join('')),
+
+  block = '{' ws blockStmtList:a ws '}' -> Expr.Block([], a), 
+
+  lambda  = '{' ws arglist:as ws seq('=>') ws blockStmtList:a ws '}' -> Expr.Block(as, a)
+          | block,
+
+  arglist = argName:a (ws argName)*:as              -> [a].concat(as),
+
+  program = ws ":siren/2" ws module:m ws eof -> m
+}
